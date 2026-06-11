@@ -82,6 +82,8 @@ EMPIRES = [
         (1790,14.7),(1820,14.0),(1860,13.0),(1880,11.5),(1900,11.0),(1912,0)]),
     ("United States", True, "#2e6b4f", [(1776,0.9),(1783,2.3),(1803,4.6),(1845,5.5),(1848,7.7),
         (1853,7.8),(1867,9.3),(1898,9.7),(1912,9.8),(2026,9.8)]),
+    ("India (Republic)", True, "#b3873e", [(1947,3.2),(1961,3.29),(2026,3.29)]),
+    ("China (PRC)", True, "#9c453a", [(1949,9.3),(1951,9.6),(2026,9.6)]),
 ]
 
 def year_fmt(y, _pos=None):
@@ -95,7 +97,7 @@ def year_fmt(y, _pos=None):
 def fig_cascade(th):
     spacing = 8.0  # million km^2 between baselines -> shared scale across rows
     n = len(EMPIRES)
-    fig, ax = plt.subplots(figsize=(13.5, 19))
+    fig, ax = plt.subplots(figsize=(13.5, 21))
     fig.patch.set_facecolor(th["bg"])
     ax.set_facecolor(th["bg"])
 
@@ -123,6 +125,17 @@ def fig_cascade(th):
                     xytext=(0, 2), textcoords="offset points",
                     ha="center", va="bottom", fontsize=7, color=col, zorder=61)
 
+    # height key: calibrates curve height (vertical row offsets carry no value)
+    kx = -1060
+    ax.plot([kx, kx], [0, 20], color=th["grey"], lw=1.0, zorder=50)
+    for v in (0, 10, 20):
+        ax.plot([kx - 14, kx], [v, v], color=th["grey"], lw=1.0, zorder=50)
+        ax.text(kx - 30, v, str(v), ha="right", va="center", fontsize=7.5,
+                color=th["grey"], zorder=50)
+    ax.text(kx + 26, 10, "curve height,\nmillion km²\n(same scale\nin every row)",
+            ha="left", va="center", fontsize=7.5, color=th["grey"], zorder=50,
+            linespacing=1.5)
+
     ax.set_xlim(-1150, 2090)
     ax.set_ylim(-2, (n - 1) * spacing + 40)
     ax.set_xticks([-500, 1, 500, 1000, 1500, 2000])
@@ -134,9 +147,10 @@ def fig_cascade(th):
 
     ax.set_title("The cascade of empires, 550 BCE – today",
                  fontsize=17, loc="left", pad=18, fontweight="bold", color=th["fg"])
-    ax.text(0, 1.005, "Curve height = land ruled, million km² — one shared scale, "
-            "so heights are comparable across all rows. Number marks each peak; "
-            "dot = still on the map today. One colour per civilisation.",
+    ax.text(0, 1.005, "Curve height = land ruled, million km² (see key, lower left) — "
+            "one shared scale, so heights are comparable across all rows. A row's "
+            "vertical position only orders empires by date of rise. Number marks each "
+            "peak; dot = still on the map today. One colour per civilisation.",
             transform=ax.transAxes, fontsize=10, color=th["grey"], va="bottom")
     ax.text(0, -0.035, "Rows ordered by date of rise. Areas approximate, after "
             "R. Taagepera, “Size and Duration of Empires” (1978–1997).",
