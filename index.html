@@ -3,18 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Shape of Empires</title>
+<title>Claudepost</title>
+<meta name="description" content="Essays in data — prompted by a human, made by an AI.">
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
 <style>
   :root{
     --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
-    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9; --cursor:#8a857c;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
   }
   html.dark{
     --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
-    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a; --cursor:#a09a8e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
   }
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
   body{
     margin:0; background:var(--bg); color:var(--fg);
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
@@ -22,39 +33,13 @@
     transition:background .25s,color .25s;
   }
   .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
-  .wide{max-width:76rem; margin:0 auto; padding:0 1.5rem}
-  header{padding:5rem 0 1rem}
-  h1{font-size:2.6rem; line-height:1.15; font-weight:600; margin:0 0 .6rem; letter-spacing:-.01em}
-  .subtitle{font-style:italic; color:var(--grey); font-size:1.15rem; margin:0 0 1rem}
-  .byline{
-    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
-    color:var(--grey); margin:0 0 .4rem;
-  }
-  .byline .aim{
-    font-size:.7rem; border:1px solid var(--rule); border-radius:4px;
-    padding:.05rem .3rem; color:var(--grey); vertical-align:1px;
-  }
-  h2{font-size:1.5rem; font-weight:600; margin:3.2rem 0 .8rem; letter-spacing:-.01em}
-  h2 .no{color:var(--accent); font-style:italic; font-weight:400; margin-right:.4rem}
-  p{margin:0 0 1rem}
-  em.k{font-style:normal; border-bottom:1px solid var(--accent)}
-  figure{margin:2rem 0 0.5rem}
-  figure img{width:100%; height:auto; display:block; border-radius:4px}
-  figcaption{
-    font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif;
-    font-size:.85rem; color:var(--grey); line-height:1.5;
-    max-width:44rem; margin:.7rem auto 0; padding:0 .2rem;
-  }
-  hr{border:none; border-top:1px solid var(--rule); margin:3rem auto; max-width:44rem}
-  ol.claims{padding-left:1.3rem}
-  ol.claims li{margin-bottom: 1rem}
-  ol.claims b{font-weight:600}
-  .note{font-size:.92rem; color:var(--grey)}
-  footer{padding:2rem 0 4rem; color:var(--grey); font-size:.9rem}
+  header{padding:5.5rem 0 .5rem}
+  h1{font-size:2.4rem; font-weight:600; margin:0 0 .4rem; letter-spacing:-.01em}
+  h1 .dot{color:var(--accent)}
+  .tagline{font-style:italic; color:var(--grey); margin:0 0 .5rem}
   a{color:var(--accent); text-decoration:none}
   a:hover{text-decoration:underline}
 
-  /* theme toggle */
   #themeBtn{
     position:fixed; top:1rem; right:1rem; z-index:50;
     width:2.4rem; height:2.4rem; border-radius:50%;
@@ -63,438 +48,78 @@
   }
   #themeBtn:hover{border-color:var(--accent)}
 
-  /* interactive cascade */
-  #cascadeWrap{position:relative}
-  #cascade svg{width:100%; height:auto; display:block}
-  #cascade text{
-    font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif;
+  .essays{list-style:none; margin:2.5rem 0 0; padding:0}
+  .essays li{
+    border-top:1px solid var(--rule); padding:1.6rem 0 1.8rem;
   }
-  #cascade .rowlabel{font-size:13px; font-weight:600; cursor:default}
-  #cascade .peak{font-size:9.5px}
-  #cascade .tick{font-size:12px; fill:var(--grey)}
-  #cascade .grid{stroke:var(--rule); stroke-width:1}
-  #cascade .base{stroke:var(--rule); stroke-width:1}
-  #cascade g.empire{transition:opacity .15s}
-  #cascade svg.focused g.empire:not(.focus){opacity:.16}
-  #cascade .cursorline{stroke:var(--cursor); stroke-width:1; stroke-dasharray:3 3}
-  #cascade .cursoryear{font-size:12px; fill:var(--fg); font-weight:600}
-  #tip{
-    position:absolute; pointer-events:none; display:none; z-index:40;
-    background:var(--card); border:1px solid var(--rule); border-radius:6px;
-    padding:.55rem .7rem; font-family:ui-sans-serif,-apple-system,sans-serif;
-    font-size:.78rem; line-height:1.45; max-width:16rem;
-    box-shadow:0 2px 10px rgba(0,0,0,.12);
+  .essays .date{
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.78rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--faint); display:block; margin-bottom:.25rem;
   }
-  #tip .yr{font-weight:700; margin-bottom:.15rem}
-  #tip .row{display:flex; justify-content:space-between; gap:1rem; white-space:nowrap}
-  #tip .row .v{color:var(--grey)}
-  #tip .hdr{font-weight:700}
-  #tip .sub{color:var(--grey)}
-  .hint{
-    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
-    color:var(--faint); text-align:right; margin:.2rem 0 0;
+  .essays h2{margin:0 0 .35rem; font-size:1.45rem; font-weight:600; letter-spacing:-.01em}
+  .essays h2 a{color:var(--fg)}
+  .essays h2 a:hover{color:var(--accent); text-decoration:none}
+  .essays p{margin:0; color:var(--grey); font-size:.98rem}
+  .essays .meta{
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.8rem; color:var(--faint); margin-top:.5rem; display:block;
   }
-
-  /* the brief (user inputs) */
-  .callout{
-    background:var(--card); border:1px solid var(--rule);
-    border-left:3px solid var(--accent); border-radius:6px;
-    padding:1rem 1.2rem; margin:1.8rem 0 0; font-size:.95rem;
-  }
-  .callout .tag{
-    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
-    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--accent); display:block; margin-bottom:.5rem;
-  }
-  .callout ul{margin:0; padding-left:1.1rem}
-  .callout li{margin-bottom:.55rem}
-  .callout li:last-child{margin-bottom:0}
-  .buildstats{
-    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
-    color:var(--grey); margin:.7rem 0 0; line-height:1.6;
-  }
-  .buildstats b{color:var(--fg); font-weight:600}
-
-  /* left-margin table of contents, only when there's room */
-  #toc{display:none}
-  @media (min-width:1480px){
-    #toc{
-      display:block; position:fixed; left:1.4rem; top:50%;
-      transform:translateY(-50%); z-index:30;
-      font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
-    }
-    #toc a{
-      display:block; color:var(--grey); padding:.28rem 0; text-decoration:none;
-      border-left:2px solid var(--rule); padding-left:.7rem;
-    }
-    #toc a:hover{color:var(--accent); border-left-color:var(--accent)}
-    #toc .roman{color:var(--accent); font-style:italic; margin-right:.35rem}
-  }
-
-  /* small screens */
+  footer{padding:3rem 0 4rem; color:var(--faint); font-size:.85rem}
   @media (max-width:640px){
-    body{font-size:.98rem}
-    header{padding-top:3.4rem}
+    header{padding-top:3.6rem}
     h1{font-size:1.9rem}
-    .subtitle{font-size:1.02rem}
-    h2{font-size:1.25rem}
-    .prose,.wide{padding:0 1.1rem}
-    #tip{max-width:12.5rem; font-size:.72rem}
-    .hint{text-align:left}
-    #themeBtn{top:.7rem; right:.7rem}
+    .prose{padding:0 1.1rem}
   }
 </style>
 </head>
 <body>
 <button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
 
-<nav id="toc" aria-label="Contents">
-  <a href="#brief"><span class="roman">§</span>The brief</a>
-  <a href="#sec1"><span class="roman">I.</span>The cascade</a>
-  <a href="#sec2"><span class="roman">II.</span>Power changes its unit</a>
-  <a href="#sec3"><span class="roman">III.</span>Own clocks</a>
-  <a href="#sec4"><span class="roman">IV.</span>Claims</a>
-  <a href="#sec5"><span class="roman">V.</span>Method</a>
-</nav>
-
 <header class="prose">
-  <h1>The Shape of Empires</h1>
-  <p class="subtitle">Twenty-five centuries of rise and fall, in three pictures.</p>
-  <p class="byline">By <a href="https://angadh.com">Angadh Nanjangud</a> (prompter)
-    &amp; Claude Fable&nbsp;5 <span class="aim">xhigh</span> (AI)</p>
-
-  <aside class="callout" id="brief">
-    <span class="tag">The brief — user inputs, lightly trimmed</span>
-    <ul>
-      <li>“Make a really nice plot that shows me all the major empires as a function of
-      time… the curve should give us the information of power rise and fall… I also
-      want to be able to see the <i>parallelness</i> of those empires… enough separation
-      between one empire and another. I want to come into modern times and understand
-      where we might be in terms of current empires… America might be ascendant even
-      now… or, as technology has advanced rapidly, it might be at its end… You're
-      welcome to start in the AD, but if there is some really cool empire in the BCs,
-      include that too… Maybe you have ideas for even more plots.”</li>
-      <li>“Put these plots in a nice HTML file with a good narrative… you are welcome
-      to make some claims and interpretations as well.”</li>
-      <li>“Light and dark themed with Tufte layout / Anthropic styling.”</li>
-      <li>“If there are ideas for interactive plots, feel free to be creative.”</li>
-    </ul>
-  </aside>
-
-  <p class="buildstats">
-    <b>Build:</b> ~21 minutes wall-clock, in one session (11 June 2026) ·
-    <b>tokens (estimated):</b> ≈2M in (the large majority cached context re-reads;
-    includes rendering and visually inspecting every chart iteration) /
-    ≈35k out (code, page, narrative) · model: Claude&nbsp;Fable&nbsp;5.
-    Figures are estimates from the session log, not billing telemetry.
-  </p>
-
-  <p style="margin-top:1.6rem">“Power” has no gauge. So this page uses two honest, imperfect proxies and never
-  mixes them: for most of history, <em class="k">land ruled</em> (million&nbsp;km²,
-  after Rein Taagepera’s classic surveys); for the modern era,
-  <em class="k">share of world output</em> (Maddison Project / IMF, at purchasing-power
-  parity). Every chart keeps one shared scale, so a tall curve is genuinely bigger
-  than a short one — no panel is stretched to flatter its subject.</p>
+  <h1>Claudepost<span class="dot">.</span></h1>
+  <p class="tagline">Essays in data — prompted by
+    <a href="https://angadh.com">Angadh Nanjangud</a>, made with Claude.</p>
 </header>
 
-<section class="wide" id="sec1">
-  <h2 class="prose" style="padding:0"><span class="no">I.</span>The cascade</h2>
-  <div class="prose" style="padding:0">
-    <p>Eighteen empires, ordered top-to-bottom by the date they began to rise.
-    Time runs left to right; the height of each curve is the land it ruled,
-    on one common scale. Reading down any vertical line shows you everything
-    that was rising, peaking, or dying <em>at the same moment</em>.</p>
-  </div>
-  <figure>
-    <div id="cascadeWrap">
-      <div id="cascade"></div>
-      <div id="tip"></div>
-    </div>
-    <p class="hint">Hover a curve to isolate one empire · move along the timeline to see who shared the world in any year</p>
-    <noscript><img src="empires_cascade.png" alt="Ridgeline chart of 18 empires’ territorial extent, 550 BCE to today"></noscript>
-    <figcaption><b>Figure 1.</b> Territorial extent of major empires, 550&nbsp;BCE–2026&nbsp;CE,
-    million km² on a single shared scale. Number marks each peak; a dot means the state still
-    exists on today’s map. Colour groups civilisations — every brick-red curve is China.
-    Areas approximate, after R.&nbsp;Taagepera, “Size and Duration of Empires” (1978–1997).</figcaption>
-  </figure>
-  <div class="prose" style="padding:0">
-    <p>Three things jump out. First, <em class="k">scale escalates</em>: antiquity’s
-    superpowers — Persia, Rome, Han China — ruled about 5–6 million&nbsp;km²; the Arab
-    caliphates doubled that; the Mongols doubled it again; Britain peaked at 35.5,
-    seven Romes. Each jump rode a technology of control: cavalry and roads, then the
-    horse-relay steppe, then the ocean-going ship and the telegraph.
-    Second, <em class="k">empires are never alone</em> — Rome shared its whole life with
-    Han China and Parthia/Persia; the parallel rise of the gunpowder empires
-    (Ottoman, Mughal, Russian, Spanish) after 1500 is almost simultaneous.
-    Third, <em class="k">civilisations pulse</em>: the brick-red curve dies and returns
-    four times — Han, Tang, Ming, Qing. China is not one empire; it is a rhythm.</p>
-  </div>
-</section>
-
-<hr>
-
-<section class="wide" id="sec2">
-  <h2 class="prose" style="padding:0"><span class="no">II.</span>Power changes its unit</h2>
-  <div class="prose" style="padding:0">
-    <p>After 1945 almost nobody’s power grows by annexing land — the American
-    “empire” holds 9.8 million&nbsp;km² and has barely moved in a century, which is why
-    its curve in Figure&nbsp;1 is a flat green shelf. Modern dominance is economic,
-    so the modern chart must change its unit: percent of everything the world produces.</p>
-  </div>
-  <figure>
-    <img class="themed" data-light="modern_power.png" data-dark="modern_power_dark.png"
-         src="modern_power.png" alt="Line chart of share of world GDP, 1500–2026, for China, India, US, Britain, Russia, Japan">
-    <figcaption><b>Figure 2.</b> Share of world GDP at purchasing-power parity, 1500–2026.
-    Maddison Project estimates, IMF for recent decades. Before the Industrial Revolution
-    the world economy simply <i>was</i> China and India; Britain peaked near 9% with the
-    world’s largest territorial empire; the United States peaked at 27% in 1950.</figcaption>
-  </figure>
-  <div class="prose" style="padding:0">
-    <p>This chart quietly reframes the present. For eighteen of the last twenty
-    centuries, China and India together were roughly half the world economy; the
-    European and American centuries are the <em>anomaly</em>, opened by the Industrial
-    Revolution around 1820. On this metric the United States is not young and
-    ascending — it peaked in 1950, when a war-wrecked world made it half of all
-    industrial output, and has glided down to ~15% as Asia rebuilt. China’s curve is
-    best read not as a rise but as a <em class="k">reversion to its millennial mean</em>.</p>
-  </div>
-</section>
-
-<hr>
-
-<section class="wide" id="sec3">
-  <h2 class="prose" style="padding:0"><span class="no">III.</span>Every empire on its own clock</h2>
-  <div class="prose" style="padding:0">
-    <p>To compare the <em>shapes</em> of imperial lives — your “parallelness” question —
-    strip away both calendars and sizes: start every empire at year zero and scale each
-    to its own peak.</p>
-  </div>
-  <figure>
-    <img class="themed" data-light="empire_lifecycles.png" data-dark="empire_lifecycles_dark.png"
-         src="empire_lifecycles.png" alt="Superimposed life-cycle curves: extent as percent of peak versus years since founding">
-    <figcaption><b>Figure 3.</b> Territorial extent as a percentage of each empire’s own peak,
-    against years since founding. Highlighted: Rome, the Mongols, Britain, Russia, the United
-    States; grey: Achaemenid, Han, Caliphates, Ottoman, Spanish, Qing.</figcaption>
-  </figure>
-  <div class="prose" style="padding:0">
-    <p>There is no single life-cycle, but there are families. <em class="k">Explosive–brief</em>:
-    the Mongols hit full size in a single lifetime and were gone within two centuries.
-    <em class="k">Slow–long</em>: Rome took four centuries to peak and three more to die;
-    the Ottomans stretched the same arc over six. And the falls are getting faster:
-    Rome’s decline took ~300 years, Spain’s ~80, Britain went from its largest extent
-    (1920) to dissolution in about <em>40</em> — one human adulthood. The two dots mark
-    the present: Russia at year 479, still holding 75% of its 1895 peak — old, shrunken,
-    but the largest country on earth; the United States at year 250, never having
-    contracted at all on this measure.</p>
-  </div>
-</section>
-
-<hr>
-
-<section class="prose" id="sec4">
-  <h2><span class="no">IV.</span>Claims, carefully labelled as claims</h2>
-  <p class="note">The charts above are data (approximate, but sourced). What follows is interpretation.</p>
-  <ol class="claims">
-    <li><b>Where is America on its curve?</b> It depends which curve you mean — and that
-    ambiguity is the honest answer. Territorially (Fig.&nbsp;1) it is a young, stable,
-    never-contracted state, 250 years into a life that on historical clocks could run
-    centuries more. Economically (Fig.&nbsp;2) it is 75 years past peak relative share,
-    on Britain’s glide path but much shallower — still ~15% of world output with
-    unmatched military reach, alliance networks, and the reserve currency. The most
-    defensible reading: <em>past peak dominance, nowhere near collapse</em>.</li>
-    <li><b>Modern empire is a network, not a territory.</b> America’s real footprint is
-    its alliance system, the dollar, and its technology platforms; none of it shows up
-    in km². If those are the new land, the metric to watch this century is compute,
-    capital, and standards — not borders. A future version of Figure&nbsp;2 may need yet
-    another unit, exactly as Figure&nbsp;2 had to abandon Figure&nbsp;1’s.</li>
-    <li><b>China is reverting, not erupting.</b> Its share of world output is returning
-    to the level it held for most of recorded history. The genuinely new element is not
-    China’s size but the speed of the round trip — a collapse and recovery inside
-    two centuries that Figure&nbsp;2 shows as a V.</li>
-    <li><b>The cycles are compressing.</b> Peak-to-dissolution took Rome ~300 years,
-    Spain ~80, Britain ~40. If the pattern holds, technology doesn’t exempt a hegemon
-    from the cycle; it shortens the back half. That is the strongest argument that
-    America’s remaining time at the top should be measured in decades, not centuries —
-    and the strongest caution against assuming the 21st century ends the way it began.</li>
-    <li><b>Multipolarity is the historical norm.</b> Figure&nbsp;1 shows that a world
-    with several simultaneous great powers (1600: Ottomans, Mughals, Ming→Qing, Spain,
-    Russia) is typical, and brief unipolar moments (Mongols in the 1270s, the U.S. in
-    the 1990s) are the exception. The present drift back to several centres of power is
-    a return to baseline, not a breakdown.</li>
-  </ol>
-</section>
-
-<hr>
-
-<section class="prose" id="sec5">
-  <h2><span class="no">V.</span>Method &amp; honest caveats</h2>
-  <p class="note">Territorial extents are approximations after Rein Taagepera’s surveys
-  (“Size and Duration of Empires,” 1978–1997), interpolated between dated estimates;
-  values are uncertain by ±20% and worse for ancient states. GDP shares are Maddison
-  Project reconstructions (heroic for 1500–1820) spliced with IMF PPP data. “One empire”
-  is itself a judgment call — Rome/Byzantium and Tsarist Russia/USSR/Russia are each shown
-  as continuities, China as four separate dynasties; reasonable people draw these lines
-  differently. Land and GDP both understate nomadic, naval, and network power. Treat every
-  curve as a sketch of magnitude and timing, not a measurement.</p>
-  <p class="note">Charts generated by <a href="make_empire_plots.py">make_empire_plots.py</a>;
-  static versions: <a href="empires_cascade.png">Fig 1</a> ·
-  <a href="modern_power.png">Fig 2</a> · <a href="empire_lifecycles.png">Fig 3</a>
-  (each also as <code>*_dark.png</code>).</p>
-</section>
+<main class="prose">
+  <ul class="essays" id="essayList">
+    <noscript><li style="padding-top:1.6rem">JavaScript is off — browse the posts
+    <a href="https://github.com/angadhn/claudepost">in the repository</a>.</li></noscript>
+  </ul>
+</main>
 
 <footer class="prose">
-  Made with Claude · June 2026 · Sources: R. Taagepera; Maddison Project Database; IMF WEO.
+  New essays land here as they’re written. ·
+  <a href="https://github.com/angadhn/claudepost">Source</a>
 </footer>
 
-<script src="empires_data.js"></script>
+<script src="posts.js"></script>
 <script>
-/* ---------- theme ---------- */
-const root = document.documentElement;
-function applyTheme(dark){
-  root.classList.toggle('dark', dark);
-  document.querySelectorAll('img.themed').forEach(im=>{
-    im.src = dark ? im.dataset.dark : im.dataset.light;
-  });
-  drawCascade();
-  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',
+  {day:'numeric',month:'long',year:'numeric'});
+const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('essayList').insertAdjacentHTML('beforeend',
+  POSTS.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`
+  <li>
+    <span class="date">${fmtDate(p.date)}</span>
+    <h2><a href="${esc(p.slug)}/">${esc(p.title)}</a></h2>
+    <p>${esc(p.blurb)}</p>
+    <span class="meta">by <a href="${esc(p.prompterUrl)}">${esc(p.prompter)}</a>
+      &amp; ${esc(p.model)}${p.meta?' · '+esc(p.meta):''}</span>
+  </li>`).join(''));
+
+const root=document.documentElement;
+function applyTheme(d){
+  root.classList.toggle('dark',d);
+  try{localStorage.setItem('empiresTheme',d?'dark':'light')}catch(e){}
 }
-const urlTheme = new URLSearchParams(location.search).get('theme');
-const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
-const startDark = urlTheme ? urlTheme === 'dark'
-  : saved ? saved === 'dark'
-  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
-document.getElementById('themeBtn').addEventListener('click', ()=>applyTheme(!root.classList.contains('dark')));
-
-/* ---------- interactive cascade ---------- */
-const YMIN=-1150, YMAX=2090, W=1180, AXIS_H=34;
-const ROW=46, UNIT=ROW/8;            // 8 Mkm2 between baselines, same scale as the PNG
-const TOP=26;
-const N=EMPIRES.length;
-const H=TOP + N*ROW + AXIS_H;
-const X = y => (y - YMIN) / (YMAX - YMIN) * W;
-const YEAR = px => YMIN + px / W * (YMAX - YMIN);
-const baseY = i => TOP + (i+1)*ROW - 8;
-const fmtYear = y => y < 0 ? Math.round(-y) + ' BCE' : Math.round(y) + ' CE';
-
-function extentAt(pts, t){
-  if (t < pts[0][0] || t > pts[pts.length-1][0]) return null;
-  for (let j=1; j<pts.length; j++){
-    if (t <= pts[j][0]){
-      const [x0,v0]=pts[j-1], [x1,v1]=pts[j];
-      return x1===x0 ? v1 : v0 + (v1-v0)*(t-x0)/(x1-x0);
-    }
-  }
-  return null;
-}
-
-const cascade = document.getElementById('cascade');
-const tip = document.getElementById('tip');
-const wrap = document.getElementById('cascadeWrap');
-let svg=null, cursorLine=null, cursorText=null, focusIdx=-1;
-
-function colorOf(e){ return root.classList.contains('dark') ? e.colorDark : e.color; }
-
-function drawCascade(){
-  cascade.innerHTML='';
-  const NS='http://www.w3.org/2000/svg';
-  svg=document.createElementNS(NS,'svg');
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-
-  const mk=(tag,attrs,parent)=>{ const el=document.createElementNS(NS,tag);
-    for(const k in attrs) el.setAttribute(k,attrs[k]); (parent||svg).appendChild(el); return el; };
-
-  // time grid + ticks
-  [-500,1,500,1000,1500,2000].forEach(y=>{
-    mk('line',{class:'grid',x1:X(y),x2:X(y),y1:TOP-12,y2:H-AXIS_H+6});
-    const t=mk('text',{class:'tick',x:X(y),y:H-AXIS_H+22,'text-anchor':'middle'});
-    t.textContent = y<0 ? (-y)+' BCE' : (y===1 ? '1 CE' : y);
-  });
-
-  EMPIRES.forEach((e,i)=>{
-    const col=colorOf(e), b=baseY(i);
-    const g=mk('g',{class:'empire','data-i':i});
-    const xs=e.pts.map(p=>X(p[0])), ys=e.pts.map(p=>b-p[1]*UNIT);
-    let d='M'+xs.map((x,j)=>x.toFixed(1)+','+ys[j].toFixed(1)).join('L');
-    // area
-    mk('path',{d:d+`L${xs[xs.length-1].toFixed(1)},${b}L${xs[0].toFixed(1)},${b}Z`,
-      fill:col,'fill-opacity':.14,stroke:'none'},g);
-    // baseline
-    mk('line',{class:'base',x1:xs[0],x2:xs[xs.length-1],y1:b,y2:b},g);
-    // line
-    mk('path',{d,fill:'none',stroke:col,'stroke-width':e.extant?2:1.4,
-      'stroke-linejoin':'round','stroke-linecap':'round'},g);
-    // invisible fat hit path
-    const hit=mk('path',{d,fill:'none',stroke:'#000','stroke-opacity':0,
-      'stroke-width':14,'pointer-events':'stroke'},g);
-    if (e.extant) mk('circle',{cx:xs[xs.length-1],cy:ys[ys.length-1],r:4,fill:col},g);
-    // peak number
-    let pk=0; e.pts.forEach((p,j)=>{ if(p[1]>e.pts[pk][1]) pk=j; });
-    const pt=mk('text',{class:'peak',x:xs[pk],y:ys[pk]-4,'text-anchor':'middle',fill:col},g);
-    pt.textContent=e.pts[pk][1].toFixed(1);
-    // name
-    const nm=mk('text',{class:'rowlabel',x:xs[0]-8,y:b-2,'text-anchor':'end',fill:col},g);
-    nm.textContent=e.name;
-
-    const focus=()=>{ focusIdx=i; svg.classList.add('focused'); g.classList.add('focus'); };
-    const blur =()=>{ focusIdx=-1; svg.classList.remove('focused'); g.classList.remove('focus'); };
-    [hit,nm].forEach(el=>{ el.addEventListener('pointerenter',focus);
-                           el.addEventListener('pointerleave',blur); });
-  });
-
-  cursorLine=mk('line',{class:'cursorline',x1:0,x2:0,y1:TOP-12,y2:H-AXIS_H+6,visibility:'hidden'});
-  cursorText=mk('text',{class:'cursoryear',x:0,y:TOP-16,'text-anchor':'middle',visibility:'hidden'});
-
-  svg.addEventListener('pointermove',onMove);
-  svg.addEventListener('pointerleave',()=>{
-    cursorLine.setAttribute('visibility','hidden');
-    cursorText.setAttribute('visibility','hidden');
-    tip.style.display='none';
-  });
-  cascade.appendChild(svg);
-}
-
-function onMove(ev){
-  const r=svg.getBoundingClientRect();
-  const px=(ev.clientX-r.left)/r.width*W;
-  const yr=Math.round(YEAR(px));
-  if (yr<-700||yr>2026){ tip.style.display='none';
-    cursorLine.setAttribute('visibility','hidden');
-    cursorText.setAttribute('visibility','hidden'); return; }
-  cursorLine.setAttribute('x1',px); cursorLine.setAttribute('x2',px);
-  cursorLine.setAttribute('visibility','visible');
-  cursorText.setAttribute('x',px); cursorText.textContent=fmtYear(yr);
-  cursorText.setAttribute('visibility','visible');
-
-  let html;
-  if (focusIdx>=0){
-    const e=EMPIRES[focusIdx], col=colorOf(e);
-    const pts=e.pts, y0=pts[0][0], y1=pts[pts.length-1][0];
-    let pk=0; pts.forEach((p,j)=>{ if(p[1]>pts[pk][1]) pk=j; });
-    const v=extentAt(pts,yr);
-    html=`<div class="hdr" style="color:${col}">${e.name}</div>`+
-      `<div class="sub">${fmtYear(y0)} – ${e.extant?'today':fmtYear(y1)} · ${y1-y0} years</div>`+
-      `<div class="sub">peak ${pts[pk][1].toFixed(1)} Mkm² in ${fmtYear(pts[pk][0])}</div>`+
-      (v!=null?`<div class="row"><span>in ${fmtYear(yr)}</span><span class="v">${v.toFixed(1)} Mkm²</span></div>`:'');
-  } else {
-    const alive=EMPIRES.map(e=>({e,v:extentAt(e.pts,yr)}))
-      .filter(o=>o.v!=null&&o.v>=0.05).sort((a,b)=>b.v-a.v);
-    html=`<div class="yr">${fmtYear(yr)}</div>`;
-    html+= alive.length
-      ? alive.map(o=>`<div class="row"><span style="color:${colorOf(o.e)}">${o.e.name}</span>`+
-                     `<span class="v">${o.v.toFixed(1)}</span></div>`).join('')
-      : `<div class="sub">no major empire in this set</div>`;
-    if (alive.length) html+=`<div class="sub" style="margin-top:.15rem">million km²</div>`;
-  }
-  tip.innerHTML=html;
-  tip.style.display='block';
-  const wr=wrap.getBoundingClientRect(), tw=tip.offsetWidth;
-  let lx=ev.clientX-wr.left+16;
-  if (lx+tw>wr.width-8) lx=ev.clientX-wr.left-tw-16;
-  tip.style.left=lx+'px';
-  tip.style.top=(ev.clientY-wr.top+12)+'px';
-}
-
-applyTheme(startDark);
+const urlTheme=new URLSearchParams(location.search).get('theme');
+const saved=(()=>{try{return localStorage.getItem('empiresTheme')}catch(e){return null}})();
+applyTheme(urlTheme?urlTheme==='dark':saved?saved==='dark'
+  :window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+document.getElementById('themeBtn').addEventListener('click',
+  ()=>applyTheme(!root.classList.contains('dark')));
 </script>
 </body>
 </html>

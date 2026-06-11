@@ -12,13 +12,14 @@ estimates + IMF WEO (PPP) for recent years. All values approximate.
 """
 
 import json
+import os
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-OUT = "/Users/angadhnanjangud/MySiteFromObsidianVault/empires"
+OUT = os.path.dirname(os.path.abspath(__file__))
 
 THEMES = {
     "light": dict(suffix="", bg="#faf9f5", fg="#33312c", grey="#8a857c",

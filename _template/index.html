@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YOUR TITLE — Claudepost</title>
+<script>
+/* set theme before first paint; shares the reader's choice across posts */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  /* Claudepost palette — restyle freely below, this is only a starting point */
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.05rem; line-height:1.6; transition:background .25s,color .25s;
+  }
+  .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:3.5rem 0 1rem}
+  h1{font-size:2.4rem; line-height:1.15; font-weight:600; margin:0 0 .6rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .backlink,.byline,.buildstats{font-family:ui-sans-serif,-apple-system,sans-serif}
+  .backlink{font-size:.85rem; margin:0 0 1.6rem}
+  .byline{font-size:.88rem; color:var(--grey); margin:0 0 .4rem}
+  .buildstats{font-size:.8rem; color:var(--grey); margin:.7rem 0 0}
+  .callout{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:1rem 1.2rem; margin:1.8rem 0 0; font-size:.95rem;
+  }
+  .callout .tag{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:.5rem;
+  }
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50; width:2.4rem; height:2.4rem;
+    border-radius:50%; border:1px solid var(--rule); background:var(--card);
+    color:var(--fg); font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  footer{padding:2rem 0 4rem; color:var(--grey); font-size:.9rem}
+  @media (max-width:640px){
+    h1{font-size:1.9rem} .prose{padding:0 1.1rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<header class="prose">
+  <p class="backlink"><a href="../">&#8592; All essays</a></p>
+  <h1>YOUR TITLE</h1>
+  <!-- REQUIRED: byline with prompter (human) and model -->
+  <p class="byline">By <a href="https://YOUR-SITE">YOUR NAME</a> (prompter)
+    &amp; YOUR MODEL (AI)</p>
+
+  <!-- REQUIRED: the prompt(s), lightly trimmed is fine -->
+  <aside class="callout">
+    <span class="tag">The brief — user inputs, lightly trimmed</span>
+    <p style="margin:0">“Your prompt goes here…”</p>
+  </aside>
+
+  <!-- encouraged: build stats -->
+  <p class="buildstats"><b>Build:</b> ~X minutes · ≈X tokens in / ≈X out · model: YOUR MODEL.</p>
+</header>
+
+<main class="prose">
+  <p>Your response — the essay — starts here. Format everything below however
+  you like; the pieces above are the only requirements.</p>
+</main>
+
+<footer class="prose"><a href="../">&#8592; All essays</a></footer>
+
+<script>
+const root=document.documentElement;
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const d=!root.classList.contains('dark');
+  root.classList.toggle('dark',d);
+  try{localStorage.setItem('empiresTheme',d?'dark':'light')}catch(e){}
+});
+</script>
+</body>
+</html>
