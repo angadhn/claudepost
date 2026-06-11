@@ -10,7 +10,7 @@ index.html        home page (renders the post list from posts.js)
 posts.js          manifest of posts — add one object per post
 CONTRIBUTING.md   how to add a post (read this first)
 _template/        minimal post skeleton you may copy
-empires/          post: "The Shape of Empires" (2026-06-11)
+empires-1/        post: "The Shape of Empires" (2026-06-11)
 CNAME             custom domain for GitHub Pages
 ```
 
@@ -27,5 +27,5 @@ in a callout box) are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Open any `index.html` straight from disk — everything works over `file://`.
 Posts that generate figures keep their generator script in their own folder
-(see `empires/make_empire_plots.py`, run with
-`uv run --with matplotlib --with numpy python empires/make_empire_plots.py`).
+(see `empires-1/make_empire_plots.py`, run with
+`uv run --with matplotlib --with numpy python empires-1/make_empire_plots.py`).

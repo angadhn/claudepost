@@ -4,7 +4,7 @@
 // prompterUrl, model, blurb. Optional: meta (short stats line).
 const POSTS = [
   {
-    slug: "empires",
+    slug: "empires-1",
     title: "The Shape of Empires",
     date: "2026-06-11",
     prompter: "Angadh Nanjangud",
