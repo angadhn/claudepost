@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appendix — the math, just in time · Claudepost</title>
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.02rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:5rem 0 .5rem}
+  h1{font-size:2.2rem; line-height:1.15; font-weight:600; margin:0 0 .6rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.08rem; margin:0 0 1rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.6rem}
+  h2{font-size:1.3rem; font-weight:600; margin:3rem 0 .4rem; letter-spacing:-.01em}
+  h2 .ch{color:var(--accent); font-style:italic; font-weight:400; margin-right:.4rem}
+  h2 + .chnote{font-size:.88rem; color:var(--grey);
+    font-family:ui-sans-serif,-apple-system,sans-serif; margin:0 0 .6rem}
+  p{margin:0 0 1rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  footer{padding:2.5rem 0 4rem; color:var(--grey); font-size:.9rem}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  /* footnote-style worked examples */
+  .ex{
+    border-top:1px solid var(--rule); padding:1.15rem .6rem 1.05rem;
+    font-size:.96rem; scroll-margin-top:4rem; border-radius:6px;
+  }
+  .ex:target{background:var(--card)}
+  .ex .no{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
+    font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:.4rem;
+  }
+  .ex p{margin:0 0 .7rem}
+  .ex p:last-of-type{margin-bottom:.4rem}
+  .ex .back{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+  }
+  .ex math{font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif}
+  .ex .work{
+    background:var(--card); border:1px solid var(--rule); border-radius:6px;
+    padding:.6rem .9rem; margin:.6rem 0 .8rem;
+    font-size:.93rem; overflow-x:auto;
+  }
+  @media (max-width:640px){
+    header{padding-top:3.4rem}
+    h1{font-size:1.7rem}
+    .prose{padding:0 1.1rem}
+    #themeBtn{top:.7rem; right:.7rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<header class="prose">
+  <p class="backlink"><a href="../index.html">&#8592; All essays</a></p>
+  <h1>Appendix — the math, just in time</h1>
+  <p class="subtitle">One short worked example per concept, chapter by chapter.
+  Each ends with a return link to the exact sentence you left.</p>
+</header>
+
+<main class="prose">
+
+  <h2 id="ch1"><span class="ch">Chapter 1</span>The Shape of Empires</h2>
+  <p class="chnote"><a href="../empires-1/" data-dir>Read the chapter</a></p>
+
+  <section class="ex" id="ex-1-1">
+    <span class="no">Ex 1.1 · Linear interpolation</span>
+    <p>The charts only have data at dated waypoints; between them they draw a straight
+    line, which means: assume the quantity changed at a constant rate. Rome’s extent has
+    waypoints (60&nbsp;BCE, 1.95&nbsp;Mkm²) and (30&nbsp;BCE, 2.75&nbsp;Mkm²). What was
+    Rome in 45&nbsp;BCE — halfway through that interval?</p>
+    <div class="work">
+      A(−45) = 1.95 + (2.75 − 1.95) · (15&#8202;/&#8202;30) = 1.95 + 0.80 · ½ =
+      <b>2.35&nbsp;Mkm²</b>
+    </div>
+    <p>The fraction (15/30) is just “how far through the interval are we?” — halfway, so
+    take half of the rise. That is the whole of eq.&nbsp;<a href="../empires-1/#eq-1-2" data-dir>(1.2)</a>.
+    Go <a href="https://en.wikipedia.org/wiki/Linear_interpolation">here for more</a>.</p>
+    <p class="back"><a href="../empires-1/#ref-ex-1-1" data-dir>&#8617; back to chapter 1</a></p>
+  </section>
+
+  <section class="ex" id="ex-1-2">
+    <span class="no">Ex 1.2 · Purchasing-power parity (PPP)</span>
+    <p>Comparing economies at market exchange rates undercounts places where things are
+    cheap. A haircut in Chicago costs $30; the same haircut in Chennai costs about $4 at
+    market rates — yet it is the same haircut, the same “output.” PPP fixes this by
+    repricing every country’s goods at one common set of prices before comparing.</p>
+    <div class="work">
+      Market rates: India’s haircut counts as $4 of output.<br>
+      PPP: both haircuts count the same → India’s real output share rises.
+    </div>
+    <p>That is why China’s output share “re-passed” America’s around 2014 in PPP terms
+    while remaining behind at market rates — both statements are true; they answer
+    different questions (PPP: how much stuff; market: how much purchasing power abroad).
+    These essays use PPP because empires’ power rested on the stuff. Go
+    <a href="https://ourworldindata.org/what-are-ppps">here for more</a>.</p>
+    <p class="back"><a href="../empires-1/#ref-ex-1-2" data-dir>&#8617; back to chapter 1</a></p>
+  </section>
+
+  <section class="ex" id="ex-1-3">
+    <span class="no">Ex 1.3 · Normalising to a peak (percent of own maximum)</span>
+    <p>To compare the <i>shapes</i> of two curves of very different sizes, divide each by
+    its own maximum so both peak at exactly 100%. The British Empire peaked at
+    35.5&nbsp;Mkm² in 1920; in 1945 it held 33.0&nbsp;Mkm²:</p>
+    <div class="work">
+      â(1945) = 100 · 33.0&#8202;/&#8202;35.5 = <b>93% of peak</b>
+    </div>
+    <p>After this rescaling Britain’s curve and the Mongols’ can sit on one chart and
+    differ only in shape and tempo — which is what Figure&nbsp;3 of chapter 1 compares.
+    The cost: all absolute size information is deliberately thrown away. Go
+    <a href="https://en.wikipedia.org/wiki/Normalization_(statistics)">here for more</a>.</p>
+    <p class="back"><a href="../empires-1/#ref-ex-1-3" data-dir>&#8617; back to chapter 1</a></p>
+  </section>
+
+  <h2 id="ch2"><span class="ch">Chapter 2</span>A Common Currency for Power</h2>
+  <p class="chnote"><a href="../empires-2/" data-dir>Read the chapter</a></p>
+
+  <section class="ex" id="ex-2-1">
+    <span class="no">Ex 2.1 · Geometric vs arithmetic mean</span>
+    <p>The arithmetic mean adds and divides; the geometric mean multiplies and takes a
+    root. The difference matters when the inputs are unbalanced. Take the United States
+    in 2026 — shares of 4.1 (people), 14.7 (output), 37 (force), 33 (network):</p>
+    <div class="work">
+      arithmetic: (4.1 + 14.7 + 37 + 33)&#8202;/&#8202;4 = <b>22.2</b><br>
+      geometric: (4.1 · 14.7 · 37 · 33)<sup>1/4</sup> = (73&#8202;590)<sup>1/4</sup> ≈ <b>16.5</b>
+    </div>
+    <p>The product drags the answer toward the weakest input: because each factor
+    multiplies the rest, one small number scales the whole thing down, and no large
+    number can buy it back. That is the “punishes lopsidedness” property the essay
+    relies on — and 16.5% is exactly the U.S. value the interactive shows on equal
+    weights. Go <a href="https://en.wikipedia.org/wiki/Geometric_mean">here for more</a>.</p>
+    <p class="back"><a href="../empires-2/#ref-ex-2-1" data-dir>&#8617; back to chapter 2</a></p>
+  </section>
+
+  <section class="ex" id="ex-2-2">
+    <span class="no">Ex 2.2 · Weights as exponents</span>
+    <p>In eq.&nbsp;<a href="../empires-2/#eq-2-3" data-dir>(2.3)</a> the weights sit in
+    the exponents: a lens with weight 0.5 counts as much as two lenses with weight 0.25,
+    and a lens with weight 0 drops out entirely (anything<sup>0</sup>&nbsp;=&nbsp;1).
+    The “soft-power-leaning mix” preset uses weights (0.1, 0.2, 0.2, 0.5). For the same
+    U.S. shares as Ex&nbsp;2.1:</p>
+    <div class="work">
+      P = 4.1<sup>0.1</sup> · 14.7<sup>0.2</sup> · 37<sup>0.2</sup> · 33<sup>0.5</sup>
+      ≈ 1.15 · 1.71 · 2.06 · 5.74 ≈ <b>23.3</b>
+    </div>
+    <p>Compare 16.5 on equal weights: weighting the network lens up, where America is
+    strong, raises its index by seven points. Same data, different theory of power —
+    which is why the sliders exist. Go
+    <a href="https://en.wikipedia.org/wiki/Weighted_geometric_mean">here for more</a>.</p>
+    <p class="back"><a href="../empires-2/#ref-ex-2-2" data-dir>&#8617; back to chapter 2</a></p>
+  </section>
+
+  <section class="ex" id="ex-2-3">
+    <span class="no">Ex 2.3 · The disagreement band (min–max range)</span>
+    <p>Eq.&nbsp;<a href="../empires-2/#eq-2-5" data-dir>(2.5)</a> shades, for each
+    empire at each moment, the interval from its harshest lens to its friendliest:</p>
+    <div class="work">
+      Rome, 165&nbsp;CE: shares (28, 28, 25, 31) → band [<b>25, 31</b>] — six points wide.<br>
+      U.S., 2026: shares (4.1, 14.7, 37, 33) → band [<b>4.1, 37</b>] — thirty-three points wide.
+    </div>
+    <p>A narrow band means every theory of power agrees; a wide one means the verdict is
+    contested by construction. The idea is borrowed from ensemble weather forecasting,
+    where the spread between models <i>is</i> the uncertainty estimate. Go
+    <a href="https://en.wikipedia.org/wiki/Ensemble_forecasting">here for more</a>.</p>
+    <p class="back"><a href="../empires-2/#ref-ex-2-3" data-dir>&#8617; back to chapter 2</a></p>
+  </section>
+
+</main>
+
+<footer class="prose">
+  <a href="../index.html">&#8592; All essays</a> · Made with Claude · June 2026
+</footer>
+
+<script>
+const root=document.documentElement;
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const d=!root.classList.contains('dark');
+  root.classList.toggle('dark',d);
+  try{localStorage.setItem('empiresTheme',d?'dark':'light')}catch(e){}
+});
+/* file:// can't resolve directory URLs — point them at index.html locally,
+   preserving any #fragment */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>

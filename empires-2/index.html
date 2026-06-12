@@ -97,11 +97,26 @@
   .buildstats b{color:var(--fg); font-weight:600}
 
   /* display math (native MathML — no JS, no external fonts) */
-  .eq{margin:1.4rem auto 1.2rem; text-align:center; overflow-x:auto}
+  .eq{
+    margin:1.4rem auto 1.2rem; text-align:center; overflow:visible;
+    position:relative; padding:.3rem 3.2rem; scroll-margin-top:4rem;
+    border-radius:6px;
+  }
   .eq math{
     font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
     font-size:1.06em;
   }
+  .eq .eqno{
+    position:absolute; right:.4rem; top:50%; transform:translateY(-50%);
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.75rem;
+    color:var(--grey); text-decoration:none;
+  }
+  .eq .eqno:hover{color:var(--accent); text-decoration:none}
+  .eq:target{background:var(--card)}
+  @media (max-width:640px){ .eq{padding:.3rem 2.3rem} .eq math{font-size:.92em} }
+  /* just-in-time worked-example footnote markers → /appendix */
+  sup.fn{font-size:.68em; line-height:0}
+  sup.fn a{padding:0 .12em}
 
   /* left-margin table of contents, only when there's room */
   #toc{display:none}
@@ -259,8 +274,9 @@
     <dd>Share of world population under direct rule. The agrarian logic: people were
     taxes, grain, and levies.</dd>
     <dt>y — output</dt>
-    <dd>Share of world gross product, at purchasing-power parity. The industrial
-    logic.</dd>
+    <dd>Share of world gross product, at purchasing-power parity — the same share
+    defined in eq.&nbsp;<a href="../empires-1/#eq-1-3" data-dir>(1.3)</a> of post one.
+    The industrial logic.</dd>
     <dt>m — force</dt>
     <dd>Share of world military capacity: manpower for most of history, blending toward
     share of world military spending in the 20th century (your “normlaisation between
@@ -272,7 +288,7 @@
   </dl>
   <p>Formally, for empire <i>e</i> and lens
   <math><mi>k</mi><mo>∈</mo><mo stretchy="false">{</mo><mi>p</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>m</mi><mo>,</mo><mi>n</mi><mo stretchy="false">}</mo></math>:</p>
-  <div class="eq"><math display="block"><mrow>
+  <div class="eq" id="eq-2-1"><a class="eqno" href="#eq-2-1">(2.1)</a><math display="block"><mrow>
     <msubsup><mi>s</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
     <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
     <mo>=</mo>
@@ -285,10 +301,21 @@
     </mfrac>
     <mtext>&#8201;%</mtext>
   </mrow></math></div>
+  <p>How to read the indices, since this symbol carries three of them:
+  the subscript <i>e</i> names <em>whose</em> share (the empire), the superscript
+  (<i>k</i>) in parentheses names <em>which lens</em> — it is a label, not a power —
+  and <i>t</i> is the calendar year. So
+  <math><msubsup><mi>s</mi><mtext>US</mtext><mrow><mo stretchy="false">(</mo><mi>m</mi><mo stretchy="false">)</mo></mrow></msubsup><mo stretchy="false">(</mo><mn>2026</mn><mo stretchy="false">)</mo><mo>≈</mo><mn>37</mn><mtext>%</mtext></math>
+  reads “America’s share of world military capacity in 2026.”
+  <math><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></math>
+  is the lens’s raw quantity — people, output, soldiers-or-spending, sphere
+  population — and dividing by the world total is what turns it into a share. When a
+  superscript <em>is</em> a true exponent, it will sit bare, without parentheses, like
+  the weights in <a href="#eq-2-3">(2.3)</a> below.</p>
   <p>One closure assumption stitches the epochs together. Before roughly 1500, per-capita
   output everywhere sat near subsistence, so an empire’s share of output was its share
   of mouths:</p>
-  <div class="eq"><math display="block"><mrow>
+  <div class="eq" id="eq-2-2"><a class="eqno" href="#eq-2-2">(2.2)</a><math display="block"><mrow>
     <msub><mi>y</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
     <mo>≈</mo>
     <msub><mi>p</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
@@ -342,8 +369,10 @@
   <h2 class="prose" style="padding:0"><span class="no">III.</span>The ensemble — and its error bars</h2>
   <div class="prose" style="padding:0">
     <p>To consolidate the lenses, combine them multiplicatively. With weights
-    <math><msub><mi>w</mi><mi>k</mi></msub></math> summing to one,</p>
-    <div class="eq"><math display="block"><mrow>
+    <math><msub><mi>w</mi><mi>k</mi></msub></math> summing to
+    one<sup class="fn"><a id="ref-ex-2-2" href="../appendix/#ex-2-2" data-dir
+    title="Worked example in the appendix">2</a></sup>,</p>
+    <div class="eq" id="eq-2-3"><a class="eqno" href="#eq-2-3">(2.3)</a><math display="block"><mrow>
       <msub><mi>P</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
       <munder><mo>∏</mo><mi>k</mi></munder>
@@ -355,8 +384,10 @@
       <mo>,</mo><mspace width="1.4em"></mspace>
       <munder><mo>∑</mo><mi>k</mi></munder><msub><mi>w</mi><mi>k</mi></msub><mo>=</mo><mn>1</mn>
     </mrow></math></div>
-    <p>and with equal weights this is the geometric mean,</p>
-    <div class="eq"><math display="block"><mrow>
+    <p>and with equal weights this is the geometric
+    mean<sup class="fn"><a id="ref-ex-2-1" href="../appendix/#ex-2-1" data-dir
+    title="Worked example in the appendix">1</a></sup>,</p>
+    <div class="eq" id="eq-2-4"><a class="eqno" href="#eq-2-4">(2.4)</a><math display="block"><mrow>
       <msub><mi>P</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
       <msup>
@@ -374,8 +405,10 @@
     be gamed by one freakish lens (an arithmetic mean would let the Mongols’ 40% of
     soldiers paper over their 2% of looms), and it rewards <em>balanced</em> power, which
     is what made empires durable. Alongside the line we plot the honest part: the span
-    between each empire’s friendliest and harshest lens,</p>
-    <div class="eq"><math display="block"><mrow>
+    between each empire’s friendliest and harshest
+    lens<sup class="fn"><a id="ref-ex-2-3" href="../appendix/#ex-2-3" data-dir
+    title="Worked example in the appendix">3</a></sup>,</p>
+    <div class="eq" id="eq-2-5"><a class="eqno" href="#eq-2-5">(2.5)</a><math display="block"><mrow>
       <msub><mi>B</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
       <mrow><mo stretchy="true">[</mo>
@@ -527,7 +560,8 @@
 <section class="prose" id="sec7">
   <h2><span class="no">VII.</span>Method &amp; honest caveats</h2>
   <p class="note">Every series is hand-tabulated waypoints, linearly interpolated exactly
-  as in <a href="../empires-1/" data-dir>post one</a>, and floored at 0.05% before the
+  as in eq.&nbsp;<a href="../empires-1/#eq-1-2" data-dir>(1.2)</a> of
+  <a href="../empires-1/" data-dir>post one</a>, and floored at 0.05% before the
   geometric mean so a single sparse lens cannot zero an empire out. Data quality is
   tiered: population shares are the firmest (McEvedy &amp; Jones; Maddison), output
   shares are heroic before 1820 (Maddison Project, PPP; IMF after 1980), military
@@ -554,6 +588,7 @@
 <footer class="prose">
   <a href="../index.html">&#8592; All essays</a> ·
   <a href="../empires-1/" data-dir>Part 1: The Shape of Empires</a> ·
+  <a href="../appendix/#ch2" data-dir>Appendix: the math, just in time</a> ·
   Made with Claude · June 2026 ·
   Sources: McEvedy &amp; Jones; Maddison Project; P. Kennedy; Correlates of War; SIPRI; IMF WEO.
 </footer>
@@ -741,9 +776,11 @@ function spyToc(){
 addEventListener('scroll', spyToc, {passive: true});
 spyToc();
 
-/* file:// can't resolve directory URLs — point them at index.html locally */
+/* file:// can't resolve directory URLs — point them at index.html locally,
+   preserving any #fragment (e.g. cross-post equation links) */
 if (location.protocol === 'file:')
-  document.querySelectorAll('a[data-dir]').forEach(a => a.href += 'index.html');
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
 </script>
 </body>
 </html>

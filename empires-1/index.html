@@ -132,11 +132,26 @@
   .callout .src{font-size:.78rem; color:var(--faint); margin-top:.6rem}
 
   /* display math (native MathML — no JS, no external fonts) */
-  .eq{margin:1.4rem auto 1.2rem; text-align:center; overflow-x:auto}
+  .eq{
+    margin:1.4rem auto 1.2rem; text-align:center; overflow:visible;
+    position:relative; padding:.3rem 3.2rem; scroll-margin-top:4rem;
+    border-radius:6px;
+  }
   .eq math{
     font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
     font-size:1.06em;
   }
+  .eq .eqno{
+    position:absolute; right:.4rem; top:50%; transform:translateY(-50%);
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.75rem;
+    color:var(--grey); text-decoration:none;
+  }
+  .eq .eqno:hover{color:var(--accent); text-decoration:none}
+  .eq:target{background:var(--card)}
+  @media (max-width:640px){ .eq{padding:.3rem 2.3rem} .eq math{font-size:.92em} }
+  /* just-in-time worked-example footnote markers → /appendix */
+  sup.fn{font-size:.68em; line-height:0}
+  sup.fn a{padding:0 .12em}
   .buildstats{
     font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
     color:var(--grey); margin:.7rem 0 0; line-height:1.6;
@@ -293,7 +308,7 @@
     the key at the lower left.</p>
     <p>To be precise about what is plotted — because this figure involves <em>no model,
     only bookkeeping</em> — the curve drawn for the <i>i</i>-th row is</p>
-    <div class="eq"><math display="block"><mrow>
+    <div class="eq" id="eq-1-1"><a class="eqno" href="#eq-1-1">(1.1)</a><math display="block"><mrow>
       <msub><mi>h</mi><mi>i</mi></msub>
       <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
@@ -312,10 +327,16 @@
     <p>where <math><msub><mi>A</mi><mi>i</mi></msub></math> is the empire’s territorial
     extent and <math><msub><mi>b</mi><mi>i</mi></msub></math> is a constant shelf that
     spaces row <i>i</i> above its neighbours — pure separation, carrying no quantity.
-    The extent itself is a straight-line interpolation between dated atlas estimates
+    (How to read the indices: <i>i</i> = 1…<i>n</i> counts the <i>n</i> = 29 rows from
+    the top of the chart, so each quantity subscripted <i>i</i> belongs to one empire;
+    Δ is the fixed gap between baselines; <i>t</i> is always the calendar year.)
+    The extent itself is a straight-line
+    interpolation<sup class="fn"><a id="ref-ex-1-1" href="../appendix/#ex-1-1" data-dir
+    title="Worked example in the appendix">1</a></sup> between dated atlas estimates
     <math><mo stretchy="false">(</mo><msub><mi>t</mi><mi>j</mi></msub><mo>,</mo>
-    <msub><mi>A</mi><mi>j</mi></msub><mo stretchy="false">)</mo></math>:</p>
-    <div class="eq"><math display="block"><mrow>
+    <msub><mi>A</mi><mi>j</mi></msub><mo stretchy="false">)</mo></math>, where
+    <i>j</i> counts an empire’s waypoints in time order:</p>
+    <div class="eq" id="eq-1-2"><a class="eqno" href="#eq-1-2">(1.2)</a><math display="block"><mrow>
       <msub><mi>A</mi><mi>i</mi></msub>
       <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
@@ -388,7 +409,7 @@
     land, on one scale, for everyone — apples to apples within the figure. This figure
     abandons that unit entirely rather than blend two incommensurable ones. What it
     plots is a share,</p>
-    <div class="eq"><math display="block"><mrow>
+    <div class="eq" id="eq-1-3"><a class="eqno" href="#eq-1-3">(1.3)</a><math display="block"><mrow>
       <msub><mi>s</mi><mi>e</mi></msub>
       <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
       <mo>=</mo>
@@ -403,7 +424,9 @@
       <mtext>&#8201;%</mtext>
     </mrow></math></div>
     <p>where <math><msub><mi>Y</mi><mi>e</mi></msub></math> is economy <i>e</i>’s gross
-    product at purchasing-power parity. The values are Maddison Project reconstructions
+    product at purchasing-power parity<sup class="fn"><a id="ref-ex-1-2"
+    href="../appendix/#ex-1-2" data-dir title="Worked example in the appendix">2</a></sup>.
+    The values are Maddison Project reconstructions
     (IMF for recent decades) joined by straight lines between benchmark years — again
     data plotted directly, with no model in between. Because it is a share, the curves
     answer “compared to what?” by construction: everything sums across the whole world
@@ -435,10 +458,11 @@
   <div class="prose" style="padding:0">
     <p>To compare the <em>shapes</em> of imperial lives — your “parallelness” question —
     strip away both calendars and sizes: start every empire at year zero and scale each
-    to its own peak. This is the only figure that transforms the data, and the whole
+    to its own peak<sup class="fn"><a id="ref-ex-1-3" href="../appendix/#ex-1-3" data-dir
+    title="Worked example in the appendix">3</a></sup>. This is the only figure that transforms the data, and the whole
     transformation is two rescalings of Figure&nbsp;1’s
     <math><msub><mi>A</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math>:</p>
-    <div class="eq"><math display="block"><mrow>
+    <div class="eq" id="eq-1-4"><a class="eqno" href="#eq-1-4">(1.4)</a><math display="block"><mrow>
       <mi>τ</mi><mo>=</mo><mi>t</mi><mo>−</mo><msub><mi>t</mi><mn>0</mn></msub>
       <mo>,</mo><mspace width="1.6em"></mspace>
       <msub><mover><mi>a</mi><mo>^</mo></mover><mi>e</mi></msub>
@@ -543,7 +567,9 @@
 </section>
 
 <footer class="prose">
-  <a href="../index.html">&#8592; All essays</a> · Made with Claude · June 2026 · Sources: R. Taagepera; Maddison Project Database; IMF WEO.
+  <a href="../index.html">&#8592; All essays</a> ·
+  <a href="../appendix/#ch1" data-dir>Appendix: the math, just in time</a> ·
+  Made with Claude · June 2026 · Sources: R. Taagepera; Maddison Project Database; IMF WEO.
 </footer>
 
 <script src="empires_data.js"></script>
@@ -711,9 +737,11 @@ function spyToc(){
 addEventListener('scroll', spyToc, {passive: true});
 spyToc();
 
-/* file:// can't resolve directory URLs — point them at index.html locally */
+/* file:// can't resolve directory URLs — point them at index.html locally,
+   preserving any #fragment (e.g. cross-post equation links) */
 if (location.protocol === 'file:')
-  document.querySelectorAll('a[data-dir]').forEach(a => a.href += 'index.html');
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
 </script>
 </body>
 </html>

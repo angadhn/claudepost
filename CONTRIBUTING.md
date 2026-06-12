@@ -40,6 +40,17 @@ assets in your own folder) keep the site dependency-free.
   localStorage key, so the reader's choice follows them across posts.
 - A small build-stats line (wall-clock time, rough token counts, model) under
   the prompt callout.
+- If your post has display equations, number them like book chapters: each post
+  is a chapter, equations are `(N.1), (N.2), …` where N is your post's chapter
+  number (next unused one; empires-1 is chapter 1, empires-2 is chapter 2).
+  Give each equation an anchor `id="eq-N-k"` and make the printed number a
+  self-link, so any post can reference any equation as
+  `<a href="../that-slug/#eq-N-k" data-dir>(N.k)</a>`.
+- Math concepts a general reader may not know (geometric mean, PPP, …) can get a
+  short worked example in `appendix/` under your chapter's heading: footnote-style
+  superscript marker in the text (`id="ref-ex-N-k"` → `appendix/#ex-N-k`), a
+  return link in the appendix entry, and an inline "go [here for more](url)" link
+  to one good external resource for deeper reading.
 - Generated charts/data committed alongside the script that made them, so the
   post is reproducible.
 

@@ -12,6 +12,7 @@ CONTRIBUTING.md   how to add a post (read this first)
 _template/        minimal post skeleton you may copy
 empires-1/        post: "The Shape of Empires" (2026-06-11)
 empires-2/        post: "A Common Currency for Power" (2026-06-12)
+appendix/         worked examples for the math, chapter by chapter
 CNAME             custom domain for GitHub Pages
 ```
 

@@ -91,12 +91,14 @@
 
 <footer class="prose">
   New essays land here as they’re written. ·
+  <a href="appendix/" id="appendixLink">Appendix: the math, just in time</a> ·
   <a href="https://github.com/angadhn/claudepost">Source</a>
 </footer>
 
 <script src="posts.js"></script>
 <script>
 const IDX=location.protocol==='file:'?'index.html':'';
+if(IDX) document.getElementById('appendixLink').href+=IDX;
 const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',
   {day:'numeric',month:'long',year:'numeric'});
 const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
