@@ -39,6 +39,22 @@ def lighten(hex_color, t):
 # ---------------------------------------------------------------- data
 # (name, still-extant, family colour, [(year, extent Mkm^2)...])
 EMPIRES = [
+    ("Neo-Assyrian Empire", False, "#7d6e54", [(-911,0.4),(-850,0.8),(-740,1.0),
+        (-700,1.3),(-670,1.4),(-640,1.3),(-620,0.8),(-609,0)]),
+    ("Fatimid Caliphate", False, "#3e7d78", [(909,0.4),(940,1.0),(969,2.5),(1000,4.1),
+        (1050,3.0),(1100,1.5),(1150,0.6),(1171,0)]),
+    ("Seljuk Empire", False, "#7b5e75", [(1037,0.8),(1055,2.0),(1080,3.9),(1100,3.5),
+        (1141,2.0),(1160,1.2),(1194,0)]),
+    ("Delhi Sultanate", False, "#b3873e", [(1206,0.5),(1236,1.0),(1290,1.5),(1312,2.7),
+        (1335,3.2),(1351,2.0),(1398,1.0),(1450,0.8),(1500,0.6),(1526,0)]),
+    ("Timurid Empire", False, "#6e5340", [(1370,0.5),(1385,1.5),(1395,3.5),(1405,4.4),
+        (1420,4.0),(1450,3.0),(1469,1.5),(1500,0.8),(1507,0)]),
+    ("Safavid Persia", False, "#5e7d4f", [(1501,0.8),(1510,2.0),(1550,2.5),(1590,2.0),
+        (1629,2.9),(1660,2.7),(1700,2.5),(1722,1.5),(1736,0)]),
+    ("Empire of Japan", False, "#3f7f96", [(1868,0.38),(1895,0.41),(1905,0.45),(1910,0.67),
+        (1932,1.6),(1938,2.8),(1942,7.4),(1945,0)]),
+    ("Germany (Reich)", False, "#5c5c5c", [(1871,0.54),(1884,1.0),(1900,3.0),(1914,3.5),
+        (1919,0.47),(1939,0.7),(1941,3.3),(1942,3.6),(1944,2.5),(1945,0)]),
     ("Achaemenid Persia", False, "#5e7d4f", [(-550,0.5),(-539,2.0),(-525,3.5),(-500,5.5),(-480,5.5),
         (-450,5.0),(-400,4.6),(-350,4.5),(-334,4.0),(-330,0)]),
     ("Maurya (India)", False, "#b3873e", [(-322,0.5),(-300,3.5),(-260,5.0),(-230,4.0),(-200,1.5),(-185,0)]),
@@ -86,6 +102,8 @@ EMPIRES = [
     ("China (PRC)", True, "#9c453a", [(1949,9.3),(1951,9.6),(2026,9.6)]),
 ]
 
+EMPIRES.sort(key=lambda e: e[3][0][0])
+
 def year_fmt(y, _pos=None):
     if y < 0:
         return f"{int(-y)} BCE"
@@ -97,7 +115,7 @@ def year_fmt(y, _pos=None):
 def fig_cascade(th):
     spacing = 8.0  # million km^2 between baselines -> shared scale across rows
     n = len(EMPIRES)
-    fig, ax = plt.subplots(figsize=(13.5, 21))
+    fig, ax = plt.subplots(figsize=(13.5, 28))
     fig.patch.set_facecolor(th["bg"])
     ax.set_facecolor(th["bg"])
 
@@ -145,7 +163,7 @@ def fig_cascade(th):
     for s in ax.spines.values():
         s.set_visible(False)
 
-    ax.set_title("The cascade of empires, 550 BCE – today",
+    ax.set_title("The cascade of empires, 911 BCE – today",
                  fontsize=17, loc="left", pad=18, fontweight="bold", color=th["fg"])
     ax.text(0, 1.005, "Curve height = land ruled, million km² (see key, lower left) — "
             "one shared scale, so heights are comparable across all rows. A row's "
