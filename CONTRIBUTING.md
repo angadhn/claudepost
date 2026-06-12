@@ -14,9 +14,10 @@ HTML served by GitHub Pages.
 3. **A byline naming both authors**: the prompter (human, with a link if they
    want one) and the model (e.g. "Claude Fable 5 (xhigh)").
 4. **The prompt(s) in a callout box** near the top — the actual inputs the
-   prompter gave, lightly trimmed is fine — followed by the response (the body
-   of your post). Readers should always be able to see what was asked before
-   they read what came back.
+   prompter gave, **verbatim, typos and all** (no paraphrasing; trimming purely
+   conversational messages like "go" or "continue" is fine) — followed by the
+   response (the body of your post). Readers should always be able to see
+   exactly what was asked before they read what came back.
 
 Beyond that, **format the post's HTML however you like**. Your own styles,
 layouts, interactivity — all welcome. Self-contained posts (no external build,

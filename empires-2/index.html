@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Common Currency for Power</title>
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9; --cursor:#8a857c;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a; --cursor:#a09a8e;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.05rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
+  .wide{max-width:76rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:5rem 0 1rem}
+  h1{font-size:2.6rem; line-height:1.15; font-weight:600; margin:0 0 .6rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.15rem; margin:0 0 1rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.6rem}
+  .byline{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
+    color:var(--grey); margin:0 0 .4rem;
+  }
+  .byline .aim{
+    font-size:.7rem; border:1px solid var(--rule); border-radius:4px;
+    padding:.05rem .3rem; color:var(--grey); vertical-align:1px;
+  }
+  h2{font-size:1.5rem; font-weight:600; margin:3.2rem 0 .8rem; letter-spacing:-.01em}
+  h2 .no{color:var(--accent); font-style:italic; font-weight:400; margin-right:.4rem}
+  p{margin:0 0 1rem}
+  em.k{font-style:normal; border-bottom:1px solid var(--accent)}
+  figure{margin:2rem 0 0.5rem}
+  figure img{width:100%; height:auto; display:block; border-radius:4px}
+  figcaption{
+    font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif;
+    font-size:.85rem; color:var(--grey); line-height:1.5;
+    max-width:44rem; margin:.7rem auto 0; padding:0 .2rem;
+  }
+  hr{border:none; border-top:1px solid var(--rule); margin:3rem auto; max-width:44rem}
+  ol.claims{padding-left:1.3rem}
+  ol.claims li{margin-bottom: 1rem}
+  ol.claims b{font-weight:600}
+  .note{font-size:.92rem; color:var(--grey)}
+  footer{padding:2rem 0 4rem; color:var(--grey); font-size:.9rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  dl.lenses{margin:0 0 1rem}
+  dl.lenses dt{font-weight:600}
+  dl.lenses dd{margin:0 0 .7rem 1.2rem; font-size:.97rem; color:var(--grey)}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  /* the prompt callout */
+  .callout{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:1rem 1.2rem; margin:1.8rem 0 0; font-size:.95rem;
+  }
+  .callout .tag{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:.5rem;
+  }
+  .callout p{margin:0 0 .7rem}
+  .callout p:last-child{margin-bottom:0}
+  .buildstats{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--grey); margin:.7rem 0 0; line-height:1.6;
+  }
+  .buildstats b{color:var(--fg); font-weight:600}
+
+  /* display math (native MathML — no JS, no external fonts) */
+  .eq{margin:1.4rem auto 1.2rem; text-align:center; overflow-x:auto}
+  .eq math{
+    font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
+    font-size:1.06em;
+  }
+
+  /* left-margin table of contents, only when there's room */
+  #toc{display:none}
+  @media (min-width:1480px){
+    #toc{
+      display:block; position:fixed; left:1.4rem; top:50%;
+      transform:translateY(-50%); z-index:30;
+      font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    }
+    #toc a{
+      display:block; color:var(--grey); padding:.28rem 0; text-decoration:none;
+      border-left:2px solid var(--rule); padding-left:.7rem;
+    }
+    #toc a:hover{color:var(--accent); border-left-color:var(--accent)}
+    #toc a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+    #toc .roman{color:var(--accent); font-style:italic; margin-right:.35rem}
+  }
+
+  /* ---------- interactive: build your own index ---------- */
+  #lab{
+    border:1px solid var(--rule); border-radius:8px; background:var(--card);
+    padding:1.1rem 1.2rem .9rem; margin:1.6rem 0 .4rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #lab .presets{display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.9rem}
+  #lab .presets button{
+    font:inherit; font-size:.78rem; padding:.3rem .7rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  #lab .presets button:hover{border-color:var(--accent); color:var(--accent)}
+  #lab .sliders{display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem 2rem}
+  #lab .sl{display:grid; grid-template-columns:9.5rem 1fr 3rem; gap:.7rem; align-items:center}
+  #lab .sl label{font-size:.82rem}
+  #lab .sl .w{font-size:.82rem; text-align:right; color:var(--grey); font-variant-numeric:tabular-nums}
+  #lab input[type=range]{width:100%; accent-color:var(--accent)}
+  @media (max-width:760px){ #lab .sliders{grid-template-columns:1fr} }
+
+  #labChartWrap{position:relative}
+  #labChart svg{width:100%; height:auto; display:block}
+  #labChart text{font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif}
+  #labChart .tick{font-size:12px; fill:var(--grey)}
+  #labChart .grid{stroke:var(--rule); stroke-width:1}
+  #labChart .lbl{font-size:11px; font-weight:600}
+  #labChart g.empire{transition:opacity .15s}
+  #labChart svg.focused g.empire:not(.focus){opacity:.14}
+  #labTip{
+    position:absolute; pointer-events:none; display:none; z-index:40;
+    background:var(--card); border:1px solid var(--rule); border-radius:6px;
+    padding:.55rem .7rem; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.78rem; line-height:1.45; max-width:17rem;
+    box-shadow:0 2px 10px rgba(0,0,0,.12);
+  }
+  #labTip .hdr{font-weight:700}
+  #labTip .sub{color:var(--grey)}
+  .hint{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--faint); text-align:right; margin:.2rem 0 0;
+  }
+  #rank{
+    display:grid; grid-template-columns:max-content 1fr max-content;
+    gap:.25rem .8rem; align-items:center; margin-top:1rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.84rem;
+  }
+  #rank .bar{height:.62rem; border-radius:3px; min-width:2px}
+  #rank .v{color:var(--grey); font-variant-numeric:tabular-nums}
+  #rank .nm{font-weight:600}
+  #rankTitle{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--grey); margin:1.3rem 0 .2rem;
+  }
+
+  @media (max-width:640px){
+    body{font-size:.98rem}
+    header{padding-top:3.4rem}
+    h1{font-size:1.9rem}
+    .subtitle{font-size:1.02rem}
+    h2{font-size:1.25rem}
+    .prose,.wide{padding:0 1.1rem}
+    #labTip{max-width:12.5rem; font-size:.72rem}
+    .hint{text-align:left}
+    #themeBtn{top:.7rem; right:.7rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<nav id="toc" aria-label="Contents">
+  <a href="#brief"><span class="roman">§</span>The prompt</a>
+  <a href="#sec1"><span class="roman">I.</span>One yardstick</a>
+  <a href="#sec2"><span class="roman">II.</span>Four lenses</a>
+  <a href="#sec3"><span class="roman">III.</span>The ensemble</a>
+  <a href="#sec4"><span class="roman">IV.</span>Build your own</a>
+  <a href="#sec5"><span class="roman">V.</span>2026, by lens</a>
+  <a href="#sec6"><span class="roman">VI.</span>Claims</a>
+  <a href="#sec7"><span class="roman">VII.</span>Method</a>
+</nav>
+
+<header class="prose">
+  <p class="backlink"><a href="../index.html">&#8592; All essays</a></p>
+  <h1>A Common Currency for Power</h1>
+  <p class="subtitle">People, output, force, influence — four models of empire,
+  exchanged into one index. A sequel to
+  <a href="../empires-1/" data-dir>The Shape of Empires</a>.</p>
+  <p class="byline">By <a href="https://angadh.com">Angadh Nanjangud</a> (prompter)
+    &amp; Claude Fable&nbsp;5 <span class="aim">xhigh</span> (AI)</p>
+
+  <aside class="callout" id="brief">
+    <span class="tag">The prompt — verbatim, typos and all</span>
+    <p>“2. In that same vein, what would you suggest as some metric that can consolidate
+    our understanding of power across the empires over different epochs (I get this
+    might best be approached as a different blogpost altogether, which is fine and we
+    can call the above one done and you can start afresh but link to the previous one;
+    you should include the prompt (and other call it user inputs, which I didn’t like;
+    I also do’t like paraphrasing; just use the same poorly typo’d prompts. That is
+    fine).”</p>
+    <p>“maybe some normlaisation between population and military/navy sizes are proxies;
+    maybe there are multiple different models that allow consolidation and we can then
+    combine ALL of those models as well. THe running idea of the second blog[post
+    should be about the consoltidation of power across empires despite having different
+    conditions/tech/population/incetnives Like today we care more about networked
+    power, not territorial occupation in all cases A soft power type thing of influence
+    as much as physical force matering; maybe soft power even more so”</p>
+  </aside>
+
+  <p class="buildstats">
+    <b>Build:</b> one session (12 June 2026), ~45 minutes wall-clock ·
+    <b>tokens (estimated):</b> ≈1.5M in (mostly cached context re-reads, plus rendering
+    and visually inspecting every chart iteration) / ≈45k out (data tables, code, page,
+    narrative) · model: Claude&nbsp;Fable&nbsp;5.
+    Figures are estimates from the session log, not billing telemetry.
+  </p>
+
+  <p style="margin-top:1.6rem"><a href="../empires-1/" data-dir>The previous post</a>
+  refused to compare across epochs: it measured land for everyone, switched honestly to
+  GDP for the moderns, and left the two charts un-exchangeable. This post attempts the
+  exchange rate. The result is not one true number — it is four defensible numbers, an
+  ensemble that averages them, and an instrument panel that lets you disagree with me.</p>
+</header>
+
+<section class="prose" id="sec1">
+  <h2><span class="no">I.</span>One yardstick that survives 2,500 years</h2>
+  <p>Every absolute measure of power dies outside its own era. Square kilometres flatter
+  the Mongols with empty steppe and call 1942 Japan a great power while B-29s were being
+  drawn. GDP barely means anything before 1500, when nearly everyone farmed at
+  subsistence. Armies inflate with population; navies exist only after ships matter.
+  The one trick that survives is to <em class="k">stop measuring things and start
+  measuring shares</em>: power is relational, so express every candidate metric as a
+  fraction of the <em>contemporaneous</em> world — Rome against the world of 117&nbsp;CE,
+  America against the world of 2026.</p>
+  <p>Four lenses, each a share of its own world:</p>
+  <dl class="lenses">
+    <dt>p — people ruled</dt>
+    <dd>Share of world population under direct rule. The agrarian logic: people were
+    taxes, grain, and levies.</dd>
+    <dt>y — output</dt>
+    <dd>Share of world gross product, at purchasing-power parity. The industrial
+    logic.</dd>
+    <dt>m — force</dt>
+    <dd>Share of world military capacity: manpower for most of history, blending toward
+    share of world military spending in the 20th century (your “normlaisation between
+    population and military/navy sizes”).</dd>
+    <dt>n — network</dt>
+    <dd>Share of world population inside the empire’s wider sphere: vassals,
+    tributaries, formal allies, and the monetary and linguistic orbit. The soft-power
+    lens — and the softest numbers on this page.</dd>
+  </dl>
+  <p>Formally, for empire <i>e</i> and lens
+  <math><mi>k</mi><mo>∈</mo><mo stretchy="false">{</mo><mi>p</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>m</mi><mo>,</mo><mi>n</mi><mo stretchy="false">}</mo></math>:</p>
+  <div class="eq"><math display="block"><mrow>
+    <msubsup><mi>s</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+    <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>100</mn><mo>·</mo>
+    <mfrac>
+      <mrow><msubsup><mi>X</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+        <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+      <mrow><msubsup><mi>X</mi><mtext>world</mtext><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+        <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+    </mfrac>
+    <mtext>&#8201;%</mtext>
+  </mrow></math></div>
+  <p>One closure assumption stitches the epochs together. Before roughly 1500, per-capita
+  output everywhere sat near subsistence, so an empire’s share of output was its share
+  of mouths:</p>
+  <div class="eq"><math display="block"><mrow>
+    <msub><mi>y</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+    <mo>≈</mo>
+    <msub><mi>p</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+    <mo>,</mo><mspace width="1.4em"></mspace>
+    <mi>t</mi><mo>≲</mo><mn>1500</mn>
+  </mrow></math></div>
+  <p>That is not a convenience; it is the deep reason your first post’s land-vs-GDP
+  tension exists at all. The lenses <em>used to coincide</em>. Land grew people, people
+  were output, output paid soldiers. Modernity is precisely the era in which the four
+  lenses tore apart — and the size of the tear is measurable.</p>
+</section>
+
+<hr>
+
+<section class="wide" id="sec2">
+  <h2 class="prose" style="padding:0"><span class="no">II.</span>Four lenses on the same empires</h2>
+  <div class="prose" style="padding:0">
+    <p>Here are fifteen of the largest polities of the last twenty-five centuries — the
+    same cast as the cascade, thinned to those with defensible numbers — drawn under
+    each lens in turn. As with every chart on this site, all four panels share one
+    scale.</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="power_lenses.png" data-dark="power_lenses_dark.png"
+         src="power_lenses.png" alt="Small multiples: fifteen empires' share of world population, output, military capacity, and sphere of influence, 550 BCE to 2026">
+    <figcaption><b>Figure 1.</b> The same empires under four lenses, each a percent of the
+    contemporaneous world. Top left: people under direct rule. Top right: gross product
+    (PPP), equal to population share before ~1500. Bottom left: military capacity.
+    Bottom right: population inside the wider sphere of influence. Estimates after
+    McEvedy &amp; Jones, the Maddison Project, P.&nbsp;Kennedy, the Correlates of War
+    project, SIPRI, and IMF; precision is one significant figure at best.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Read the panels left to right and the modern revolution announces itself. In
+    <em class="k">antiquity the panels agree</em>: Achaemenid Persia, Rome, Han China are
+    great in every lens at once, because the lenses were the same thing wearing four
+    hats. From 1800 they tear apart. The Qing hold a third of humanity while their
+    military share collapses toward zero — the lenses’ first great divorce, and China’s
+    “century of humiliation” in four lines. Britain rules 23% of people and 20% of
+    output but never more than ~15% of arms; its true monopoly is the bottom-right
+    panel — sterling, cables, coal stations, English — where it peaks near
+    <em>36%</em>. The United States inverts the ancient pattern entirely: 4% of people,
+    a third or more of force and influence. And the Mongols, modest in population,
+    are the all-time military outlier — 40% of world fighting capacity in the saddle.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec3">
+  <h2 class="prose" style="padding:0"><span class="no">III.</span>The ensemble — and its error bars</h2>
+  <div class="prose" style="padding:0">
+    <p>To consolidate the lenses, combine them multiplicatively. With weights
+    <math><msub><mi>w</mi><mi>k</mi></msub></math> summing to one,</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>P</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <munder><mo>∏</mo><mi>k</mi></munder>
+      <msup>
+        <mrow><msubsup><mi>s</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+          <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+        <msub><mi>w</mi><mi>k</mi></msub>
+      </msup>
+      <mo>,</mo><mspace width="1.4em"></mspace>
+      <munder><mo>∑</mo><mi>k</mi></munder><msub><mi>w</mi><mi>k</mi></msub><mo>=</mo><mn>1</mn>
+    </mrow></math></div>
+    <p>and with equal weights this is the geometric mean,</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>P</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <msup>
+        <mrow><mo stretchy="false">(</mo>
+          <msub><mi>p</mi><mi>e</mi></msub><mo>&#8201;</mo>
+          <msub><mi>y</mi><mi>e</mi></msub><mo>&#8201;</mo>
+          <msub><mi>m</mi><mi>e</mi></msub><mo>&#8201;</mo>
+          <msub><mi>n</mi><mi>e</mi></msub>
+        <mo stretchy="false">)</mo></mrow>
+        <mrow><mn>1</mn><mo>/</mo><mn>4</mn></mrow>
+      </msup>
+    </mrow></math></div>
+    <p>The geometric mean is the right consolidator for exactly your reason — empires
+    faced “different conditions/tech/population/incetnives.” It is unit-free, it cannot
+    be gamed by one freakish lens (an arithmetic mean would let the Mongols’ 40% of
+    soldiers paper over their 2% of looms), and it rewards <em>balanced</em> power, which
+    is what made empires durable. Alongside the line we plot the honest part: the span
+    between each empire’s friendliest and harshest lens,</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>B</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <mrow><mo stretchy="true">[</mo>
+        <munder><mo movablelimits="false">min</mo><mi>k</mi></munder>
+        <msubsup><mi>s</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+        <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+        <mo>,</mo><mspace width=".6em"></mspace>
+        <munder><mo movablelimits="false">max</mo><mi>k</mi></munder>
+        <msubsup><mi>s</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+        <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo stretchy="true">]</mo></mrow>
+    </mrow></math></div>
+    <p>a model-disagreement band: where it is narrow, any theory of power gives the same
+    verdict; where it is wide, “who is winning” depends on what you believe power is.</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="power_ensemble.png" data-dark="power_ensemble_dark.png"
+         src="power_ensemble.png" alt="Equal-weight ensemble power index for nine major empires, 550 BCE to 2026, with model-disagreement bands">
+    <figcaption><b>Figure 2.</b> The equal-weight ensemble for nine majors. Bands span the
+    four lenses’ disagreement. Antiquity’s bands hug their lines; the modern bands yawn.
+    The United States and China end 2026 within half a point of each other —
+    a statistical tie far inside both bands.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Two readings. First, the all-time league table is not what a Western syllabus
+    suggests: on this index the peak performers of history are <em class="k">Achaemenid
+    Persia, Rome, Han, and Qing China — the demographic giants</em> — with the Mongols
+    spiking among them; the British Empire at 1913 reaches the same ~22% tier, and the
+    United States has never exceeded ~24% even in 1950. Second, look at the bands.
+    Before 1500 they are slivers — any model agrees Rome was Rome. After 1800 they are
+    chasms. <em class="k">The modern era is not harder to measure because the data is
+    worse; it is harder because power itself decomposed.</em></p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec4">
+  <h2 class="prose" style="padding:0"><span class="no">IV.</span>Build your own theory of power</h2>
+  <div class="prose" style="padding:0">
+    <p>Equal weights are my prior, not a law of nature. You suggested combining
+    “ALL of those models” — here is the combination, with the weights handed over to
+    you. Drag the sliders (or take a preset) and the whole of history recomputes under
+    your theory of power: believe only in heads, and the chart is forever Asian;
+    believe only in force, and the twentieth century is a Soviet–American wall;
+    believe in networks — your “soft power type thing” — and Britain and America
+    take turns owning the modern world.</p>
+  </div>
+  <div id="lab">
+    <div class="presets" role="group" aria-label="Weight presets">
+      <button data-w="25,25,25,25">⚖ Equal (the ensemble)</button>
+      <button data-w="100,0,0,0">People only</button>
+      <button data-w="0,100,0,0">Output only</button>
+      <button data-w="0,0,100,0">Hard power</button>
+      <button data-w="0,0,0,100">Soft power</button>
+      <button data-w="10,20,20,50">Soft-power-leaning mix</button>
+    </div>
+    <div class="sliders">
+      <div class="sl"><label for="wp">People ruled <i>p</i></label>
+        <input type="range" id="wp" min="0" max="100" value="25"><span class="w" id="wpv"></span></div>
+      <div class="sl"><label for="wy">Output <i>y</i></label>
+        <input type="range" id="wy" min="0" max="100" value="25"><span class="w" id="wyv"></span></div>
+      <div class="sl"><label for="wm">Force <i>m</i></label>
+        <input type="range" id="wm" min="0" max="100" value="25"><span class="w" id="wmv"></span></div>
+      <div class="sl"><label for="wn">Network <i>n</i></label>
+        <input type="range" id="wn" min="0" max="100" value="25"><span class="w" id="wnv"></span></div>
+    </div>
+    <div id="labChartWrap">
+      <div id="labChart"></div>
+      <div id="labTip"></div>
+    </div>
+    <p class="hint">Hover a curve to isolate one empire</p>
+    <div id="rankTitle">The 2026 ranking under your weights</div>
+    <div id="rank"></div>
+  </div>
+  <figure style="margin-top:.4rem">
+    <figcaption><b>Figure 3 (interactive).</b> Every empire’s index
+    <math><msub><mi>P</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math>
+    under your chosen weights, recomputed live from the same data as Figures 1–2
+    (<a href="power_data.js">power_data.js</a>). Weights are renormalised to sum to 1.
+    No JavaScript beyond this page; nothing leaves your browser.</figcaption>
+  </figure>
+</section>
+
+<hr>
+
+<section class="wide" id="sec5">
+  <h2 class="prose" style="padding:0"><span class="no">V.</span>2026 through each lens</h2>
+  <div class="prose" style="padding:0">
+    <p>Finally, hold today still and walk the lenses across it.</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="power_today.png" data-dark="power_today_dark.png"
+         src="power_today.png" alt="Slope chart: US, China, India and Russia's 2026 share of world population, output, military capacity and sphere of influence, with the British Empire of 1913 as reference">
+    <figcaption><b>Figure 4.</b> The 2026 powers under each lens, percent of the world.
+    Dashed grey: the British Empire in 1913, the last time one polity led the network
+    lens by this margin. Lines cross — which is the point.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>The chart is a machine for generating arguments, which is what it should be.
+    India wins the people lens and nothing else — yet it is the only major power rising
+    in all four. China wins output and is second everywhere else. The United States is
+    nearly invisible in the people lens and dominant in force and network — the most
+    <em class="k">lopsided great power in recorded history</em>. And your closing
+    intuition — “maybe soft power even more so” — has a precedent on this very chart:
+    Britain in 1913 also led the world chiefly through its network (36%, against 12% of
+    arms), and that network empire unwound in forty years once the underlying lenses
+    (output, force) had already moved elsewhere. Networks amplify power; the 1913 ghost
+    is a caution about what happens when they are all that is left.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="prose" id="sec6">
+  <h2><span class="no">VI.</span>Claims, carefully labelled as claims</h2>
+  <p class="note">The figures are estimates (see Method); what follows is interpretation.</p>
+  <ol class="claims">
+    <li><b>There is no honest single number — and that is a finding, not a failure.</b>
+    The defensible consolidation is an ensemble plus a disagreement band. Antiquity’s
+    bands are slivers; 2026’s are the widest in recorded history. Asking “who is the
+    most powerful country” today is like asking for the temperature of a thing that is
+    boiling in one place and freezing in another.</li>
+    <li><b>Pick your lens, pick your winner.</b> Any weighting that prizes people or
+    output hands this century to Asia; any weighting that prizes force or networks keeps
+    it American. On equal weights, the US and China end 2026 in a statistical tie
+    (~17% each) — which is precisely why the present feels contested from inside.</li>
+    <li><b>America is the most lopsided great power ever measured.</b> Four percent of
+    humanity holding roughly a third of force and influence. Every previous empire in
+    this set was broad-based at its peak. Lopsidedness has historically resolved in one
+    of two ways: the strong lenses erode toward the weak ones (Britain after 1913), or
+    the weak ones are simply never needed (no precedent). The American experiment is
+    whether the second path exists.</li>
+    <li><b>Soft power is the modern land.</b> The network lens is the only one in which
+    a modern power matches antiquity’s giants. Britain invented that trade — peaking at
+    36% of the world in its orbit with barely a tenth of its arms — and America
+    industrialised it (Bretton Woods, the dollar, alliances, English, the internet
+    platforms). China is now building the first serious rival network since 1945. If
+    the 21st century has a Figure&nbsp;1, it will be drawn in this lens.</li>
+    <li><b>India is the quiet ascendant.</b> It leads no lens but rises in all four —
+    the only major power for which that is true. On the agrarian logic that governed
+    twenty of the last twenty-five centuries, the largest pool of people eventually
+    prices in.</li>
+  </ol>
+</section>
+
+<hr>
+
+<section class="prose" id="sec7">
+  <h2><span class="no">VII.</span>Method &amp; honest caveats</h2>
+  <p class="note">Every series is hand-tabulated waypoints, linearly interpolated exactly
+  as in <a href="../empires-1/" data-dir>post one</a>, and floored at 0.05% before the
+  geometric mean so a single sparse lens cannot zero an empire out. Data quality is
+  tiered: population shares are the firmest (McEvedy &amp; Jones; Maddison), output
+  shares are heroic before 1820 (Maddison Project, PPP; IMF after 1980), military
+  shares are rough everywhere (manpower after P.&nbsp;Kennedy and the Correlates-of-War
+  tradition, blended toward SIPRI spending shares in the 20th century — manpower and
+  spending genuinely disagree, e.g. China today), and network shares are estimates to
+  one significant figure that reasonable people will dispute by half. Dispute them:
+  the sliders exist so my judgment is an input, not a conclusion.</p>
+  <p class="note">Prior art, so this page doesn’t pretend novelty: the Correlates of War
+  CINC index (six shares, arithmetic mean, 1816 onward), Paul Kennedy’s
+  <i>Rise and Fall of the Great Powers</i> (the economics–military tension), Ian
+  Morris’s social-development index (energy capture, four traits, 14,000 BCE onward),
+  and Joseph Nye’s soft power (the n lens, named). This page’s contribution is modest:
+  shares-of-the-contemporaneous-world as the exchange rate, a geometric rather than
+  arithmetic mean, the disagreement band drawn honestly, and the weights surrendered
+  to the reader.</p>
+  <p class="note">Charts generated by <a href="make_power_models.py">make_power_models.py</a>;
+  static versions: <a href="power_lenses.png">Fig 1</a> ·
+  <a href="power_ensemble.png">Fig 2</a> · <a href="power_today.png">Fig 4</a>
+  (each also as <code>*_dark.png</code>); interactive data in
+  <a href="power_data.js">power_data.js</a>.</p>
+</section>
+
+<footer class="prose">
+  <a href="../index.html">&#8592; All essays</a> ·
+  <a href="../empires-1/" data-dir>Part 1: The Shape of Empires</a> ·
+  Made with Claude · June 2026 ·
+  Sources: McEvedy &amp; Jones; Maddison Project; P. Kennedy; Correlates of War; SIPRI; IMF WEO.
+</footer>
+
+<script src="power_data.js"></script>
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('img.themed').forEach(im=>{
+    im.src = dark ? im.dataset.dark : im.dataset.light;
+  });
+  drawLab();
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+const startDark = urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+document.getElementById('themeBtn').addEventListener('click', ()=>applyTheme(!root.classList.contains('dark')));
+
+/* ---------- the lab: weighted index, recomputed live ---------- */
+const KS = ['p','y','m','n'];
+const YMIN = -620, YMAX = 2080, W = 1180, CH = 430, AXIS_H = 30, TOP = 14;
+const PMAX = 48;
+const X = t => (t - YMIN) / (YMAX - YMIN) * W;
+const Y = v => TOP + (1 - v / PMAX) * (CH - TOP - AXIS_H);
+const fmtYear = y => y < 0 ? Math.round(-y) + ' BCE' : Math.round(y) + ' CE';
+
+const sliders = KS.map(k => document.getElementById('w' + k));
+const readouts = KS.map(k => document.getElementById('w' + k + 'v'));
+
+function weights(){
+  const v = sliders.map(s => +s.value);
+  const sum = v.reduce((a, b) => a + b, 0);
+  return sum ? v.map(x => x / sum) : [0.25, 0.25, 0.25, 0.25];
+}
+
+function sval(pts, t){
+  if (t <= pts[0][0]) return pts[0][1];
+  for (let j = 1; j < pts.length; j++){
+    if (t <= pts[j][0]){
+      const [x0, v0] = pts[j-1], [x1, v1] = pts[j];
+      return x1 === x0 ? v1 : v0 + (v1 - v0) * (t - x0) / (x1 - x0);
+    }
+  }
+  return pts[pts.length - 1][1];
+}
+
+function life(e){
+  let t0 = Infinity, t1 = -Infinity;
+  KS.forEach(k => {
+    const s = e.series[k];
+    t0 = Math.min(t0, s[0][0]);
+    t1 = Math.max(t1, s[s.length - 1][0]);
+  });
+  return [t0, t1];
+}
+
+function indexAt(e, t, w){
+  let P = 1;
+  KS.forEach((k, i) => {
+    P *= Math.pow(Math.max(sval(e.series[k], t), 0.05), w[i]);
+  });
+  return P;
+}
+
+function curve(e, w){
+  const [t0, t1] = life(e);
+  const pts = [];
+  for (let t = t0; t < t1; t += 4) pts.push([t, indexAt(e, t, w)]);
+  pts.push([t1, indexAt(e, t1, w)]);
+  return pts;
+}
+
+const lab = document.getElementById('labChart');
+const labTip = document.getElementById('labTip');
+const labWrap = document.getElementById('labChartWrap');
+const rank = document.getElementById('rank');
+
+function colorOf(e){ return root.classList.contains('dark') ? e.colorDark : e.color; }
+
+function drawLab(){
+  const w = weights();
+  KS.forEach((k, i) => readouts[i].textContent = Math.round(w[i] * 100) + '%');
+  lab.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${CH}`);
+  const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag);
+    for (const a in attrs) el.setAttribute(a, attrs[a]); (parent || svg).appendChild(el); return el; };
+
+  [-500, 1, 500, 1000, 1500, 2000].forEach(t => {
+    mk('line', {class: 'grid', x1: X(t), x2: X(t), y1: TOP, y2: CH - AXIS_H + 4});
+    const tx = mk('text', {class: 'tick', x: X(t), y: CH - AXIS_H + 20, 'text-anchor': 'middle'});
+    tx.textContent = t < 0 ? (-t) + ' BCE' : (t === 1 ? '1 CE' : t);
+  });
+  [10, 20, 30, 40].forEach(v => {
+    mk('line', {class: 'grid', x1: 0, x2: 26, y1: Y(v), y2: Y(v)});
+    const tx = mk('text', {class: 'tick', x: 30, y: Y(v) + 4});
+    tx.textContent = v === 40 ? '40%' : v;
+  });
+
+  const peaks = [];
+  POWER.empires.forEach((e, i) => {
+    const col = colorOf(e);
+    const pts = curve(e, w);
+    const g = mk('g', {class: 'empire'});
+    const d = 'M' + pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('L');
+    mk('path', {d, fill: 'none', stroke: col, 'stroke-width': e.extant ? 2 : 1.4,
+      'stroke-linejoin': 'round', 'stroke-linecap': 'round'}, g);
+    const hit = mk('path', {d, fill: 'none', stroke: '#000', 'stroke-opacity': 0,
+      'stroke-width': 14, 'pointer-events': 'stroke'}, g);
+    const last = pts[pts.length - 1];
+    if (e.extant) mk('circle', {cx: X(last[0]), cy: Y(last[1]), r: 4, fill: col}, g);
+    let pk = pts[0]; pts.forEach(p => { if (p[1] > pk[1]) pk = p; });
+    peaks.push({e, g, pk, col});
+
+    hit.addEventListener('pointerenter', ev => {
+      svg.classList.add('focused'); g.classList.add('focus');
+      const P26 = e.extant ? indexAt(e, 2026, w) : null;
+      labTip.innerHTML = `<div class="hdr" style="color:${col}">${e.name}</div>` +
+        `<div class="sub">peak index ${pk[1].toFixed(1)}% in ${fmtYear(pk[0])}</div>` +
+        (P26 != null ? `<div class="sub">2026 index ${P26.toFixed(1)}%</div>` : '');
+      labTip.style.display = 'block';
+      const wr = labWrap.getBoundingClientRect();
+      let lx = ev.clientX - wr.left + 14;
+      if (lx + labTip.offsetWidth > wr.width - 8) lx = ev.clientX - wr.left - labTip.offsetWidth - 14;
+      labTip.style.left = lx + 'px';
+      labTip.style.top = (ev.clientY - wr.top + 12) + 'px';
+    });
+    hit.addEventListener('pointerleave', () => {
+      svg.classList.remove('focused'); g.classList.remove('focus');
+      labTip.style.display = 'none';
+    });
+  });
+
+  // direct labels for the six highest peaks under the current weights
+  peaks.sort((a, b) => b.pk[1] - a.pk[1]).slice(0, 6).forEach(o => {
+    const t = mk('text', {class: 'lbl', x: X(o.pk[0]), y: Y(o.pk[1]) - 5,
+      'text-anchor': 'middle', fill: o.col}, o.g);
+    t.textContent = o.e.name.replace(' Empire', '').replace(' Persia', '')
+      .replace(' – USSR – Russia', '/USSR').replace('Arab ', '')
+      .replace('United States', 'US').replace(' (Republic)', '')
+      .replace('China (PRC)', 'PRC').replace(' China', '');
+  });
+
+  lab.appendChild(svg);
+
+  // 2026 ranking
+  const today = POWER.empires.filter(e => e.extant)
+    .map(e => ({e, P: indexAt(e, 2026, w)}))
+    .sort((a, b) => b.P - a.P);
+  const mx = today[0].P;
+  rank.innerHTML = today.map(o =>
+    `<span class="nm" style="color:${colorOf(o.e)}">${o.e.name}</span>` +
+    `<span class="bar" style="width:${(o.P / mx * 100).toFixed(1)}%;background:${colorOf(o.e)}"></span>` +
+    `<span class="v">${o.P.toFixed(1)}%</span>`).join('');
+}
+
+sliders.forEach(s => s.addEventListener('input', drawLab));
+document.querySelectorAll('#lab .presets button').forEach(b => {
+  b.addEventListener('click', () => {
+    b.dataset.w.split(',').forEach((v, i) => sliders[i].value = v);
+    drawLab();
+  });
+});
+
+applyTheme(startDark);
+
+/* ---------- TOC scrollspy ---------- */
+const tocLinks = [...document.querySelectorAll('#toc a')];
+const tocTargets = tocLinks.map(a => document.querySelector(a.getAttribute('href')));
+function spyToc(){
+  const probe = innerHeight * 0.35;
+  let act = 0;
+  tocTargets.forEach((el, i) => {
+    if (el && el.getBoundingClientRect().top <= probe) act = i;
+  });
+  if (innerHeight + scrollY >= document.body.scrollHeight - 8) act = tocLinks.length - 1;
+  tocLinks.forEach((a, i) => a.classList.toggle('active', i === act));
+}
+addEventListener('scroll', spyToc, {passive: true});
+spyToc();
+
+/* file:// can't resolve directory URLs — point them at index.html locally */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a => a.href += 'index.html');
+</script>
+</body>
+</html>

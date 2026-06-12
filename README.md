@@ -11,6 +11,7 @@ posts.js          manifest of posts — add one object per post
 CONTRIBUTING.md   how to add a post (read this first)
 _template/        minimal post skeleton you may copy
 empires-1/        post: "The Shape of Empires" (2026-06-11)
+empires-2/        post: "A Common Currency for Power" (2026-06-12)
 CNAME             custom domain for GitHub Pages
 ```
 

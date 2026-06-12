@@ -121,6 +121,22 @@
   .callout ul{margin:0; padding-left:1.1rem}
   .callout li{margin-bottom:.55rem}
   .callout li:last-child{margin-bottom:0}
+  .callout p{margin:0 0 .7rem}
+  .callout p:last-child{margin-bottom:0}
+  .callout details{margin-top:.8rem; border-top:1px solid var(--rule); padding-top:.7rem}
+  .callout summary{
+    cursor:pointer; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.78rem; font-weight:600; color:var(--accent);
+  }
+  .callout details ul{margin-top:.6rem}
+  .callout .src{font-size:.78rem; color:var(--faint); margin-top:.6rem}
+
+  /* display math (native MathML — no JS, no external fonts) */
+  .eq{margin:1.4rem auto 1.2rem; text-align:center; overflow-x:auto}
+  .eq math{
+    font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
+    font-size:1.06em;
+  }
   .buildstats{
     font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
     color:var(--grey); margin:.7rem 0 0; line-height:1.6;
@@ -178,21 +194,74 @@
     &amp; Claude Fable&nbsp;5 <span class="aim">xhigh</span> (AI)</p>
 
   <aside class="callout" id="brief">
-    <span class="tag">The brief — user inputs, lightly trimmed</span>
-    <ul>
-      <li>“Make a really nice plot that shows me all the major empires as a function of
-      time… the curve should give us the information of power rise and fall… I also
-      want to be able to see the <i>parallelness</i> of those empires… enough separation
-      between one empire and another. I want to come into modern times and understand
-      where we might be in terms of current empires… America might be ascendant even
-      now… or, as technology has advanced rapidly, it might be at its end… You're
-      welcome to start in the AD, but if there is some really cool empire in the BCs,
-      include that too… Maybe you have ideas for even more plots.”</li>
-      <li>“Put these plots in a nice HTML file with a good narrative… you are welcome
-      to make some claims and interpretations as well.”</li>
-      <li>“Light and dark themed with Tufte layout / Anthropic styling.”</li>
-      <li>“If there are ideas for interactive plots, feel free to be creative.”</li>
-    </ul>
+    <span class="tag">The prompt — verbatim, typos and all</span>
+    <p>“I want you to make a really nice plot that shows me all the major umpires as a
+    function of time. This means time on the x axis and their power on the y axis. And
+    the curve, for example, in the case of the Roman Empire, might show that it is
+    ascending for a while, plateaus maybe rises again or falls or whatever it is. Like
+    that, I might see the Roman Empire, but I also want to be able to see the
+    parallelness of those empires, if you get what I mean. So Maybe there's a different
+    way to organize that information on the y axis because maybe the y axis is just
+    capturing which empire we are at. I don't know what is a good way to plot this, but
+    I know that the x axis must be time and that the curve that is plotted should be
+    able to give us the information of power rise and fall. But I also want there to be
+    enough separation between, uh, one empire and another. And I want to come into
+    modern times, and I want to understand where we might be in terms of current
+    empires and the rise and fall as well. Uh, maybe they're more geographic. today
+    than they were before. Uh, I'm not completely sure. By geographic, I mean that
+    America might be ascendant as a country even now. It's not plateaued. It might not
+    even be near its end because it might be quite young compared to everything else.
+    But it may also be the case that as technology has advanced rapidly, it is possible
+    they might be at their end. Now I don't know about all of this. These are complex
+    theories, but for me to understand this stuff, I know I need one of these plots at
+    least. But maybe you have ideas for even more plots. Let me know and make the
+    plots, please.</p>
+    <p>What I do not expect from you is some major, major, um, blog writing or written
+    responses. You can make the plots and explain them as needed and then reach
+    hypotheses if needed. Uh, Alright? And you're welcome to start in the AD, but if
+    there is some really, really cool empire that was super powerful for a really long
+    time that is in the BCs, you're welcome to include that also on the time horizon
+    and choose appropriate scales as well.”</p>
+    <details>
+      <summary>The follow-up prompts that shaped this page (also verbatim)</summary>
+      <ul>
+        <li>“you can also put these plots in a nice htl file with a good narrative which
+        is how I would like to read the plots and your eventual findings. You are
+        welcome to make some claims and interpretations as well, if needed.” —
+        “html*”</li>
+        <li>“light and dark themed with tufte layout/ANthorpic styling is fine.”</li>
+        <li>“if there are ideas for interactive plots, feel free to be creative.”</li>
+        <li>“1. Can you put in a box the inputs I gave you in a callout box?
+        2. Can you also then just under the callout box but before your reposone add how
+        long it took to do this (time, total tokens with breakdown for in and out for
+        the previous/main task) Also add a TO on the left margin, if there's room. I am
+        assuming formatting of everything also works in mobile too.
+        3. Can you initalise this as a git repo then commit/push/deploy via github
+        pages? Create a new repo as it doesn't exist on gh.
+        4. I also own a domain via cloudflare called claudepost.com; would be great if
+        you can setup the repo to point to that. Hopefullly CF have a CLI so I don't
+        need to do anything myself.”</li>
+        <li>“Oh; and oyu can put both our names in the title to the post. Me (details at
+        angadh.com so make my name clickable and sendable to my site) as prompter; and
+        you uas AI (Fable 5 xhigh I think?)”</li>
+        <li>“what does the y axis capture in the figure 1? is there a better way to
+        catch that plot's y-axis maybe? Unsure if the offsets mean that much vertically
+        as the civilisations decline but correct me if I am missing something. If not,
+        fix and push changes”</li>
+        <li>“and no CHina or INdia or some other place now? Not empires yet?”</li>
+        <li>“why no Japan germany or early Egypt? Any islamic ones to be mndful of
+        anywhere?”</li>
+        <li>“nothing sputh american at any point?”</li>
+        <li>“also highlight the right swxtionin the toc when we are in it??”</li>
+        <li>“… It might be worth adding to the existing, centered LaTeX math of your
+        logic of what you are measuring and how using a formulat. I obviously haven’t
+        seen the code and want to learn by reading the post; so if each plot needs it,
+        show it. If it’s only based on data plots, that is different; but if you are
+        massaging data or developing models, equations should be there.”</li>
+      </ul>
+      <p class="src">Purely conversational and debugging messages (“go”, “continue”,
+      DNS repairs) are omitted; everything quoted is letter-for-letter.</p>
+    </details>
   </aside>
 
   <p class="buildstats">
@@ -201,6 +270,7 @@
     includes rendering and visually inspecting every chart iteration) /
     ≈35k out (code, page, narrative) · model: Claude&nbsp;Fable&nbsp;5.
     Figures are estimates from the session log, not billing telemetry.
+    Equations and the verbatim prompt box were added in a follow-up session (12 June 2026).
   </p>
 
   <p style="margin-top:1.6rem">“Power” has no gauge. So this page uses two honest, imperfect proxies and never
@@ -221,6 +291,56 @@
     y-axis: a row’s vertical <em>position</em> carries no quantity — the offsets only keep
     empires apart. Height above each row’s thin baseline is the measure, calibrated by
     the key at the lower left.</p>
+    <p>To be precise about what is plotted — because this figure involves <em>no model,
+    only bookkeeping</em> — the curve drawn for the <i>i</i>-th row is</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>h</mi><mi>i</mi></msub>
+      <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <msub><mi>b</mi><mi>i</mi></msub>
+      <mo>+</mo>
+      <msub><mi>A</mi><mi>i</mi></msub>
+      <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>,</mo><mspace width="1.4em"></mspace>
+      <msub><mi>b</mi><mi>i</mi></msub>
+      <mo>=</mo>
+      <mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mi>i</mi><mo stretchy="false">)</mo>
+      <mi>Δ</mi>
+      <mo>,</mo><mspace width="1.4em"></mspace>
+      <mi>Δ</mi><mo>=</mo><mn>8</mn><mtext>&#8201;million&#8201;km²</mtext>
+    </mrow></math></div>
+    <p>where <math><msub><mi>A</mi><mi>i</mi></msub></math> is the empire’s territorial
+    extent and <math><msub><mi>b</mi><mi>i</mi></msub></math> is a constant shelf that
+    spaces row <i>i</i> above its neighbours — pure separation, carrying no quantity.
+    The extent itself is a straight-line interpolation between dated atlas estimates
+    <math><mo stretchy="false">(</mo><msub><mi>t</mi><mi>j</mi></msub><mo>,</mo>
+    <msub><mi>A</mi><mi>j</mi></msub><mo stretchy="false">)</mo></math>:</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>A</mi><mi>i</mi></msub>
+      <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <msub><mi>A</mi><mi>j</mi></msub>
+      <mo>+</mo>
+      <mrow>
+        <mo stretchy="false">(</mo>
+        <msub><mi>A</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn></mrow></msub>
+        <mo>−</mo>
+        <msub><mi>A</mi><mi>j</mi></msub>
+        <mo stretchy="false">)</mo>
+      </mrow>
+      <mfrac>
+        <mrow><mi>t</mi><mo>−</mo><msub><mi>t</mi><mi>j</mi></msub></mrow>
+        <mrow><msub><mi>t</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn></mrow></msub>
+          <mo>−</mo><msub><mi>t</mi><mi>j</mi></msub></mrow>
+      </mfrac>
+      <mo>,</mo><mspace width="1.4em"></mspace>
+      <msub><mi>t</mi><mi>j</mi></msub><mo>≤</mo><mi>t</mi><mo>≤</mo>
+      <msub><mi>t</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn></mrow></msub>
+    </mrow></math></div>
+    <p>No smoothing, no fitting, no inferred values: between waypoints the chart admits
+    it is guessing linearly, and the waypoints themselves are Taagepera’s estimates.
+    The same <math><msub><mi>A</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math>
+    drives the hover tooltips below.</p>
   </div>
   <figure>
     <div id="cascadeWrap">
@@ -264,6 +384,30 @@
     “empire” holds 9.8 million&nbsp;km² and has barely moved in a century, which is why
     its curve in Figure&nbsp;1 is a flat green shelf. Modern dominance is economic,
     so the modern chart must change its unit: percent of everything the world produces.</p>
+    <p>Note the deliberate discontinuity: Figure&nbsp;1 measures land and <em>only</em>
+    land, on one scale, for everyone — apples to apples within the figure. This figure
+    abandons that unit entirely rather than blend two incommensurable ones. What it
+    plots is a share,</p>
+    <div class="eq"><math display="block"><mrow>
+      <msub><mi>s</mi><mi>e</mi></msub>
+      <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <mn>100</mn>
+      <mo>·</mo>
+      <mfrac>
+        <mrow><msub><mi>Y</mi><mi>e</mi></msub>
+          <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+        <mrow><msub><mi>Y</mi><mtext>world</mtext></msub>
+          <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+      </mfrac>
+      <mtext>&#8201;%</mtext>
+    </mrow></math></div>
+    <p>where <math><msub><mi>Y</mi><mi>e</mi></msub></math> is economy <i>e</i>’s gross
+    product at purchasing-power parity. The values are Maddison Project reconstructions
+    (IMF for recent decades) joined by straight lines between benchmark years — again
+    data plotted directly, with no model in between. Because it is a share, the curves
+    answer “compared to what?” by construction: everything sums across the whole world
+    to 100.</p>
   </div>
   <figure>
     <img class="themed" data-light="modern_power.png" data-dark="modern_power_dark.png"
@@ -291,7 +435,31 @@
   <div class="prose" style="padding:0">
     <p>To compare the <em>shapes</em> of imperial lives — your “parallelness” question —
     strip away both calendars and sizes: start every empire at year zero and scale each
-    to its own peak.</p>
+    to its own peak. This is the only figure that transforms the data, and the whole
+    transformation is two rescalings of Figure&nbsp;1’s
+    <math><msub><mi>A</mi><mi>e</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math>:</p>
+    <div class="eq"><math display="block"><mrow>
+      <mi>τ</mi><mo>=</mo><mi>t</mi><mo>−</mo><msub><mi>t</mi><mn>0</mn></msub>
+      <mo>,</mo><mspace width="1.6em"></mspace>
+      <msub><mover><mi>a</mi><mo>^</mo></mover><mi>e</mi></msub>
+      <mo stretchy="false">(</mo><mi>τ</mi><mo stretchy="false">)</mo>
+      <mo>=</mo>
+      <mn>100</mn>
+      <mo>·</mo>
+      <mfrac>
+        <mrow><msub><mi>A</mi><mi>e</mi></msub>
+          <mo stretchy="false">(</mo><msub><mi>t</mi><mn>0</mn></msub>
+          <mo>+</mo><mi>τ</mi><mo stretchy="false">)</mo></mrow>
+        <mrow><munder><mo movablelimits="false">max</mo><mi>t</mi></munder>
+          <msub><mi>A</mi><mi>e</mi></msub>
+          <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow>
+      </mfrac>
+      <mtext>&#8201;%</mtext>
+    </mrow></math></div>
+    <p>where <math><msub><mi>t</mi><mn>0</mn></msub></math> is each empire’s founding
+    year. Time becomes <em>age</em>, size becomes <em>percent of own peak</em> — so every
+    curve starts at the origin and touches 100 exactly once, and only the shapes
+    remain.</p>
   </div>
   <figure>
     <img class="themed" data-light="empire_lifecycles.png" data-dark="empire_lifecycles_dark.png"
@@ -330,7 +498,9 @@
     its alliance system, the dollar, and its technology platforms; none of it shows up
     in km². If those are the new land, the metric to watch this century is compute,
     capital, and standards — not borders. A future version of Figure&nbsp;2 may need yet
-    another unit, exactly as Figure&nbsp;2 had to abandon Figure&nbsp;1’s.</li>
+    another unit, exactly as Figure&nbsp;2 had to abandon Figure&nbsp;1’s. (The sequel
+    post, <a href="../empires-2/" data-dir>A Common Currency for Power</a>, takes up
+    exactly this: one index that can rank Rome, the Mongols, Britain, and America.)</li>
     <li><b>China is reverting, not erupting.</b> Its share of world output is returning
     to the level it held for most of recorded history. The genuinely new element is not
     China’s size but the speed of the round trip — a collapse and recovery inside
@@ -540,6 +710,10 @@ function spyToc(){
 }
 addEventListener('scroll', spyToc, {passive: true});
 spyToc();
+
+/* file:// can't resolve directory URLs — point them at index.html locally */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a => a.href += 'index.html');
 </script>
 </body>
 </html>
