@@ -55,6 +55,8 @@ EMPIRES = [
         (1932,1.6),(1938,2.8),(1942,7.4),(1945,0)]),
     ("Germany (Reich)", False, "#5c5c5c", [(1871,0.54),(1884,1.0),(1900,3.0),(1914,3.5),
         (1919,0.47),(1939,0.7),(1941,3.3),(1942,3.6),(1944,2.5),(1945,0)]),
+    ("Inca (Tawantinsuyu)", False, "#ab5d3c", [(1438,0.3),(1463,0.8),(1471,1.2),
+        (1493,1.8),(1525,2.0),(1532,1.8),(1533,0)]),
     ("Achaemenid Persia", False, "#5e7d4f", [(-550,0.5),(-539,2.0),(-525,3.5),(-500,5.5),(-480,5.5),
         (-450,5.0),(-400,4.6),(-350,4.5),(-334,4.0),(-330,0)]),
     ("Maurya (India)", False, "#b3873e", [(-322,0.5),(-300,3.5),(-260,5.0),(-230,4.0),(-200,1.5),(-185,0)]),
@@ -115,7 +117,7 @@ def year_fmt(y, _pos=None):
 def fig_cascade(th):
     spacing = 8.0  # million km^2 between baselines -> shared scale across rows
     n = len(EMPIRES)
-    fig, ax = plt.subplots(figsize=(13.5, 28))
+    fig, ax = plt.subplots(figsize=(13.5, 29))
     fig.patch.set_facecolor(th["bg"])
     ax.set_facecolor(th["bg"])
 
