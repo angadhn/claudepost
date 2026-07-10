@@ -4,6 +4,20 @@
 // prompterUrl, model, blurb. Optional: meta (short stats line).
 const POSTS = [
   {
+    slug: "rockets-1",
+    title: "The Victorian Satellite",
+    date: "2026-07-10",
+    prompter: "Angadh Nanjangud",
+    prompterUrl: "https://angadh.com",
+    model: "Claude Fable 5 (xhigh)",
+    blurb: "Goddard's 1926 liquid rocket is a red herring: orbit is a speed, the " +
+      "speed was public in 1687, and the chemistry to buy it existed by 1890. The " +
+      "rocket equation, staged and priced era by era — with an animated Newton's " +
+      "cannonball, a launcher you design yourself, and a claim about the 61 years " +
+      "the world didn't bother.",
+    meta: "interactive · animated · 3 figures · ~11 min read",
+  },
+  {
     slug: "empires-2",
     title: "A Common Currency for Power",
     date: "2026-06-12",

@@ -201,6 +201,83 @@
     <p class="back"><a href="../empires-2/#ref-ex-2-3" data-dir>&#8617; back to chapter 2</a></p>
   </section>
 
+  <h2 id="ch3"><span class="ch">Chapter 3</span>The Victorian Satellite</h2>
+  <p class="chnote"><a href="../rockets-1/" data-dir>Read the chapter</a></p>
+
+  <section class="ex" id="ex-3-1">
+    <span class="no">Ex 3.1 · The rocket equation</span>
+    <p>Eq.&nbsp;<a href="../rockets-1/#eq-3-3" data-dir>(3.3)</a> says the velocity a
+    rocket gains equals its exhaust velocity times the logarithm of its mass ratio.
+    Take a cordite stage with exhaust velocity 2.06&nbsp;km/s that is two-thirds
+    propellant: it ignites at 3&nbsp;t and burns out at 1&nbsp;t:</p>
+    <div class="work">
+      Δv = 2.06 · ln(3&#8202;/&#8202;1) = 2.06 · 1.10 = <b>2.26&nbsp;km/s</b>
+    </div>
+    <p>Note what is <i>absent</i>: the rocket’s size. A 3-gram and a 3,000-tonne rocket
+    with the same mass ratio and exhaust gain exactly the same velocity — which is why
+    no amount of scaling-up rescues a weak propellant, and why the logarithm is called
+    a tyranny: to double the Δv you must <i>square</i> the mass ratio, 3 → 9. Go
+    <a href="https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation">here for more</a>.</p>
+    <p class="back"><a href="../rockets-1/#ref-ex-3-1" data-dir>&#8617; back to chapter 3</a></p>
+  </section>
+
+  <section class="ex" id="ex-3-2">
+    <span class="no">Ex 3.2 · Specific impulse ↔ exhaust velocity</span>
+    <p>Engineers quote propellant performance as “specific impulse” in seconds: how
+    long one kilogram of propellant can push with one kilogram-force of thrust. Multiply
+    by standard gravity, <math><msub><mi>g</mi><mn>0</mn></msub></math> =
+    9.81&nbsp;m/s², and you get the exhaust velocity of eq.&nbsp;<a
+    href="../rockets-1/#eq-3-3" data-dir>(3.3)</a>:</p>
+    <div class="work">
+      black powder: 70&nbsp;s × 9.81 ≈ <b>0.69&nbsp;km/s</b><br>
+      1890s double-base: 210&nbsp;s × 9.81 ≈ <b>2.06&nbsp;km/s</b><br>
+      kerosene–LOX: 280&nbsp;s × 9.81 ≈ <b>2.75&nbsp;km/s</b>
+    </div>
+    <p>The chapter’s whole argument sits in that middle line: smokeless powder tripled
+    the number that lives in the rocket equation’s exponent. Go
+    <a href="https://en.wikipedia.org/wiki/Specific_impulse">here for more</a>.</p>
+    <p class="back"><a href="../rockets-1/#ref-ex-3-2" data-dir>&#8617; back to chapter 3</a></p>
+  </section>
+
+  <section class="ex" id="ex-3-3">
+    <span class="no">Ex 3.3 · Why staging multiplies</span>
+    <p>Eqs.&nbsp;<a href="../rockets-1/#eq-3-4" data-dir>(3.4)</a>–<a
+    href="../rockets-1/#eq-3-5" data-dir>(3.5)</a> for the Victorian stack: five cordite
+    stages, exhaust velocity 2.06&nbsp;km/s, structure ε = 0.18, each stage delivering
+    9.4&#8202;/&#8202;5 = 1.88&nbsp;km/s:</p>
+    <div class="work">
+      per stage: λ = (e<sup>−1.88/2.06</sup> − 0.18)&#8202;/&#8202;(1 − 0.18)
+      = (0.401 − 0.18)&#8202;/&#8202;0.82 = 0.27<br>
+      whole stack: λ<sub>tot</sub> = 0.27⁵ ≈ 1.4 × 10⁻³ →
+      10&nbsp;kg needs 10&#8202;/&#8202;0.0014 ≈ <b>7&nbsp;tonnes</b>
+    </div>
+    <p>Each stage keeps 27% of its ignition mass as “payload” — the entire rest of the
+    rocket above it — and five such factors compound to a seven-thousandth. Staging
+    converts an impossible single mass ratio (e<sup>9.4/2.06</sup> ≈ 96) into five easy
+    ones (e<sup>1.88/2.06</sup> ≈ 2.5 each). Go
+    <a href="https://en.wikipedia.org/wiki/Multistage_rocket">here for more</a>.</p>
+    <p class="back"><a href="../rockets-1/#ref-ex-3-3" data-dir>&#8617; back to chapter 3</a></p>
+  </section>
+
+  <section class="ex" id="ex-3-4">
+    <span class="no">Ex 3.4 · Gravity loss (why 9.4, not 7.8)</span>
+    <p>Orbital speed at 200&nbsp;km is 7.8&nbsp;km/s, but eq.&nbsp;<a
+    href="../rockets-1/#eq-3-2" data-dir>(3.2)</a> charges ~9.4. The difference is
+    mostly gravity loss: while the rocket climbs, gravity subtracts
+    <math><mi>g</mi></math> from its acceleration every second, so thrust spent during
+    the climb is partly spent hovering. A rocket that spends ~150&nbsp;s ascending
+    steeply loses roughly</p>
+    <div class="work">
+      Δv<sub>gravity</sub> ≈ g · t<sub>climb</sub> ≈ 9.8&nbsp;m/s² × 150&nbsp;s ≈
+      <b>1.5&nbsp;km/s</b>
+    </div>
+    <p>(plus ~0.1–0.3 km/s of air drag). That is why rockets pitch over toward the
+    horizontal as early as the air allows — every second spent pointing up is rent paid
+    to gravity — and why a real trajectory is a “gravity turn.” Go
+    <a href="https://en.wikipedia.org/wiki/Gravity_loss">here for more</a>.</p>
+    <p class="back"><a href="../rockets-1/#ref-ex-3-4" data-dir>&#8617; back to chapter 3</a></p>
+  </section>
+
 </main>
 
 <footer class="prose">

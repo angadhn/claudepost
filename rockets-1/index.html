@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Victorian Satellite</title>
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9; --cursor:#8a857c;
+    --bp:#9c453a; --smk:#b3873e; --cmp:#2f629c; --liq:#2d7d52;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a; --cursor:#a09a8e;
+    --bp:#c25a3c; --smk:#b98a2c; --cmp:#5b8ed8; --liq:#3ba26b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.05rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
+  .wide{max-width:76rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:5rem 0 1rem}
+  h1{font-size:2.6rem; line-height:1.15; font-weight:600; margin:0 0 .6rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.15rem; margin:0 0 1rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.6rem}
+  .byline{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
+    color:var(--grey); margin:0 0 .4rem;
+  }
+  .byline .aim{
+    font-size:.7rem; border:1px solid var(--rule); border-radius:4px;
+    padding:.05rem .3rem; color:var(--grey); vertical-align:1px;
+  }
+  h2{font-size:1.5rem; font-weight:600; margin:3.2rem 0 .8rem; letter-spacing:-.01em}
+  h2 .no{color:var(--accent); font-style:italic; font-weight:400; margin-right:.4rem}
+  p{margin:0 0 1rem}
+  em.k{font-style:normal; border-bottom:1px solid var(--accent)}
+  figure{margin:2rem 0 0.5rem}
+  figure img{width:100%; height:auto; display:block; border-radius:4px}
+  figcaption{
+    font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif;
+    font-size:.85rem; color:var(--grey); line-height:1.5;
+    max-width:44rem; margin:.7rem auto 0; padding:0 .2rem;
+  }
+  hr{border:none; border-top:1px solid var(--rule); margin:3rem auto; max-width:44rem}
+  ol.claims{padding-left:1.3rem}
+  ol.claims li{margin-bottom: 1rem}
+  ol.claims b{font-weight:600}
+  .note{font-size:.92rem; color:var(--grey)}
+  footer{padding:2rem 0 4rem; color:var(--grey); font-size:.9rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  /* the prompt callout */
+  .callout{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:1rem 1.2rem; margin:1.8rem 0 0; font-size:.95rem;
+  }
+  .callout .tag{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:.5rem;
+  }
+  .callout p{margin:0 0 .7rem}
+  .callout p:last-child{margin-bottom:0}
+  .buildstats{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--grey); margin:.7rem 0 0; line-height:1.6;
+  }
+  .buildstats b{color:var(--fg); font-weight:600}
+
+  /* display math (native MathML — no JS, no external fonts) */
+  .eq{
+    margin:1.4rem auto 1.2rem; text-align:center; overflow:visible;
+    position:relative; padding:.3rem 3.2rem; scroll-margin-top:4rem;
+    border-radius:6px;
+  }
+  .eq math{
+    font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
+    font-size:1.06em;
+  }
+  .eq .eqno{
+    position:absolute; right:.4rem; top:50%; transform:translateY(-50%);
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.75rem;
+    color:var(--grey); text-decoration:none;
+  }
+  .eq .eqno:hover{color:var(--accent); text-decoration:none}
+  .eq:target{background:var(--card)}
+  @media (max-width:640px){ .eq{padding:.3rem 2.3rem} .eq math{font-size:.92em} }
+  sup.fn{font-size:.68em; line-height:0}
+  sup.fn a{padding:0 .12em}
+
+  /* left-margin table of contents, only when there's room */
+  #toc{display:none}
+  @media (min-width:1480px){
+    #toc{
+      display:block; position:fixed; left:1.4rem; top:50%;
+      transform:translateY(-50%); z-index:30;
+      font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    }
+    #toc a{
+      display:block; color:var(--grey); padding:.28rem 0; text-decoration:none;
+      border-left:2px solid var(--rule); padding-left:.7rem;
+    }
+    #toc a:hover{color:var(--accent); border-left-color:var(--accent)}
+    #toc a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+    #toc .roman{color:var(--accent); font-style:italic; margin-right:.35rem}
+  }
+
+  /* ---------- Newton's cannonball ---------- */
+  #cannon{
+    border:1px solid var(--rule); border-radius:8px; background:var(--card);
+    margin:1.6rem 0 .4rem; overflow:hidden;
+  }
+  #cannon svg{width:100%; height:auto; display:block}
+  #cannonBar{
+    display:flex; justify-content:space-between; align-items:baseline; gap:1rem;
+    padding:.55rem .9rem .7rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.84rem;
+  }
+  #cannonMsg{color:var(--fg)}
+  #cannonMsg b{font-variant-numeric:tabular-nums}
+  #cannonHint{color:var(--faint); font-size:.78rem; white-space:nowrap}
+
+  /* ---------- the lab ---------- */
+  #lab{
+    border:1px solid var(--rule); border-radius:8px; background:var(--card);
+    padding:1.1rem 1.2rem .9rem; margin:1.6rem 0 .4rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #lab .presets{display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.9rem}
+  #lab .presets button{
+    font:inherit; font-size:.78rem; padding:.3rem .7rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  #lab .presets button:hover{border-color:var(--accent); color:var(--accent)}
+  #lab .sliders{display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem 2rem}
+  #lab .sl{display:grid; grid-template-columns:11.5rem 1fr 4.6rem; gap:.7rem; align-items:center}
+  #lab .sl label{font-size:.82rem}
+  #lab .sl .w{font-size:.82rem; text-align:right; color:var(--grey); font-variant-numeric:tabular-nums}
+  #lab input[type=range]{width:100%; accent-color:var(--accent)}
+  @media (max-width:760px){ #lab .sliders{grid-template-columns:1fr} }
+  #verdict{
+    margin-top:1.1rem; padding:.8rem 1rem; border-radius:6px;
+    border:1px solid var(--rule); background:var(--bg);
+    font-size:.9rem; line-height:1.55;
+  }
+  #verdict .v-yes{color:var(--liq); font-weight:700}
+  #verdict .v-no{color:var(--bp); font-weight:700}
+  #verdict .nums{color:var(--grey); font-size:.84rem; margin-top:.25rem}
+  #massChart{margin-top:.9rem}
+  #massChart svg{width:100%; height:auto; display:block}
+  #massChart text{font-family:ui-sans-serif,-apple-system,sans-serif}
+  .hint{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--faint); text-align:right; margin:.2rem 0 0;
+  }
+
+  @media (max-width:640px){
+    body{font-size:.98rem}
+    header{padding-top:3.4rem}
+    h1{font-size:1.9rem}
+    .subtitle{font-size:1.02rem}
+    h2{font-size:1.25rem}
+    .prose,.wide{padding:0 1.1rem}
+    .hint{text-align:left}
+    #themeBtn{top:.7rem; right:.7rem}
+    #lab .sl{grid-template-columns:8.5rem 1fr 4.2rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<nav id="toc" aria-label="Contents">
+  <a href="#brief"><span class="roman">§</span>The prompt</a>
+  <a href="#sec1"><span class="roman">I.</span>Orbit is a speed</a>
+  <a href="#sec2"><span class="roman">II.</span>The ledger</a>
+  <a href="#sec3"><span class="roman">III.</span>The price</a>
+  <a href="#sec4"><span class="roman">IV.</span>The ingredients</a>
+  <a href="#sec5"><span class="roman">V.</span>The existence proof</a>
+  <a href="#sec6"><span class="roman">VI.</span>Your turn</a>
+  <a href="#sec7"><span class="roman">VII.</span>Claims</a>
+  <a href="#sec8"><span class="roman">VIII.</span>Method</a>
+</nav>
+
+<header class="prose">
+  <p class="backlink"><a href="../index.html">&#8592; All essays</a></p>
+  <h1>The Victorian Satellite</h1>
+  <p class="subtitle">Goddard is a red herring: how early a rocket could have
+  reached orbit, worked out with arithmetic.</p>
+  <p class="byline">By <a href="https://angadh.com">Angadh Nanjangud</a> (prompter)
+    &amp; Claude Fable&nbsp;5 <span class="aim">xhigh</span> (AI)</p>
+
+  <aside class="callout" id="brief">
+    <span class="tag">The prompt — verbatim, typos and all</span>
+    <p>“Alright, so I want you to study how we've got other posts laid out on this
+    website and use that to answer the following question in as much detail as
+    possible. Now, Goddard invented the liquid-fueled rocket in 1926 and that is the
+    discovery upon which, at least from what I understand, space launch hinges upon.
+    But this does not tell us how early a space rocket could have been invented, which
+    means it could have been both solid propelled or liquid propelled. And I'm curious
+    to see what you independently come up with. I want you to use this prompt and
+    present the information that you come up with in a manner done similar to the
+    other two posts. And then I want you to push these posts online and draw whatever
+    charts you think are necessary to justify your claims. Of course, the word doesn't
+    need to just be charts. It can be a bunch of other stuff as well. Just qualitative
+    analysis with figures and images and whatnot or literally just arguments. Use
+    whatever resources you want to use to make your point. You can make the
+    presentation more interesting by using animations and whatnot as well. So, yeah,
+    up to you. Take a decision.”</p>
+  </aside>
+
+  <p class="buildstats">
+    <b>Build:</b> one session (10 July 2026), ~55 minutes wall-clock ·
+    <b>tokens (estimated):</b> ≈1.5M in (mostly cached context re-reads, plus
+    rendering and visually inspecting every chart iteration) / ≈50k out (model code,
+    charts, page, narrative) · model: Claude&nbsp;Fable&nbsp;5.
+    Figures are estimates from the session log, not billing telemetry.
+  </p>
+
+  <p style="margin-top:1.6rem">The standard history says spaceflight became possible on
+  16 March 1926, in a cabbage field in Massachusetts, when Robert Goddard flew the
+  first liquid-fuelled rocket. This essay argues the standard history answers the
+  wrong question. Reaching orbit never required liquid fuel — solid rockets have done
+  it, including one with <em>no guidance system at all</em> — and once you price orbit
+  honestly, in the only currency that matters (exhaust velocity against the rocket
+  equation), the ingredients were all on the shelf by about 1896. What follows is the
+  arithmetic of that claim: where the wall really was, which invention actually
+  breached it, and why the world then waited sixty-one years.</p>
+</header>
+
+<section class="wide" id="sec1">
+  <h2 class="prose" style="padding:0"><span class="no">I.</span>Orbit is a speed, and the speed was public in 1687</h2>
+  <div class="prose" style="padding:0">
+    <p>The first honest thing to say about a satellite is that it is not <em>high</em>,
+    it is <em>fast</em>. Isaac Newton made the point with a thought experiment in the
+    1680s: fire a cannonball horizontally from a mountaintop and it lands some distance
+    away; fire it faster and it lands farther; fire it fast enough and the Earth’s
+    surface curves away beneath it exactly as fast as the ball falls toward it — and it
+    never lands. Orbit is falling, sideways, indefinitely.</p>
+  </div>
+
+  <div id="cannon">
+    <div id="cannonSvg"></div>
+    <div id="cannonBar">
+      <span id="cannonMsg">…</span>
+      <span id="cannonHint">click to fire the next shot</span>
+    </div>
+  </div>
+  <figure style="margin-top:.4rem">
+    <figcaption><b>Figure 1 (animated).</b> Newton’s cannonball, replayed. Each shot
+    leaves its trace; trajectories are integrated two-body orbits, drawn to scale for a
+    launch just above the atmosphere. The final shot, at 7.9&nbsp;km/s, never comes
+    down. This diagram — the complete concept of a satellite — was drawn by Newton in
+    <i>A Treatise of the System of the World</i>, written in the 1680s.</figcaption>
+  </figure>
+
+  <div class="prose" style="padding:0">
+    <p>Newton’s picture contains the requirement, and the requirement is a number. For
+    a circular orbit just above the atmosphere,</p>
+    <div class="eq" id="eq-3-1"><a class="eqno" href="#eq-3-1">(3.1)</a><math display="block"><mrow>
+      <msub><mi>v</mi><mtext>orb</mtext></msub>
+      <mo>=</mo>
+      <msqrt><mfrac><mi>μ</mi><mrow><mi>R</mi><mo>+</mo><mi>h</mi></mrow></mfrac></msqrt>
+      <mo>≈</mo>
+      <mn>7.8</mn><mtext>&#8201;km/s</mtext>
+    </mrow></math></div>
+    <p>where <math><mi>μ</mi></math> is the Earth’s gravitational parameter (its mass
+    times the constant of gravitation), <math><mi>R</mi></math> its radius, and
+    <math><mi>h</mi></math> the orbit’s altitude — say 200&nbsp;km, above the air. Every
+    quantity in (3.1) was measurable in the seventeenth century, and the answer has not
+    changed since. A real rocket must also pay tolls on the way up — it spends thrust
+    holding itself against gravity while it climbs, and loses a little to
+    drag<sup class="fn"><a id="ref-ex-3-4" href="../appendix/#ex-3-4" data-dir
+    title="Worked example in the appendix">4</a></sup> — so the full bill is</p>
+    <div class="eq" id="eq-3-2"><a class="eqno" href="#eq-3-2">(3.2)</a><math display="block"><mrow>
+      <mi>Δ</mi><msub><mi>v</mi><mtext>req</mtext></msub>
+      <mo>=</mo>
+      <msub><mi>v</mi><mtext>orb</mtext></msub>
+      <mo>+</mo>
+      <mi>Δ</mi><msub><mi>v</mi><mtext>gravity</mtext></msub>
+      <mo>+</mo>
+      <mi>Δ</mi><msub><mi>v</mi><mtext>drag</mtext></msub>
+      <mo>≈</mo>
+      <mn>9.4</mn><mtext>&#8201;km/s</mtext>
+    </mrow></math></div>
+    <p>(How to read it: <math><mi>Δ</mi><mi>v</mi></math>, “delta-vee,” is the total
+    change of velocity a rocket can generate — the universal currency of rocketry.
+    The two loss terms together run 1.3–1.9&nbsp;km/s for real vehicles; 9.4 is a
+    fair central price for a small launcher to low orbit.)</p>
+    <p>So by 1687 the target was, in principle, computable. By 1813 the other half of
+    the problem — what a rocket can actually deliver — was also in print: William
+    Moore, a mathematics master at the Royal Military Academy at Woolwich, published
+    the first treatise on rocket dynamics, deriving from Newton’s third law what we
+    now call the rocket equation. Here is the detail that should make you sit up:
+    <em class="k">Woolwich was simultaneously the home of the Congreve war rocket</em> —
+    Britain was mass-producing black-powder rockets in the same arsenal complex where
+    Moore taught. The equation and the factory shared a postcode for a decade. Nobody
+    multiplied them together, and — as the next section shows — it is a mercy nobody
+    did, because the arithmetic would have said <em>no</em>.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec2">
+  <h2 class="prose" style="padding:0"><span class="no">II.</span>The tyranny of the ledger</h2>
+  <div class="prose" style="padding:0">
+    <p>Moore’s result, in Tsiolkovsky’s modern
+    notation<sup class="fn"><a id="ref-ex-3-1" href="../appendix/#ex-3-1" data-dir
+    title="Worked example in the appendix">1</a></sup>:</p>
+    <div class="eq" id="eq-3-3"><a class="eqno" href="#eq-3-3">(3.3)</a><math display="block"><mrow>
+      <mi>Δ</mi><mi>v</mi>
+      <mo>=</mo>
+      <msub><mi>v</mi><mi>e</mi></msub>
+      <mo>&#8201;</mo>
+      <mi>ln</mi>
+      <mfrac><msub><mi>m</mi><mn>0</mn></msub><msub><mi>m</mi><mi>f</mi></msub></mfrac>
+      <mo>,</mo><mspace width="1.6em"></mspace>
+      <msub><mi>v</mi><mi>e</mi></msub>
+      <mo>=</mo>
+      <msub><mi>g</mi><mn>0</mn></msub>
+      <mo>&#8201;</mo>
+      <msub><mi>I</mi><mtext>sp</mtext></msub>
+    </mrow></math></div>
+    <p>How to read it: <math><msub><mi>m</mi><mn>0</mn></msub></math> is the rocket’s
+    mass at ignition, <math><msub><mi>m</mi><mi>f</mi></msub></math> what remains at
+    burnout, and <math><msub><mi>v</mi><mi>e</mi></msub></math> the speed of the
+    exhaust leaving the nozzle — equivalently the propellant’s <i>specific
+    impulse</i><sup class="fn"><a id="ref-ex-3-2" href="../appendix/#ex-3-2" data-dir
+    title="Worked example in the appendix">2</a></sup>
+    <math><msub><mi>I</mi><mtext>sp</mtext></msub></math> (in seconds) times standard
+    gravity <math><msub><mi>g</mi><mn>0</mn></msub></math>. The logarithm is the
+    tyranny: velocity grows only as the <em>log</em> of the mass you burn, so the mass
+    you need grows as the <em>exponential</em> of the velocity you want. And the
+    exponent has <math><msub><mi>v</mi><mi>e</mi></msub></math> in its denominator —
+    which is why exhaust velocity, not thrust, not size, not fuel state, is the one
+    number that decides who may go to space.</p>
+    <p>Two more facts complete the ledger. A stage is never all propellant: casing,
+    nozzle and fins claim a structural fraction <math><mi>ε</mi></math> of its mass,
+    so a single stage hits a hard ceiling no matter how large it grows. The escape from
+    the ceiling is staging — drop the empty casing and light a fresh rocket — an idea
+    already drawn by Conrad Haas in the 1550s and printed by Siemienowicz in 1650.
+    For a stack of <math><mi>N</mi></math> equal stages, each delivering
+    <math><mi>Δ</mi><msub><mi>v</mi><mi>s</mi></msub><mo>=</mo><mi>Δ</mi><msub><mi>v</mi><mtext>req</mtext></msub><mo>/</mo><mi>N</mi></math>,
+    the payload each stage can carry as a fraction of its own ignition mass is</p>
+    <div class="eq" id="eq-3-4"><a class="eqno" href="#eq-3-4">(3.4)</a><math display="block"><mrow>
+      <mi>λ</mi>
+      <mo>=</mo>
+      <mfrac>
+        <mrow>
+          <msup><mi>e</mi><mrow><mo>−</mo><mi>Δ</mi><msub><mi>v</mi><mi>s</mi></msub><mo>/</mo><msub><mi>v</mi><mi>e</mi></msub></mrow></msup>
+          <mo>−</mo><mi>ε</mi>
+        </mrow>
+        <mrow><mn>1</mn><mo>−</mo><mi>ε</mi></mrow>
+      </mfrac>
+    </mrow></math></div>
+    <p>and the whole stack multiplies<sup class="fn"><a id="ref-ex-3-3"
+    href="../appendix/#ex-3-3" data-dir title="Worked example in the appendix">3</a></sup>:</p>
+    <div class="eq" id="eq-3-5"><a class="eqno" href="#eq-3-5">(3.5)</a><math display="block"><mrow>
+      <msub><mi>λ</mi><mtext>tot</mtext></msub>
+      <mo>=</mo>
+      <msup><mi>λ</mi><mi>N</mi></msup>
+      <mo>=</mo>
+      <mfrac><msub><mi>m</mi><mtext>pay</mtext></msub><msub><mi>m</mi><mn>0</mn></msub></mfrac>
+      <mo>,</mo><mspace width="1.6em"></mspace>
+      <msub><mi>m</mi><mn>0</mn></msub>
+      <mo>=</mo>
+      <mfrac><msub><mi>m</mi><mtext>pay</mtext></msub><msub><mi>λ</mi><mtext>tot</mtext></msub></mfrac>
+    </mrow></math></div>
+    <p>(Indices, as always on this site: <math><mi>ε</mi></math> is dead weight per
+    stage as a fraction of that stage; <math><mi>λ</mi></math> is payload per stage;
+    <math><msub><mi>λ</mi><mtext>tot</mtext></msub></math> is satellite mass over
+    liftoff mass. When the exponential in (3.4) dips below <math><mi>ε</mi></math>,
+    the numerator goes negative: the stage cannot even lift its own casing through its
+    share of the journey, and <em>no amount of money makes the rocket bigger enough</em>.)
+    Equations (3.1)–(3.5) are the entire model behind every figure below; there is
+    nothing else in the machine.</p>
+    <p>Now feed the eras into the ledger. Black powder — the propellant of every rocket
+    from Song-dynasty fire arrows to Congreve’s barrage at Copenhagen — has
+    <math><msub><mi>v</mi><mi>e</mi></msub></math> ≈ 0.7&nbsp;km/s. Orbit at
+    9.4&nbsp;km/s is thirteen times the exhaust velocity, so a single stage would need
+    a mass ratio of <math><msup><mi>e</mi><mn>13.4</mn></msup></math> ≈ 660,000 — and
+    with period casings (<math><mi>ε</mi></math> ≈ 0.45; Congreve’s rockets were
+    roughly half iron case by weight) even infinite staging saturates below a quarter
+    of the requirement:</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="rocket_wall.png" data-dark="rocket_wall_dark.png"
+         src="rocket_wall.png" alt="Line chart: total delta-v attainable versus number of stages for four propellant and structure eras; black powder saturates near 2.4 km/s, smokeless powder crosses the 9.4 km/s orbit band at four to five stages">
+    <figcaption><b>Figure 2.</b> The wall. Total velocity an ideal staged rocket can
+    reach versus number of stages, carrying a 10&nbsp;kg satellite at payload fraction
+    10⁻³, from eq.&nbsp;(3.5). Adding black-powder stages flattens out hopelessly below
+    orbit — the curve is asymptotic, not merely slow — while 1890s smokeless powder in
+    steel crosses the orbit band at four to five stages. The dashed curve grants black
+    powder anachronistically perfect casings and it <em>still</em> stalls near half the
+    requirement.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>This chart settles the first historical question. <em class="k">The gunpowder
+    millennium never had a path to orbit.</em> Not Song China, not Mysore, not
+    Congreve’s Britain — not for want of ambition or treasure, but because 0.7&nbsp;km/s
+    of exhaust velocity cannot be staged, clustered, or financed into 9.4. Grant the
+    nineteenth century perfect casings and the ledger still demands about
+    <em>650&nbsp;million tonnes</em> of black powder for ten kilograms of satellite.
+    The wall was chemical, and it stood for a thousand years.</p>
+    <p>Then, in five years, chemistry knocked it down — for reasons that had nothing to
+    do with space. Vieille gelatinised nitrocellulose into smokeless powder (1884) so
+    French rifles would outrange German ones; Nobel’s ballistite (1887) and the British
+    cordite (1889) followed. Double-base powders burn with two to three times black
+    powder’s exhaust velocity — roughly 2.1&nbsp;km/s delivered through a proper
+    nozzle — and because <math><msub><mi>v</mi><mi>e</mi></msub></math> sits in the
+    exponent, tripling it doesn’t triple the prospects, it <em>transforms</em> them:
+    9.4&nbsp;km/s falls from thirteen exhaust-velocities to four and a half. And in a
+    tidy coincidence of the same decade, de Laval’s convergent–divergent nozzle (1888)
+    — invented for steam turbines — is precisely the device that converts a
+    propellant’s heat into that exhaust velocity efficiently.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec3">
+  <h2 class="prose" style="padding:0"><span class="no">III.</span>The price of orbit, by chemistry</h2>
+  <div class="prose" style="padding:0">
+    <p>Run eq.&nbsp;(3.5) for a 10&nbsp;kg satellite — a sphere with a battery and a
+    radio, Sputnik at seven-eighths scale — under each era’s chemistry and structures,
+    and the price list looks like this:</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="rocket_price.png" data-dark="rocket_price_dark.png"
+         src="rocket_price.png" alt="Log-scale chart of minimum liftoff mass to orbit a 10 kg satellite: about 7 tonnes for 1890s smokeless powder, 1 tonne for 1960 composites, 0.6 tonnes for kerosene-LOX, and about 10,000 tonnes for black powder even with perfect casings">
+    <figcaption><b>Figure 3.</b> Liftoff mass to put 10&nbsp;kg in orbit. Dots are the
+    idealised floor from eq.&nbsp;(3.5); shaded bands span ×1–4, which is where real
+    vehicles land (Scout flew at ×1.5 its floor, the unguided Lambda-4S at ×2.5–4).
+    Grey verticals are real objects for scale. The 1890s row is the finding: a
+    <em>Victorian</em> satellite launcher prices out at 7–30 tonnes — lighter than a
+    canal boat, in an era that riveted 18,000-tonne battleships.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Read the top row slowly, because it is the essay’s central number. With 1890s
+    double-base powder, 1890s steel, and a de Laval nozzle, five stages clear
+    9.4&nbsp;km/s with a payload fraction around
+    <math><mn>1.4</mn><mo>×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>3</mn></mrow></msup></math>:
+    a seven-tonne floor, call it twenty to thirty tonnes as built by people learning as
+    they went. That is not a Manhattan-Project object; it is <em>one large boiler</em>.
+    The same decade’s engineers were erecting the 7,300-tonne Eiffel Tower on schedule
+    and launching steel hulls a thousand times the mass of this rocket. Money and
+    fabrication were never the binding constraint after 1890; the constraint was that
+    no one asked.</p>
+    <p>The model is deliberately naive — equations (3.4)–(3.5) know nothing about
+    guidance electronics, interstages, or margin — so it is calibrated the honest way,
+    against vehicles that actually flew: Scout (1961, four solid stages, 21.5&nbsp;t)
+    flew at 1.5× its computed floor; Lambda-4S (1970, 9.4&nbsp;t) at 2.5–4×. The
+    Victorian claim inherits that band, which is why this essay says “twenty to thirty
+    tonnes,” not seven. The R-7 that launched Sputnik sits far off to the right at 267
+    tonnes — not because liquid fuel is heavy, but because it was an intercontinental
+    missile sized to throw a hydrogen warhead; the satellite was a passenger on a
+    weapon.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec4">
+  <h2 class="prose" style="padding:0"><span class="no">IV.</span>The ingredient list</h2>
+  <div class="prose" style="padding:0">
+    <p>If orbit was affordable from the 1890s, the question “how early could a space
+    rocket have been invented?” becomes a supply-chain question: list every technology
+    an all-solid satellite launcher actually needs, and date each one’s arrival.</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="rocket_ingredients.png" data-dark="rocket_ingredients_dark.png"
+         src="rocket_ingredients.png" alt="Timeline from 1550 to 1980 showing arrival dates of every enabling technology for an all-solid satellite launcher; the list completes by 1896, 61 years before Sputnik">
+    <figcaption><b>Figure 4.</b> Arrival dates of every prerequisite. Blue: the idea
+    (staging, the orbital requirement, the rocket equation). Red: hardware (iron then
+    steel casings, spin stabilisation, gyroscopes, radio). Gold: the chemistry.
+    Grey: what actually happened. Twelve years — 1884 to 1896 — deliver the final four
+    ingredients, none of them invented with the sky in mind.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Three readings. First, the ideas are <em class="k">ancient relative to the
+    hardware</em>: staging predates its chemistry by three centuries, the requirement
+    (Newton) by two, the rocket equation (Moore) by seventy years. Deep theory waited
+    on rifle propellant. Second, the enabling inventions arrive in a single burst —
+    smokeless powder 1884, ballistite 1887, de Laval nozzle 1888, cordite 1889, Obry’s
+    gyroscopic autopilot 1895 (already steering torpedoes, a guided missile of the
+    sea), Marconi’s radio 1896 (without which a satellite is unprovable — the last
+    ingredient is not propulsion but the ability to <em>hear</em> your success). By
+    1896 the list is complete. Third, the grey rows: from that completed list to
+    Sputnik is <em class="k">sixty-one years</em>, and when orbit finally happened it
+    was reached with liquid engines built for warheads, then re-achieved within
+    thirteen years by solid rockets so simple (Scout, Lambda-4S) that they would have
+    been legible — component by component — to a good engineer of 1900.</p>
+    <p>Note what Figure&nbsp;4 does to 1926. Goddard’s liquid-fuelled flight sits in
+    the grey rows, thirty years <em>after</em> the ingredient list closed — a landmark
+    of what came next (throttleable, restartable, high-energy engines; the road to the
+    Moon), not the opening of the door. The door had been standing open since the
+    1890s.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="prose" id="sec5">
+  <h2><span class="no">V.</span>The existence proof from 1970</h2>
+  <p>Counterfactuals are cheap; existence proofs are not, and this one is exact. On
+  11 February 1970, Japan’s Lambda-4S put the 24&nbsp;kg satellite Ohsumi into orbit.
+  The vehicle: 9.4 tonnes, <em class="k">every stage solid-fuelled</em>, spin-stabilised,
+  and — by deliberate national policy, to keep the university programme untouchable by
+  missile politics — <em class="k">flown without inertial guidance</em>. A gravity
+  turn, a spin, one pre-programmed attitude nudge before the final burn, and physics
+  did the rest. It failed four times between 1966 and 1969 before it worked, which is
+  the honest footnote every counterfactual needs: nothing here says <em>easy</em>;
+  everything here says <em>possible</em>.</p>
+  <p>Walk Lambda-4S’s parts list against Figure&nbsp;4. Solid propellant: 1890s
+  chemistry gets within ~15% of its performance. Steel and wound casings: Bessemer and
+  after. Spin stabilisation: Hale, 1844 — Victorian artillerists spun rockets as a
+  matter of course. Staging by timed pyrotechnics: fireworks masters, then
+  Siemienowicz. A radio beacon: Marconi. The only components a 1900 team could not
+  buy were the tracking radars that <em>watched</em> it — conveniences, not
+  requirements. That is the sense in which Goddard is a red herring: the first
+  satellite did not need his invention. Liquid fuel is what you need when you want to
+  orbit <em>tonnes</em> — people, cameras, warheads — cheaply and steerably. To make
+  a beacon exist in orbit, the solid path sufficed, and the solid path was open
+  decades earlier.</p>
+  <p>What would the Victorian programme actually have looked like? A 20–30 tonne,
+  five-stage stack of clustered cordite motors — the era could extrude cordite only in
+  sticks, so a first stage is thousands of sticks bundled in one steel chamber, or
+  dozens of Congreve-style unit motors ignited together: the programme’s hardest and
+  likeliest-fatal engineering problem, along with combustion instabilities nobody had
+  names for. Launch near the equator, spin the upper stages, sequence them with
+  clockwork fuzes, and listen for the beacon each pass. Optimistically — a competent
+  great-power arsenal starting in 1890 with Manhattan-style urgency — first success
+  plausibly falls around 1900–1910. Pessimistically, add a decade for the explosions.
+  Either way the physics had stopped saying no.</p>
+</section>
+
+<hr>
+
+<section class="wide" id="sec6">
+  <h2 class="prose" style="padding:0"><span class="no">VI.</span>Build your counterfactual launcher</h2>
+  <div class="prose" style="padding:0">
+    <p>Equations (3.4)–(3.5), live. Pick an era or set the dials yourself; the ledger
+    prices your rocket instantly. Drag the exhaust-velocity slider down to black powder
+    and watch the mass leave the chart — that cliff is the entire history of why
+    spaceflight waited for chemistry.</p>
+  </div>
+  <div id="lab">
+    <div class="presets" role="group" aria-label="Era presets">
+      <button data-p="70,45,6,10">1804 · Congreve black powder</button>
+      <button data-p="210,18,5,10">1895 · cordite &amp; steel</button>
+      <button data-p="250,11,4,10">1960 · composite solid (Scout)</button>
+      <button data-p="280,8,2,10">1957 · kerosene–LOX (R-7 class)</button>
+    </div>
+    <div class="sliders">
+      <div class="sl"><label for="sIsp">Specific impulse <i>I</i><sub>sp</sub></label>
+        <input type="range" id="sIsp" min="60" max="320" value="210"><span class="w" id="sIspV"></span></div>
+      <div class="sl"><label for="sEps">Structural fraction <i>ε</i></label>
+        <input type="range" id="sEps" min="5" max="50" value="18"><span class="w" id="sEpsV"></span></div>
+      <div class="sl"><label for="sN">Stages <i>N</i></label>
+        <input type="range" id="sN" min="1" max="16" value="5"><span class="w" id="sNV"></span></div>
+      <div class="sl"><label for="sPay">Satellite mass</label>
+        <input type="range" id="sPay" min="0" max="30" value="10"><span class="w" id="sPayV"></span></div>
+    </div>
+    <div id="verdict"></div>
+    <div id="massChart"></div>
+  </div>
+  <figure style="margin-top:.4rem">
+    <figcaption><b>Figure 5 (interactive).</b> Your launcher, priced by
+    eqs.&nbsp;<a href="#eq-3-4">(3.4)</a>–<a href="#eq-3-5">(3.5)</a> with
+    <math><mi>Δ</mi><msub><mi>v</mi><mtext>req</mtext></msub></math> = 9.4&nbsp;km/s.
+    The bar shows liftoff mass on a logarithmic scale against real objects; the shaded
+    extension is the ×1–4 engineering-reality band from Figure&nbsp;3. Everything
+    computes in your browser; nothing leaves the page.</figcaption>
+  </figure>
+</section>
+
+<hr>
+
+<section class="prose" id="sec7">
+  <h2><span class="no">VII.</span>Claims, carefully labelled as claims</h2>
+  <p class="note">Figures 2–5 are arithmetic from stated assumptions; what follows is
+  interpretation.</p>
+  <ol class="claims">
+    <li><b>Goddard is a red herring for the question “how early?”</b> Orbit never
+    required liquid fuel: Scout (1961) and Lambda-4S (1970) reached it on solids alone,
+    the latter without guidance. Liquid propulsion was the gate to <em>heavy</em>
+    spaceflight — people, platforms, the Moon — not to the existence of satellites.
+    Dating spaceflight’s possibility from 1926 mistakes the second story for the
+    first.</li>
+    <li><b>The true enabling invention was smokeless powder, 1884–1889.</b> Exhaust
+    velocity sits in the exponent of the rocket equation, and double-base propellant
+    tripled it — the only jump in the whole story that turns orbit from forbidden to
+    affordable. Spaceflight’s chemical threshold was crossed by men optimising rifle
+    cartridges, and nobody noticed for sixty years — the de Laval nozzle (1888),
+    needed to cash the chemistry into velocity, arrived the very next year for steam
+    turbines.</li>
+    <li><b>The gunpowder millennium never had a path.</b> With period casings, black
+    powder saturates near 2.4&nbsp;km/s at any size and any staging (Fig.&nbsp;2);
+    with impossibly perfect casings it still demands hundreds of millions of tonnes.
+    A Ming or Napoleonic space programme fails not on money or nerve but on
+    arithmetic. “Could rockets have appeared much earlier?” — as weapons, they did;
+    as space launchers, the answer is a clean no before ~1885.</li>
+    <li><b>Earliest plausible satellite: roughly 1905, give or take a decade.</b>
+    A 20–30 tonne, five-stage clustered-cordite vehicle was within the fabrication,
+    budget, and instrumentation reach of any great-power arsenal from about 1890
+    (radio, the last ingredient — and the one that makes success <em>audible</em> —
+    arrives 1896). The hard parts (large solid grains, ignition simultaneity,
+    combustion instability) cost explosions and years, not new science: Lambda-4S
+    itself failed four times. Sputnik-style spaceflight sat ~50–65 years ahead of its
+    history.</li>
+    <li><b>The 61-year gap was demand, not capability.</b> The requirement was
+    computable from 1687 and the means existed from 1896, yet orbit waited for the
+    hydrogen bomb to create a customer for 9,000-km rockets; the satellite rode to
+    space on a weapon’s budget. The rocket equation and the rocket factory had
+    already shared Woolwich for a decade in 1813 without speaking. The general lesson
+    for technological forecasting: <em class="k">arrival dates track incentives, not
+    possibility</em> — and the interesting question about our own moment is which
+    ingredient lists are already complete, waiting for their H-bomb.</li>
+  </ol>
+</section>
+
+<hr>
+
+<section class="prose" id="sec8">
+  <h2><span class="no">VIII.</span>Method &amp; honest caveats</h2>
+  <p class="note">The model is eqs.&nbsp;(3.1)–(3.5) and nothing more: ideal equal
+  <math><mi>Δ</mi><mi>v</mi></math>-split staging with era parameters
+  (<math><msub><mi>I</mi><mtext>sp</mtext></msub></math> effective over the ascent /
+  <math><mi>ε</mi></math>): black powder 70&nbsp;s / 0.45 in period casings (80&nbsp;s
+  / 0.10 in the counterfactually perfect ones); 1890s double-base 210&nbsp;s / 0.18;
+  1960 composite 250&nbsp;s / 0.11; kerosene–LOX 280&nbsp;s / 0.08.
+  <math><mi>Δ</mi><msub><mi>v</mi><mtext>req</mtext></msub></math> is fixed at
+  9.4&nbsp;km/s; low-thrust-to-weight designs would pay more gravity loss and small
+  vehicles more drag, both of which push the Victorian estimate toward its upper band.
+  The idealisation omits interstages, guidance mass, and margins, so all results are
+  quoted as a floor with a ×1–4 band calibrated on Scout (×1.5) and Lambda-4S
+  (×2.5–4). The biggest honest uncertainties in the 1890s scenario are large-grain
+  manufacture (cordite extruded in sticks; monolithic cast grains are a 1940s art),
+  combustion instability (not even named until the 20th century), and unguided
+  dispersion — all engineering-iteration risks rather than physical barriers, but a
+  sceptic may fairly move my “~1905” to “~1915”. Injection precision is graded
+  generously: an orbit that decays in months still counts as a satellite here, as
+  Sputnik’s did.</p>
+  <p class="note">History: dates and masses after standard references — Moore’s 1813
+  treatise (see W.&nbsp;Johnson’s commentary), Taylor’s and Sutton’s propulsion texts
+  for propellant performance, JAXA/ISAS records for Lambda-4S (9.4&nbsp;t, 24&nbsp;kg,
+  350×5,140&nbsp;km orbit), NASA for Scout, and the usual encyclopedic sources for the
+  invention dates in Figure&nbsp;4. Specific-impulse values for historical propellants
+  are necessarily approximate (black powder 60–100&nbsp;s depending on formulation;
+  double-base 200–235&nbsp;s delivered); the conclusions survive any value in those
+  ranges — the wall in Figure&nbsp;2 moves by millimetres.</p>
+  <p class="note">Charts generated by <a href="make_rocket_plots.py">make_rocket_plots.py</a>;
+  static versions: <a href="rocket_wall.png">Fig 2</a> ·
+  <a href="rocket_price.png">Fig 3</a> · <a href="rocket_ingredients.png">Fig 4</a>
+  (each also as <code>*_dark.png</code>). The cannonball and the launcher lab are
+  computed live on this page from the same equations.</p>
+</section>
+
+<footer class="prose">
+  <a href="../index.html">&#8592; All essays</a> ·
+  <a href="../appendix/#ch3" data-dir>Appendix: the math, just in time</a> ·
+  Made with Claude · July 2026 ·
+  Sources: W. Moore (1813); Sutton, <i>Rocket Propulsion Elements</i>; JAXA/ISAS; NASA.
+</footer>
+
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('img.themed').forEach(im=>{
+    im.src = dark ? im.dataset.dark : im.dataset.light;
+  });
+  drawCannon(); drawLab();
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+const startDark = urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+document.getElementById('themeBtn').addEventListener('click', ()=>applyTheme(!root.classList.contains('dark')));
+
+const css = v => getComputedStyle(root).getPropertyValue(v).trim();
+
+/* ---------- Newton's cannonball ---------- */
+/* Units: Earth radius = 1, mu = 1. Surface circular speed 1 = 7.91 km/s. */
+const CB = {
+  W: 720, H: 560, cx: 360, cy: 330, Rpx: 200,
+  r0: 1.05,                                  /* launch radius (exaggerated altitude) */
+  shots: [3.2, 5.2, 6.6, 7.9],               /* muzzle speeds, km/s */
+  KMS: 7.91,
+};
+function cbIntegrate(vkms){
+  const v = vkms / CB.KMS, dt = 0.004, pts = [];
+  let x = 0, y = CB.r0, vx = v, vy = 0, ang = 0, lastTh = Math.atan2(y, x);
+  for (let i = 0; i < 12000; i++){
+    /* leapfrog (kick-drift-kick) */
+    let r3 = Math.pow(x*x + y*y, 1.5);
+    vx -= 0.5*dt * x/r3;  vy -= 0.5*dt * y/r3;
+    x += dt*vx;  y += dt*vy;
+    r3 = Math.pow(x*x + y*y, 1.5);
+    vx -= 0.5*dt * x/r3;  vy -= 0.5*dt * y/r3;
+    const r = Math.hypot(x, y);
+    pts.push([x, y]);
+    const th = Math.atan2(y, x);
+    let d = th - lastTh; if (d > Math.PI) d -= 2*Math.PI; if (d < -Math.PI) d += 2*Math.PI;
+    ang += Math.abs(d); lastTh = th;
+    if (r < 1) return {pts, orbit:false, range: ang * 6371};
+    if (ang > 2*Math.PI*1.02) return {pts, orbit:true, range: null};
+    if (r > 3.2) return {pts, orbit:false, range: null};
+  }
+  return {pts, orbit:true, range:null};
+}
+const SHOTS = CB.shots.map(v => ({v, ...cbIntegrate(v)}));
+const cbX = p => CB.cx + p[0]*CB.Rpx;
+const cbY = p => CB.cy - p[1]*CB.Rpx;
+
+const cannonDiv = document.getElementById('cannonSvg');
+const cannonMsg = document.getElementById('cannonMsg');
+let cbShot = 0, cbIdx = 0, cbTimer = null, cbSvg, cbTrace, cbDot, cbDone = [];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function cbMsg(i, flying){
+  const s = SHOTS[i];
+  if (s.orbit) return `<b>${s.v.toFixed(1)} km/s</b> — the ground falls away as fast as the ball falls: <b>orbit</b>`;
+  const r = Math.round(s.range/100)*100;
+  return `<b>${s.v.toFixed(1)} km/s</b> — ${flying ? 'falls' : 'fell'} back ${r.toLocaleString()} km downrange`;
+}
+function drawCannon(){
+  cannonDiv.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  cbSvg = document.createElementNS(NS,'svg');
+  cbSvg.setAttribute('viewBox', `0 0 ${CB.W} ${CB.H}`);
+  const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag);
+    for (const a in attrs) el.setAttribute(a, attrs[a]); (parent||cbSvg).appendChild(el); return el; };
+  /* Earth */
+  mk('circle', {cx: CB.cx, cy: CB.cy, r: CB.Rpx, fill: css('--rule'), 'fill-opacity': .55,
+                stroke: css('--grey'), 'stroke-width': 1.2});
+  /* graticule hint */
+  mk('circle', {cx: CB.cx, cy: CB.cy, r: CB.Rpx*.72, fill:'none', stroke: css('--grey'),
+                'stroke-opacity': .25, 'stroke-width': .8});
+  /* Newton's mountain */
+  const mtop = CB.cy - CB.r0*CB.Rpx;
+  mk('path', {d: `M${CB.cx-16},${CB.cy-CB.Rpx+2} L${CB.cx},${mtop} L${CB.cx+16},${CB.cy-CB.Rpx+2} Z`,
+              fill: css('--grey'), 'fill-opacity': .8});
+  /* completed traces */
+  cbDone.forEach(i => {
+    const s = SHOTS[i];
+    mk('path', {d: 'M' + s.pts.filter((_,k)=>k%6===0).map(p=>cbX(p).toFixed(1)+','+cbY(p).toFixed(1)).join('L'),
+      fill:'none', stroke: css('--faint'), 'stroke-width': 1, 'stroke-opacity': .8});
+  });
+  cbTrace = mk('path', {fill:'none', stroke: css('--accent'), 'stroke-width': 1.8,
+                        'stroke-linecap':'round'});
+  cbDot = mk('circle', {r: 4.5, fill: css('--accent'), visibility: 'hidden'});
+  if (reduceMotion){       /* draw everything statically instead of animating */
+    SHOTS.forEach((s,i) => {
+      mk('path', {d: 'M' + s.pts.filter((_,k)=>k%6===0).map(p=>cbX(p).toFixed(1)+','+cbY(p).toFixed(1)).join('L'),
+        fill:'none', stroke: i===SHOTS.length-1 ? css('--accent') : css('--faint'),
+        'stroke-width': i===SHOTS.length-1 ? 1.8 : 1});
+    });
+    cannonMsg.innerHTML = SHOTS.map((s,i)=>`${s.v.toFixed(1)}`).join(' → ') +
+      ' km/s — only the last one never lands';
+    document.getElementById('cannonHint').textContent = '';
+  }
+  cannonDiv.appendChild(cbSvg);
+}
+function cbStep(){
+  const s = SHOTS[cbShot];
+  cbIdx = Math.min(cbIdx + Math.max(2, Math.ceil(s.pts.length/160)), s.pts.length);
+  const seg = s.pts.slice(0, cbIdx).filter((_,k)=>k%3===0);
+  cbTrace.setAttribute('d', 'M' + seg.map(p=>cbX(p).toFixed(1)+','+cbY(p).toFixed(1)).join('L'));
+  const last = s.pts[cbIdx-1];
+  cbDot.setAttribute('cx', cbX(last)); cbDot.setAttribute('cy', cbY(last));
+  cbDot.setAttribute('visibility','visible');
+  if (cbIdx >= s.pts.length){
+    cbDot.setAttribute('visibility', s.orbit ? 'visible' : 'hidden');
+    cannonMsg.innerHTML = cbMsg(cbShot, false);
+    cbDone.push(cbShot);
+    const next = (cbShot + 1) % SHOTS.length;
+    cbTimer = setTimeout(()=>{ if (next===0) cbDone = [];
+      cbShot = next; cbIdx = 0; drawCannon();
+      cannonMsg.innerHTML = cbMsg(cbShot, true); cbLoop(); }, s.orbit ? 2600 : 1100);
+    return;
+  }
+  cbTimer = requestAnimationFrame(cbStep);
+}
+function cbLoop(){ if (!reduceMotion) cbTimer = requestAnimationFrame(cbStep); }
+document.getElementById('cannon').addEventListener('click', ()=>{
+  if (reduceMotion) return;
+  cancelAnimationFrame(cbTimer); clearTimeout(cbTimer);
+  cbDone.push(cbShot);
+  cbShot = (cbShot + 1) % SHOTS.length; if (cbShot===0) cbDone = [];
+  cbIdx = 0; drawCannon(); cannonMsg.innerHTML = cbMsg(cbShot, true); cbLoop();
+});
+
+/* ---------- the launcher lab ---------- */
+const G0 = 9.80665, DVREQ = 9.4;
+const REFS = [
+  [0.66, 'a Model T Ford'],
+  [9.4, 'Lambda-4S'],
+  [21.5, 'Scout'],
+  [150, 'a blue whale'],
+  [267, 'the R-7 that launched Sputnik'],
+  [7300, 'the Eiffel Tower'],
+  [18120, 'HMS Dreadnought'],
+  [52000, 'the Titanic'],
+  [5.9e6, 'the Great Pyramid'],
+  [2.8e7, "the world's 1900 steel output"],
+];
+const sIsp = document.getElementById('sIsp'), sEps = document.getElementById('sEps'),
+      sN = document.getElementById('sN'), sPay = document.getElementById('sPay');
+const payKg = () => Math.round(Math.pow(10, sPay.value/10));   /* 1..1000 kg */
+function fmtMass(t){
+  if (t < 100) return t.toFixed(1) + ' t';
+  if (t < 1e6) return Math.round(t).toLocaleString('en-US') + ' t';
+  return (t/1e6).toPrecision(3) + ' million t';
+}
+function nearestRef(t){
+  let best = REFS[0], bd = 1e9;
+  REFS.forEach(r => { const d = Math.abs(Math.log10(t/r[0])); if (d < bd){ bd = d; best = r; }});
+  const k = t/best[0];
+  const kf = k >= 10 ? Math.round(k).toLocaleString('en-US') : k >= 1.15 ? k.toFixed(1) : null;
+  return kf ? `≈ ${kf} × ${best[1]}` : `≈ the mass of ${best[1]}`;
+}
+function drawLab(){
+  const isp = +sIsp.value, eps = +sEps.value/100, N = +sN.value, pay = payKg();
+  document.getElementById('sIspV').textContent = isp + ' s';
+  document.getElementById('sEpsV').textContent = sEps.value + '%';
+  document.getElementById('sNV').textContent = N;
+  document.getElementById('sPayV').textContent = pay + ' kg';
+  const ve = isp*G0/1000;
+  const lam = (Math.exp(-DVREQ/(N*ve)) - eps) / (1 - eps);
+  const v = document.getElementById('verdict');
+  let m0 = null;
+  if (lam <= 0){
+    const dvmax = N * ve * Math.log(1/eps);
+    v.innerHTML = `<span class="v-no">No mass reaches orbit.</span> Each stage must ` +
+      `deliver ${(DVREQ/N).toFixed(2)} km/s, but even a payload-free stage of this ` +
+      `propellant and casing tops out at ${(ve*Math.log(1/eps)).toFixed(2)} km/s. ` +
+      `The whole stack’s ceiling is ${dvmax.toFixed(1)} of the required ${DVREQ} km/s ` +
+      `— the rocket equation forecloses it at any size.` +
+      `<div class="nums">exhaust velocity ${ve.toFixed(2)} km/s · per-stage payload fraction ≤ 0</div>`;
+  } else {
+    const lt = Math.pow(lam, N);
+    m0 = pay/lt/1000;
+    v.innerHTML = `<span class="v-yes">Orbit is reachable.</span> Payload fraction ` +
+      `${lt.toExponential(1)}: your ${pay} kg satellite needs ` +
+      `<b>${fmtMass(m0)}</b> at liftoff (idealised floor) — ` +
+      `as built, expect ${fmtMass(m0)}–${fmtMass(4*m0)}. ` +
+      `At the floor, ${nearestRef(m0)}.` +
+      `<div class="nums">exhaust velocity ${ve.toFixed(2)} km/s · ` +
+      `${(DVREQ/N).toFixed(2)} km/s per stage · per-stage mass ratio ` +
+      `${Math.exp(DVREQ/(N*ve)).toFixed(2)} · per-stage payload fraction ${(100*lam).toFixed(1)}%</div>`;
+  }
+  /* log-scale mass bar */
+  const mc = document.getElementById('massChart');
+  mc.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 1080, H = 128, L = 10, R = 10;
+  const LO = -0.5, HI = 8;                 /* log10 tonnes: 0.3 t .. 100 Mt */
+  const svg = document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const mk=(tag,attrs)=>{ const el=document.createElementNS(NS,tag);
+    for(const a in attrs) el.setAttribute(a,attrs[a]); svg.appendChild(el); return el; };
+  const X = t => L + (Math.log10(t) - LO)/(HI - LO) * (W - L - R);
+  mk('line', {x1:L, x2:W-R, y1:78, y2:78, stroke:css('--rule'), 'stroke-width':1});
+  [1, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7].forEach(t=>{
+    mk('line', {x1:X(t), x2:X(t), y1:74, y2:82, stroke:css('--grey'), 'stroke-width':1});
+    const tx = mk('text', {x:X(t), y:96, 'text-anchor':'middle', 'font-size':11, fill:css('--grey')});
+    tx.textContent = t >= 1e6 ? (t/1e6)+'M t' : t >= 1000 ? (t/1000)+'k t' : t+' t';
+  });
+  [[9.4,'Lambda-4S'],[267,'R-7'],[7300,'Eiffel Tower'],[5.9e6,'Great Pyramid']].forEach(([t,lab],i)=>{
+    mk('line', {x1:X(t), x2:X(t), y1:34, y2:78, stroke:css('--rule'), 'stroke-width':1});
+    const tx = mk('text', {x:X(t), y: 26 - (i%2)*13, 'text-anchor':'middle', 'font-size':10.5,
+                           fill:css('--grey')});
+    tx.textContent = lab;
+  });
+  if (m0 != null && m0 > 0){
+    const x0 = X(Math.max(m0, Math.pow(10,LO)));
+    const x1 = X(Math.min(4*m0, Math.pow(10,HI)));
+    mk('rect', {x:x0, y:56, width:Math.max(x1-x0,2), height:16, rx:3,
+                fill:css('--accent'), 'fill-opacity':.28});
+    mk('circle', {cx:x0, cy:64, r:6, fill:css('--accent')});
+    const tx = mk('text', {x:Math.min(x0+4, W-150), y:48, 'font-size':11.5, fill:css('--accent'),
+                           'font-weight':'600'});
+    tx.textContent = 'your rocket: ' + fmtMass(m0);
+  } else {
+    const tx = mk('text', {x:W-R, y:50, 'text-anchor':'end', 'font-size':12,
+                           fill:css('--bp'), 'font-weight':'600'});
+    tx.textContent = 'off the scale — no finite rocket suffices →';
+  }
+  mc.appendChild(svg);
+}
+[sIsp, sEps, sN, sPay].forEach(s => s.addEventListener('input', drawLab));
+document.querySelectorAll('#lab .presets button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const [isp, eps, N, pay] = b.dataset.p.split(',').map(Number);
+    sIsp.value = isp; sEps.value = eps; sN.value = N; sPay.value = Math.round(10*Math.log10(pay));
+    drawLab();
+  });
+});
+
+applyTheme(startDark);
+if (!reduceMotion){ cannonMsg.innerHTML = cbMsg(0, true); cbLoop(); }
+
+/* ---------- TOC scrollspy ---------- */
+const tocLinks = [...document.querySelectorAll('#toc a')];
+const tocTargets = tocLinks.map(a => document.querySelector(a.getAttribute('href')));
+function spyToc(){
+  const probe = innerHeight * 0.35;
+  let act = 0;
+  tocTargets.forEach((el, i) => {
+    if (el && el.getBoundingClientRect().top <= probe) act = i;
+  });
+  if (innerHeight + scrollY >= document.body.scrollHeight - 8) act = tocLinks.length - 1;
+  tocLinks.forEach((a, i) => a.classList.toggle('active', i === act));
+}
+addEventListener('scroll', spyToc, {passive: true});
+spyToc();
+
+/* file:// can't resolve directory URLs — point them at index.html locally,
+   preserving any #fragment (e.g. cross-post equation links) */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>
