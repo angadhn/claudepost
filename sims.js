@@ -8,12 +8,13 @@ const SIMS = [
     prompter: "Angadh Nanjangud",
     prompterUrl: "https://angadh.com",
     model: "Claude Fable 5 (xhigh)",
-    blurb: "The whole planet, one alternate history at a time. Spin a hand-drawn " +
-      "globe and watch technologies ignite where they were born — fire arrows " +
-      "over Kaifeng, engines at Woolwich, iron rockets at Srirangapatna — then " +
-      "click any beacon to zoom into that province as an isometric diorama. In " +
-      "sugar-rocket worlds, the road to orbit runs through Damascus.",
-    meta: "globe + isometric provinces · geography-aware events · one world per run",
+    blurb: "History as a playable game. A director's camera flies the globe to " +
+      "each city as its moment comes; decision cards let you leave reality's " +
+      "path (the choice history made is always badged); a trajectory strip " +
+      "draws your run against ours; and the tech graph runs past Sputnik to " +
+      "Mars — so the verdict is the state of 2026. In good timelines humanity " +
+      "is multi-planet by the 1800s.",
+    meta: "director's camera · decision points · reality-vs-you strip · verdict at 2026",
   },
   {
     slug: "sims/skyline",
