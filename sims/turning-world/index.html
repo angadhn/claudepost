@@ -321,7 +321,8 @@
     <div class="prow"><span class="plab">decisions<em>pick one</em></span>
       <div class="chips" id="cMode">
         <button data-v="ask" class="on">ask me</button>
-        <button data-v="auto">auto-play (the world decides)</button>
+        <button data-v="hist">auto — as history did</button>
+        <button data-v="coin">auto — coin flips</button>
       </div>
       <button id="run">▶ Run</button>
     </div>
@@ -342,8 +343,11 @@
     wobble per run: <b>exact replay</b> — no wobble, every technology lands on its
     true date (orbit 1957, every time); <b>historical</b> — each run re-rolls
     history’s luck and the satellite wanders by decades; <b>chaotic</b> — the same
-    luck, roughly doubled. <b>Decisions</b>: at the crossroads the run either
-    pauses and asks you, or a coin answers and the tape keeps rolling.</p>
+    luck, roughly doubled. <b>Decisions</b>: at the crossroads the run
+    pauses and asks you (“ask me”), answers the way history answered
+    (“as history did”), or flips a coin (“coin flips”). For a hands-off replay of
+    exactly what happened, in the order it happened: <b>exact replay dice +
+    auto-as-history</b>.</p>
   </details>
 
   <div id="stage">
@@ -1254,11 +1258,13 @@ function maybeDecide(){
   for (const d of DECISIONS){
     if (decisionsTaken.some(x => x.id === d.id)) continue;
     if (YEAR >= d.year() && d.when()){
-      if (decideMode === 'auto'){
-        /* the world decides: a fresh coin, not the lag dice */
-        const o = d.options[Math.floor(Math.random() * d.options.length)];
-        caption(YEAR, `<i>the world decides:</i> ${o.label}` +
-          (o.hist ? ` <span style="color:var(--faint)">(as history did)</span>`
+      if (decideMode !== 'ask'){
+        /* hist: always the badged option; coin: a fresh flip, not the lag dice */
+        const o = decideMode === 'hist'
+          ? d.options.find(x => x.hist)
+          : d.options[Math.floor(Math.random() * d.options.length)];
+        caption(YEAR, `<i>${decideMode === 'hist' ? 'as history did' : 'the world decides'}:</i> ${o.label}` +
+          (o.hist ? ` <span style="color:var(--faint)">(what we did)</span>`
                   : ` <span style="color:var(--accent)">⑂ leaving our path</span>`));
         resolveDecision(d, o);
         return false;          /* keep the tape rolling this same frame */
@@ -1330,9 +1336,11 @@ function syncToggleUI(){
   const isOur = !TOGGLES.arts && !TOGGLES.steam && !TOGGLES.vision && !TOGGLES.luck;
   document.getElementById('worldSummary').innerHTML =
     `<b>This world:</b> ${el.join(' · ')}${isOur ? ' — our world' : ''}.<br>` +
-    `<b>Dice:</b> ${dice}. <b>Decisions:</b> ${decideMode === 'ask'
-      ? 'the run pauses and asks you at each crossroads'
-      : 'a coin answers each crossroads and the tape keeps rolling'}.`;
+    `<b>Dice:</b> ${dice}. <b>Decisions:</b> ${{
+      ask: 'the run pauses and asks you at each crossroads',
+      hist: 'every crossroads is answered the way history answered it — with exact-replay dice this reproduces our world precisely',
+      coin: 'a coin answers each crossroads and the tape keeps rolling',
+    }[decideMode]}.`;
 }
 document.querySelectorAll('#elements button[data-e]').forEach(b =>
   b.addEventListener('click', () => {
@@ -1458,7 +1466,9 @@ function showFin(){
        a destination, every belief-fed step limped at a third of its pace.</li>`);
   L.insertAdjacentHTML('beforeend', devs
     ? `<li>You left history’s path at ${devs} decision${devs > 1 ? 's' : ''} (⑂ on the strip below).</li>`
-    : `<li>You made every choice history made — this is reality’s corridor, re-rolled.</li>`);
+    : CFG.exact
+      ? `<li>Every choice as history made it, on exact dice — this is our world, replayed to the year.</li>`
+      : `<li>You made every choice history made — this is reality’s corridor, re-rolled.</li>`);
   fin.style.display = 'block';
 }
 
