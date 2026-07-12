@@ -1280,11 +1280,11 @@ function drawPath(){
     if (prev != null) s += `<line x1="${prev}" x2="${x}" y1="${YR}" y2="${YR}" stroke="${css('--grey')}" stroke-width="1.6" ${NODE[id].proj ? 'stroke-dasharray="4 3"' : ''}/>`;
     prev = x;
   }
-  for (const [id, lab] of MILES){
+  MILES.forEach(([id, lab], i) => {
     const x = xr(NODE[id].real);
     s += `<circle cx="${x}" cy="${YR}" r="3.4" fill="${css('--grey')}"/>` +
-      `<text x="${x}" y="${YR - 9}" text-anchor="middle" font-size="9" fill="${css('--grey')}">${lab}</text>`;
-  }
+      `<text x="${x}" y="${YR - (i % 2 ? 20 : 9)}" text-anchor="middle" font-size="9" fill="${css('--grey')}">${lab}</text>`;
+  });
   if (RUNT){
     prev = null;
     for (const [id] of MILES){
