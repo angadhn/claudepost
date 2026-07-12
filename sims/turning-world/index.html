@@ -228,6 +228,16 @@
     #hudYear{font-size:1.3rem}
     #hudEra{font-size:.8rem}
     #hudBtns button{font-size:.68rem; padding:.18rem .5rem}
+    /* the HUD wraps to a second row of buttons here: move the province
+       name below it, on a chip so it reads over the terrain */
+    #regionName{
+      top:4.9rem; background:var(--bg); border:1px solid var(--rule);
+      border-radius:99px; padding:.08rem .55rem; font-size:.78rem;
+    }
+    /* keep the cameo bubble clear of the captions: raise it, and cap each
+       caption to a single ellipsised line on small screens */
+    #cameo{bottom:5.6rem}
+    #caption div{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
     #hint{display:none}
     #themeBtn{top:.7rem; right:.7rem}
     /* escape the stage's overflow:hidden: pin cards to the viewport */
@@ -1365,7 +1375,7 @@ const SLOTS = {
            {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
            {node:'machine_tools', sprite:'factory', tx:4, ty:6.4},
            {node:'rocket_eq', sprite:'arsenal', tx:7, ty:6},
-           {node:'bessemer', sprite:'converter', tx:5.6, ty:8},
+           {node:'bessemer', sprite:'converter', tx:3, ty:7.8},
            {node:'radio', sprite:'mast', tx:8.6, ty:3.2, rings:[.5,.5,62]},
            {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
            {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
@@ -1519,11 +1529,12 @@ const CAMEO_LIFE = { kepler: [1591, 1634], cyrano: [1639, 1662],
                      newton: [1663, 1727], watt: [1756, 1819],
                      verne: [1848, 1905] };
 const cameoEl = document.getElementById('cameo');
-let cameoTimer = null;
+let cameoTimer = null, skipping = false;
 function showCameo(id, y){
   const c = CAMEOS[id];
   if (!c) return;
   spawnWalker(id, homeOf(id, y, CFG));
+  if (skipping) return;   /* walkers spawn, but no bubbles during a skip */
   const [b0, d0] = CAMEO_LIFE[c[0]];
   const line = (y >= b0 && y <= d0) ? c[1] : c[2];
   cameoEl.innerHTML = FACES[c[0]] + `<span class="who">${Math.round(y)} — ${line}</span>`;
@@ -1709,7 +1720,10 @@ function updateOutlook(){
     comps.sort((x, y) => x - y);
     const cm = comps[N >> 1];
     if (cm < TL.NEVER)
-      delta += ` <span style="opacity:.8">— tamed chlorates give castable propellant ~${Math.round(cm)}, decades early, yet orbit barely moves: chemistry without a programme is mostly inert</span>`;
+      delta += ` <span style="opacity:.8">— tamed chlorates give castable propellant ~${Math.round(cm)}, decades early, ${
+        Math.abs(dv) < 10
+          ? 'yet orbit barely moves: chemistry without a programme is mostly inert'
+          : `nudging orbit ~${Math.abs(dv)} yr ${dv > 0 ? 'earlier' : 'later'} — chemistry helps only where smokeless powder rolls late`}</span>`;
   }
   let frac;                                   /* 0 = grim, 1 = glorious */
   if (med >= TL.NEVER) frac = 0.02;
@@ -1749,6 +1763,7 @@ function startWorld(){
   clearTimeout(satTimer); satTimer = null;
   marsScene = null; moonCeleb = null;
   epilogueActive = false; epilogueDone = false; epilogueCap = 0;
+  clearTimeout(cameoTimer); cameoEl.classList.remove('show');
   document.getElementById('btnMars').style.display = 'none';
   document.getElementById('btnSkip').textContent = 'skip to 2026';
   camQueue = []; camTarget = null; specials = [];
@@ -1933,14 +1948,15 @@ function drawPath(){
       if (prev != null) s += `<line x1="${prev}" x2="${x}" y1="${YU}" y2="${YU}" stroke="${css('--accent')}" stroke-width="2"/>`;
       prev = x;
     }
-    for (const [id] of MILES){
+    MILES.forEach(([id], i) => {
       const v = RUNT[id];
-      if (v >= TL.NEVER) continue;
+      if (v >= TL.NEVER) return;
       const x = xr(v);
+      /* alternate label rows, like the "ours" row, so compressed runs stay legible */
       s += `<line x1="${xr(NODE[id].real)}" x2="${x}" y1="${YR + 5}" y2="${YU - 5}" stroke="${css('--faint')}" stroke-width=".8" stroke-dasharray="2 3"/>` +
         `<circle cx="${x}" cy="${YU}" r="3.4" fill="${css('--accent')}"/>` +
-        `<text x="${x}" y="${YU + 15}" text-anchor="middle" font-size="8.5" fill="${css('--accent')}">${Math.round(v)}</text>`;
-    }
+        `<text x="${x}" y="${YU + (i % 2 ? 24 : 13)}" text-anchor="middle" font-size="8.5" fill="${css('--accent')}">${Math.round(v)}</text>`;
+    });
   }
   s += `<line id="stripNow" x1="${xr(YEAR)}" x2="${xr(YEAR)}" y1="18" y2="${H2 - 18}" stroke="${css('--accent')}" stroke-width="1" opacity=".55"/>`;
   s += '</svg>';
@@ -1991,20 +2007,23 @@ function isoTick(dt, now){
       `<line x1="${x.toFixed(1)}" y1="${(y - 13).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y - 8).toFixed(1)}"/></g>` +
       `<circle cx="${x.toFixed(1)}" cy="${(y - 15).toFixed(1)}" r="2.2" style="fill:var(--fg);opacity:.75"/>`;
   }
-  for (const w of specials){
+  for (let wi = 0; wi < specials.length; wi++){
+    const w = specials[wi];
     if (w.region !== curRegion) continue;
     const dx = w.tx - w.x, dy = w.ty - w.y, dist = Math.hypot(dx, dy);
     if (dist < .05){ w.tx = 2.5 + Math.random() * 7; w.ty = 2.5 + Math.random() * 7; }
     else { w.x += dx / dist * w.sp * dt; w.y += dy / dist * w.sp * dt; }
     const [x, y] = tileXY(w.x, w.y);
     const step = Math.sin(now / 95 + w.x * 7) * 2.8;
+    /* stagger the name labels so clustered walkers stay legible */
+    const ly = y - 24 - (wi % 3) * 9;
     out += `<g style="stroke:${w.coat};stroke-width:2;opacity:.95">` +
       `<line x1="${x.toFixed(1)}" y1="${(y - 9).toFixed(1)}" x2="${(x + step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
       `<line x1="${x.toFixed(1)}" y1="${(y - 9).toFixed(1)}" x2="${(x - step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
       `<line x1="${x.toFixed(1)}" y1="${(y - 15).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y - 9).toFixed(1)}"/></g>` +
       `<circle cx="${x.toFixed(1)}" cy="${(y - 17).toFixed(1)}" r="2.6" style="fill:#e6cfae"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${(y - 19.5).toFixed(1)}" r="1.6" style="fill:${w.hat}"/>` +
-      `<text x="${x.toFixed(1)}" y="${(y - 24).toFixed(1)}" text-anchor="middle" font-size="8.5" style="fill:var(--fg);opacity:.85">${w.name}</text>`;
+      `<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="8.5" style="fill:var(--fg);opacity:.85">${w.name}</text>`;
   }
   isoFx.innerHTML = out;
   isoSvg.querySelectorAll('.shimmer').forEach(el => {
@@ -2077,19 +2096,26 @@ document.getElementById('run').addEventListener('click', startWorld);
 document.getElementById('btnAgain').addEventListener('click', () => {
   fin.style.display = 'none'; startWorld();
 });
-document.getElementById('btnClose').addEventListener('click', () => fin.style.display = 'none');
+document.getElementById('btnClose').addEventListener('click', () => {
+  fin.style.display = 'none';
+  /* playback is over: make the pause button reflect the stopped state */
+  if (!playing) document.getElementById('btnPause').textContent = 'resume';
+});
 document.getElementById('btnPause').addEventListener('click', e => {
   playing = !playing;
   e.target.textContent = playing ? 'pause' : 'resume';
   if (playing) lastTs = null;
+  else hudFf.textContent = '';   /* don't leave the ≫ glyph frozen on screen */
 });
 document.getElementById('btnSkip').addEventListener('click', () => {
   playing = false;
   if (epilogueActive){
     /* skip during the epilogue: jump straight to arrival */
+    skipping = true;
     while (EIDX < EVENTS.length && EVENTS[EIDX].y <= epilogueCap){
       YEAR = EVENTS[EIDX].y; onEvent(EVENTS[EIDX]); EIDX++;
     }
+    skipping = false;
     YEAR = epilogueCap;
     hudYear.textContent = Math.round(epilogueCap);
     hudFf.textContent = '';
@@ -2098,10 +2124,13 @@ document.getElementById('btnSkip').addEventListener('click', () => {
     return;
   }
   moonCeleb = null; marsScene = null;   /* no celebrations after a skip */
+  skipping = true;
   while (EIDX < EVENTS.length && EVENTS[EIDX].y <= PRESENT){
     YEAR = EVENTS[EIDX].y;
     onEvent(EVENTS[EIDX]); EIDX++;
   }
+  skipping = false;
+  clearTimeout(cameoTimer); cameoEl.classList.remove('show');
   moonCeleb = null; marsScene = null;
   YEAR = PRESENT;
   hudYear.textContent = PRESENT;
