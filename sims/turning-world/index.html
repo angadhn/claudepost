@@ -201,6 +201,7 @@
   <div id="panel">
     <div class="chips" id="worlds">
       <button data-w="our" class="on">our world</button>
+      <button data-w="exact">our world, exactly</button>
       <button data-w="sugar">the sugar rocket (1250)</button>
       <button data-w="nosteam">steam never invented</button>
       <button data-w="sugarnosteam">sugar rocket, no steam</button>
@@ -280,6 +281,15 @@ function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
 function gauss(rand){ let u=0,v=0;
   while(!u) u=rand(); while(!v) v=rand();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function rawLag(n){          /* uncalibrated lag: deterministic pass replays history */
+  let gate = TL.T0;
+  for (const g of n.groups){
+    let m = Infinity;
+    for (const p of g) m = Math.min(m, NODE[p].real);
+    gate = Math.max(gate, m);
+  }
+  return Math.max(n.real - gate, 1);
+}
 function arrivalTime(n, gate, work, active){
   const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
   const rate = tt => { let v = 1;
@@ -317,7 +327,7 @@ function simulate(cfg, rand){
         if (m > gate) gate = m;
       }
       if (!ok) continue;
-      const work = n.L0 * Math.exp(cfg.sigma * z[id]);
+      const work = cfg.exact ? rawLag(n) : n.L0 * Math.exp(cfg.sigma * z[id]);
       const arr = arrivalTime(n, gate, work, active);
       if (arr < barr){ barr = arr; bid = id; }
     }
@@ -339,6 +349,7 @@ const VISION_RULES = Y => [
   {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
 ];
 const WORLDS = {
+  exact:        () => ({rules: [], block: new Set(), sigma: 0, exact: true, vision: false}),
   our:          () => ({rules: [], block: new Set(), sigma: 0.14, vision: false}),
   sugar:        () => ({rules: VISION_RULES(1250), block: new Set(), sigma: 0.14, vision: true}),
   nosteam:      () => ({rules: [], block: new Set(TL.steam), sigma: 0.14, vision: false}),

@@ -257,6 +257,7 @@
     <div class="assump">
       <span class="q">Turbulence of history</span>
       <div class="chips" id="cSigma">
+        <button data-v="exact">none — replay history exactly</button>
         <button data-v="0.07">calm</button>
         <button data-v="0.14" class="on">historical</button>
         <button data-v="0.25">chaotic</button>
@@ -284,7 +285,11 @@
         assumptions create. Randomness comes from a seeded generator (mulberry32 +
         the <a href="https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform">Box–Muller
         transform</a>), so the seed on the end card reproduces a world exactly. The
-        chronicle sentences are pre-written templates keyed to each technology — not
+        “replay history exactly” setting bypasses the dice entirely and uses the raw
+        historical lags, so every technology lands on its real date and the satellite
+        flies in 1957 — the other settings answer “how else could it have gone?”,
+        that one confirms the machine knows how it <em>did</em> go. The chronicle
+        sentences are pre-written templates keyed to each technology — not
         generated text.</p>
         <p><b>Where AI does enter:</b> the model itself — the node list, the edges,
         the calibration procedure, this page — was written by Claude (Fable&nbsp;5)
@@ -362,6 +367,18 @@ function gauss(rand){ let u=0,v=0;
   while(!u) u=rand(); while(!v) v=rand();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
 
+/* uncalibrated lag: real year minus the year the last prerequisite fell in
+   real history — a deterministic pass with these reproduces history exactly */
+function rawLag(n){
+  let gate = TL.T0;
+  for (const g of n.groups){
+    let m = Infinity;
+    for (const p of g) m = Math.min(m, NODE[p].real);
+    gate = Math.max(gate, m);
+  }
+  return Math.max(n.real - gate, 1);
+}
+
 function arrivalTime(n, gate, work, active){
   const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
   const rate = tt => { let v = 1;
@@ -402,7 +419,7 @@ function simulate(cfg, rand){
         if (m > gate) gate = m;
       }
       if (!ok) continue;
-      let work = n.L0 * Math.exp(cfg.sigma * z[id]);
+      let work = cfg.exact ? rawLag(n) : n.L0 * Math.exp(cfg.sigma * z[id]);
       if (id === 'composite' && cfg.essonne && lucky) work /= 3;
       const arr = arrivalTime(n, gate, work, active);
       if (arr < barr){ barr = arr; bid = id; }
@@ -516,10 +533,12 @@ function buildCfg(){
     {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
   ] : [];
   const block = new Set(val('cSteam') === 'no' ? TL.steam : []);
+  const sig = val('cSigma');
   return {
     rules, block,
     essonne: val('cEssonne') === 'dice',
-    sigma: +val('cSigma'),
+    sigma: sig === 'exact' ? 0 : +sig,
+    exact: sig === 'exact',
     orbitGroups: val('cProof') === 'optical'
       ? NODE.orbit.groups.filter(g => !(g.length === 1 && g[0] === 'radio'))
       : null,
@@ -642,8 +661,10 @@ function showFinale(){
   notes.innerHTML = '';
   if (oy < TL.NEVER && oy <= END_YEAR){
     const d = Math.round(1957 - oy);
-    title.textContent = d > 0 ? `Orbit, ${Math.round(oy)}.` : `Orbit, ${Math.round(oy)}.`;
-    verdict.innerHTML = `This world put a satellite up
+    title.textContent = `Orbit, ${Math.round(oy)}.`;
+    verdict.innerHTML = Math.abs(d) < 1
+      ? `Right on our schedule — as it should be: you replayed history exactly.`
+      : `This world put a satellite up
       <span class="n">${Math.abs(d)} years ${d > 0 ? 'before' : 'after'}</span> ours did.`;
     yearBig.textContent = Math.round(oy);
   } else {
