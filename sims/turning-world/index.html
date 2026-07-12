@@ -1110,14 +1110,17 @@ const SPRITES = {
       '<line x1="' + x2 + '" y1="' + y2 + '" x2="' + x2 + '" y2="' + (y2 - 28) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
       '<line x1="' + (x2 - 6) + '" y1="' + (y2 - 25) + '" x2="' + (x2 + 6) + '" y2="' + (y2 - 25) + '" style="stroke:' + GY2 + ';stroke-width:1.6"/>' +
       '<path d="M' + x + ',' + (y - 25) + ' Q' + ((x + x2) / 2) + ',' + ((y + y2) / 2 - 18) + ' ' + x2 + ',' + (y2 - 25) + '" style="fill:none;stroke:' + GY2 + ';stroke-width:1.2"/>'; })(),
-  abbey: (tx, ty) => isoBox(tx + .05, ty + .25, .9, .5, 20, IT, IL, IR) +
-    roof(tx + .05, ty + .25, .9, .5, 20, 8, GY2) +
-    isoBox(tx, ty, .3, .3, 46, IT, IL, IR) + isoBox(tx, ty + .7, .3, .3, 46, IT, IL, IR) +
+  abbey: (tx, ty) => isoBox(tx + .05, ty + .25, .9, .5, 22, IT, IL, IR) +
+    roof(tx + .05, ty + .25, .9, .5, 22, 9, GY2) +
+    isoBox(tx, ty, .3, .3, 56, IT, IL, IR) + isoBox(tx, ty + .7, .3, .3, 56, IT, IL, IR) +
     (() => { const a = tileXY(tx + .15, ty + .15), b = tileXY(tx + .15, ty + .85);
       let st = '';
       for (const c of [a, b])
-        st += '<polygon points="' + c[0] + ',' + (c[1] - 56) + ' ' + (c[0] - 4) + ',' + (c[1] - 46) + ' ' + (c[0] + 4) + ',' + (c[1] - 46) + '" style="fill:' + IT + '"/>';
-      return st; })(),
+        st += '<polygon points="' + c[0] + ',' + (c[1] - 68) + ' ' + (c[0] - 5) + ',' + (c[1] - 56) + ' ' + (c[0] + 5) + ',' + (c[1] - 56) + '" style="fill:' + IT + '"/>' +
+          '<rect x="' + (c[0] - 1.2) + '" y="' + (c[1] - 52) + '" width="2.4" height="7" style="fill:' + IR + '"/>';
+      const m = tileXY(tx + .5, ty + .5);
+      return st + '<line x1="' + m[0] + '" y1="' + (m[1] - 31) + '" x2="' + m[0] + '" y2="' + (m[1] - 38) + '" style="stroke:' + GD2 + ';stroke-width:1.8"/>' +
+        '<line x1="' + (m[0] - 2.5) + '" y1="' + (m[1] - 35.5) + '" x2="' + (m[0] + 2.5) + '" y2="' + (m[1] - 35.5) + '" style="stroke:' + GD2 + ';stroke-width:1.8"/>'; })(),
   cathedral: (tx, ty) => isoBox(tx + .05, ty + .22, 1.05, .55, 22, IT, IL, IR) +
     roof(tx + .05, ty + .22, 1.05, .55, 22, 9, GY2) +
     isoBox(tx, ty, .28, .28, 38, IT, IL, IR) + isoBox(tx, ty + .72, .28, .28, 38, IT, IL, IR) +
@@ -1189,24 +1192,24 @@ const TERRA = {
 const TCOL = {g:'var(--terraG)', a:'var(--terraA)', w:'var(--terraW)',
               f:'var(--terraG)', d:'var(--terraD)', s:'var(--terraA)'};
 const SLOTS = {
-  china:  [{always:1, sprite:'gate', tx:2.4, ty:7.2},
+  china:  [{always:1, sprite:'gate', tx:2.4, ty:7.2, label:'Kaifeng Gate'},
            {always:1, sprite:'pagoda', tx:5, ty:4}, {always:1, sprite:'hut', tx:3.4, ty:6},
            {always:1, sprite:'hut', tx:7, ty:5.4},
            {node:'rocket_candy', sprite:'candyshop', tx:6.5, ty:7},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.4},
            {node:'orbit', sprite:'pad', tx:9, ty:6}],
-  levant: [{always:1, sprite:'mosque', tx:3.2, ty:7.3},
+  levant: [{always:1, sprite:'mosque', tx:3.2, ty:7.3, label:'Umayyad Mosque'},
            {always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
            {node:'acids', sprite:'alchemy', tx:5, ty:6, smoke:{dx:.62, dy:.45, off:32, tint:'var(--gold)'}},
            {node:'rocket_candy', sprite:'candyshop', tx:6.6, ty:5},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.6},
            {node:'orbit', sprite:'pad', tx:8.6, ty:6.4}],
-  mysore: [{always:1, sprite:'gopuram', tx:3, ty:7.2},
+  mysore: [{always:1, sprite:'gopuram', tx:3, ty:7.2, label:'Ranganathaswamy'},
            {always:1, sprite:'hut', tx:4, ty:4}, {always:1, sprite:'hut', tx:6.4, ty:3.4},
            {node:'mil_rockets', sprite:'arsenal', tx:5, ty:6},
            {node:'rocket_candy', sprite:'candyshop', tx:7, ty:5.6},
            {node:'sounding', sprite:'gantry', tx:8.4, ty:4}],
-  britain:[{always:1, sprite:'abbey', tx:2.3, ty:4.7},
+  britain:[{always:1, sprite:'abbey', tx:2.3, ty:4.7, label:'Westminster Abbey'},
            {always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'university', tx:4.6, ty:3},
            {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
            {node:'machine_tools', sprite:'factory', tx:4, ty:6.4},
@@ -1215,7 +1218,7 @@ const SLOTS = {
            {node:'radio', sprite:'mast', tx:8.6, ty:3.2, rings:[.5,.5,62]},
            {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
            {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
-  europe: [{always:1, sprite:'cathedral', tx:2.4, ty:5.6},
+  europe: [{always:1, sprite:'cathedral', tx:2.4, ty:5.6, label:'Notre-Dame'},
            {always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
            {node:'printing', sprite:'print', tx:6.2, ty:3},
            {node:'telescope', sprite:'obs', tx:7.8, ty:3.6},
@@ -1224,7 +1227,7 @@ const SLOTS = {
            {node:'delaval', sprite:'turbine', tx:6.4, ty:6.2},
            {node:'liquefaction', sprite:'lique', tx:8, ty:7.2},
            {node:'sounding', sprite:'gantry', tx:9.2, ty:5}],
-  america:[{always:1, sprite:'steeple', tx:7.4, ty:2.4},
+  america:[{always:1, sprite:'steeple', tx:7.4, ty:2.4, label:'Meeting House'},
            {always:1, sprite:'hut', tx:3.6, ty:4.4},
            {node:'interchange', sprite:'armory', tx:4.6, ty:3.2},
            {node:'telegraph', sprite:'tele', tx:6, ty:3},
@@ -1232,7 +1235,7 @@ const SLOTS = {
            {node:'rocket_candy', sprite:'candyshop', tx:4, ty:6.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:7},
            {node:'orbit', sprite:'pad', tx:8.4, ty:7}],
-  steppe: [{always:1, sprite:'yurts', tx:3.2, ty:6.3},
+  steppe: [{always:1, sprite:'yurts', tx:3.2, ty:6.3, label:'Yurt Camp'},
            {always:1, sprite:'hut', tx:4, ty:4.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:5},
            {node:'orbit', sprite:'pad', tx:7.4, ty:6.4}],
@@ -1264,9 +1267,11 @@ function buildRegion(key){
     const [sx, sy] = tileXY(s.tx + .55, s.ty + .55);
     blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">` +
       `<ellipse cx="${sx}" cy="${sy + 2}" rx="${TW * .95}" ry="${TH * .8}" style="fill:#000;opacity:.09"/>` +
-      SPRITES[s.sprite](s.tx, s.ty) + `</g>`;
+      SPRITES[s.sprite](s.tx, s.ty) +
+      (s.label ? `<text x="${sx}" y="${sy + TH + 11}" text-anchor="middle" font-size="9.5" style="fill:var(--fg);opacity:.75">${s.label}</text>` : '') +
+      `</g>`;
   });
-  isoDiv.innerHTML = `<svg viewBox="0 0 ${ISO_W} ${ISO_H}" preserveAspectRatio="xMidYMid meet">
+  isoDiv.innerHTML = `<svg viewBox="180 10 820 505" preserveAspectRatio="xMidYMid meet">
     <g id="terra">${tiles}</g><g id="deco">${deco}</g>
     <g id="blds">${blds}</g><g id="isofx"></g></svg>`;
   isoSvg = isoDiv.querySelector('svg');
