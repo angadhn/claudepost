@@ -299,7 +299,8 @@
         the <a href="https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform">Box–Muller
         transform</a>), so the seed on the end card reproduces a world exactly. The
         “replay history exactly” setting bypasses the dice entirely and uses the raw
-        historical lags, so every technology lands on its real date and the satellite
+        historical lags, so — with every other assumption at our world’s setting —
+        every technology lands on its real date and the satellite
         flies in 1957 — the other settings answer “how else could it have gone?”,
         that one confirms the machine knows how it <em>did</em> go. The chronicle
         sentences are pre-written templates keyed to each technology — not
@@ -645,7 +646,7 @@ function startWorld(cfg, reuseSeed){
   feed.innerHTML = ''; finale.style.display = 'none';
   document.getElementById('setup').style.display = 'none';
   document.getElementById('tape').style.display = 'block';
-  eraEl.textContent = eraOf(unlocked, CFG.block.size > 0);
+  eraEl.textContent = eraOf(unlocked, CFG.block.has('newcomen'));
   metersInit(); metersUpdate();
   playing = true; lastTs = null;
   document.getElementById('btnPause').textContent = 'pause';
@@ -671,7 +672,7 @@ function emit(ev){
   chronicle.push(`${Math.round(ev.y)} — ${
     (ev.special || (LINES[ev.n.id] || ev.n.label)).replace(/<[^>]+>/g, '')}`);
   metersUpdate();
-  eraEl.textContent = eraOf(unlocked, CFG.block.size > 0);
+  eraEl.textContent = eraOf(unlocked, CFG.block.has('newcomen'));
   const li = feed.lastElementChild;
   const r = li.getBoundingClientRect();
   if (r.bottom > innerHeight - 40) li.scrollIntoView({behavior: 'smooth', block: 'end'});
@@ -686,7 +687,8 @@ function tick(ts){
   const mult = gap > 60 ? 10 : gap > 18 ? 4 : 1;   /* time compression */
   ffwd.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
   YEAR += dt * BASE_SPEED * mult;
-  while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR){
+  while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR &&
+         EVENTS[EIDX].y <= END_YEAR){
     emit(EVENTS[EIDX]); EIDX++;
   }
   yearBig.textContent = Math.round(Math.min(YEAR, END_YEAR));
@@ -718,7 +720,7 @@ function showFinale(){
       lattice never closed.`;
   }
   const bits = [];
-  if (CFG.block.size) bits.push('The steam engine was never invented — and this world ' +
+  if (CFG.block.has('newcomen')) bits.push('The steam engine was never invented — and this world ' +
     (oy < TL.NEVER && oy <= END_YEAR ? 'reached orbit anyway.' : 'still didn’t need it for what it managed.'));
   if (CFG.visionOn) bits.push(`The vision event fired in ${CFG.visionYear}.`);
   if (CFG.essonne) bits.push(RUN.lucky
@@ -755,7 +757,9 @@ document.getElementById('btnPause').addEventListener('click', e => {
 });
 document.getElementById('btnSkip').addEventListener('click', () => {
   playing = false;
-  while (EIDX < EVENTS.length){ emit(EVENTS[EIDX]); EIDX++; }
+  while (EIDX < EVENTS.length && EVENTS[EIDX].y <= END_YEAR){
+    emit(EVENTS[EIDX]); EIDX++;
+  }
   YEAR = Math.min(RUN.t.orbit < TL.NEVER ? RUN.t.orbit : END_YEAR, END_YEAR);
   yearBig.textContent = Math.round(YEAR);
   showFinale();
@@ -771,7 +775,7 @@ document.getElementById('btnNew2').addEventListener('click', backToSetup);
 document.getElementById('btnAgain').addEventListener('click', () => startWorld(CFG));
 document.getElementById('btnCopy').addEventListener('click', e => {
   const head = `A world from the Tape Machine (claudepost.com/sims/tape-machine)\n` +
-    `Assumptions: vision ${CFG.visionOn ? CFG.visionYear : 'none'} · steam ${CFG.block.size ? 'never' : 'yes'}` +
+    `Assumptions: vision ${CFG.visionOn ? CFG.visionYear : 'none'} · steam ${CFG.block.has('newcomen') ? 'never' : 'yes'}` +
     ` · Essonne ${CFG.essonne ? 'coin' : 'history'} · proof ${CFG.orbitGroups ? 'optical' : 'radio'}` +
     ` · turbulence σ=${CFG.sigma} · seed ${RUN.seed}\n\n`;
   navigator.clipboard.writeText(head + chronicle.join('\n')).then(() => {

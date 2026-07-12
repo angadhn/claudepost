@@ -534,7 +534,8 @@ const capEl = document.getElementById('caption');
 const fin = document.getElementById('fin');
 let CFG = null, RUNT = null, EVENTS = [], EIDX = 0, YEAR = 1000,
     playing = false, unlocked = new Set(), lastTs = null, capTimer = null,
-    launchTimer = 0, satOn = false, bigLaunched = false, worldKey = 'our';
+    launchTimer = 0, satOn = false, bigLaunched = false, worldKey = 'our',
+    rafId = null;
 const BASE_SPEED = 26, END_YEAR = 2200;
 
 function pickWorld(){
@@ -554,6 +555,7 @@ function startWorld(){
     .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
   EIDX = 0; YEAR = 1000; unlocked = new Set();
   smoke = []; sources = []; rings = []; anims = {}; satOn = false;
+  rockets = [];
   bigLaunched = false; launchTimer = 3;
   drawScene();
   BUILDINGS.filter(b => b.always).forEach(b => reveal(b));
@@ -564,7 +566,7 @@ function startWorld(){
   document.getElementById('btnSkip').style.display = '';
   document.getElementById('btnPause').textContent = 'pause';
   playing = true; lastTs = null;
-  requestAnimationFrame(tick);
+  cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick);
 }
 
 function reveal(b){
@@ -593,7 +595,7 @@ function onEvent(ev){
     if (b.node === id || (b.nodeAny && b.nodeAny.includes(id))) reveal(b);
   });
   if (CAP[id]) caption(ev.y, CAP[id]);
-  const [era, sky] = eraOf(unlocked, CFG.block.size > 0);
+  const [era, sky] = eraOf(unlocked, CFG.block.has('newcomen'));
   hudEra.textContent = era;
   stage.dataset.era = sky;
   if (id === 'orbit'){ bigLaunched = false; }  /* the pad launch fires in fx loop */
@@ -673,7 +675,8 @@ function tick(ts){
     const mult = gap > 60 ? 9 : gap > 18 ? 4 : 1;
     hudFf.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
     YEAR += dt * BASE_SPEED * mult;
-    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR){
+    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR &&
+           EVENTS[EIDX].y <= END_YEAR){
       onEvent(EVENTS[EIDX]); EIDX++;
     }
     hudYear.textContent = Math.round(Math.min(YEAR, END_YEAR));
@@ -695,7 +698,7 @@ function tick(ts){
   }
   spawnSmoke(dt);
   fxRender(ts);
-  requestAnimationFrame(tick);
+  rafId = requestAnimationFrame(tick);
 }
 
 function showFin(){
@@ -705,7 +708,7 @@ function showFin(){
     const d = Math.round(1957 - oy);
     t.textContent = `Orbit, ${Math.round(oy)}.`;
     p.textContent = (d >= 0 ? `${d} years before ours` : `${-d} years after ours`) +
-      (CFG.block.size ? ' — and this town never built a steam engine.' : '.') +
+      (CFG.block.has('newcomen') ? ' — and this town never built a steam engine.' : '.') +
       ' The town keeps living below; the satellite keeps passing.';
   } else {
     t.textContent = 'The tape ran out.';
@@ -723,10 +726,12 @@ document.getElementById('btnPause').addEventListener('click', e => {
   e.target.textContent = playing ? 'pause' : 'resume';
 });
 document.getElementById('btnSkip').addEventListener('click', () => {
-  while (EIDX < EVENTS.length){ onEvent(EVENTS[EIDX]); EIDX++; }
+  while (EIDX < EVENTS.length && EVENTS[EIDX].y <= END_YEAR){
+    onEvent(EVENTS[EIDX]); EIDX++;
+  }
   YEAR = Math.min(RUNT.orbit < TL.NEVER ? RUNT.orbit : END_YEAR, END_YEAR);
   hudYear.textContent = Math.round(YEAR);
-  if (unlocked.has('orbit') && !bigLaunched){
+  if (unlocked.has('orbit') && RUNT.orbit <= END_YEAR && !bigLaunched){
     bigLaunched = true; rockets.push({x0: 1148, t: 0, big: true});
     setTimeout(() => { satOn = true; }, 2400);
   }
@@ -738,7 +743,7 @@ document.getElementById('btnSkip').addEventListener('click', () => {
 drawScene();
 BUILDINGS.filter(b => b.always).forEach(b =>
   svg.querySelector('#bld_' + b.id).classList.add('up'));
-requestAnimationFrame(tick);
+rafId = requestAnimationFrame(tick);
 
 /* file:// can't resolve directory URLs — point them at index.html locally */
 if (location.protocol === 'file:')

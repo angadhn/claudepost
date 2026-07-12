@@ -623,7 +623,10 @@ function arrivalTime(n, gate, work, active){
 function simulate(cfg, rand, presetZ){
   const t = {}, rem = new Set();
   for (const n of TL.nodes){
-    if (cfg.block.has(n.id)){ t[n.id] = TL.NEVER; continue; }
+    /* blocked nodes stay OUT of t during the loop so OR-groups they belong
+       to can't treat NEVER (9999) as a satisfiable gate; they get t=NEVER
+       after the loop so downstream reads stay defined */
+    if (cfg.block.has(n.id)) continue;
     if (n.start) t[n.id] = n.real; else rem.add(n.id);
   }
   const z = presetZ || {};
@@ -658,6 +661,7 @@ function simulate(cfg, rand, presetZ){
     }
   }
   for (const id of rem) t[id] = TL.NEVER;
+  for (const id of cfg.block) t[id] = TL.NEVER;
   return { t, z };
 }
 const VISION_RULES = Y => [
@@ -825,7 +829,7 @@ function project(lon, lat){
   };
 }
 
-let pings = [], satT = -1, moonAng = 0;
+let pings = [], satT = -1, moonAng = 0, satTimer = null;
 
 function drawGlobe(now){
   const darkG = root.classList.contains('dark');
@@ -1626,6 +1630,7 @@ function startWorld(){
   EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER)
     .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
   EIDX = 0; YEAR = 1000; unlocked = new Set(); pings = []; satT = -1; moonAng = 0;
+  clearTimeout(satTimer); satTimer = null;
   camQueue = []; camTarget = null; specials = [];
   finShown = false; fin.style.display = 'none';
   capQueue = [];
@@ -1661,7 +1666,7 @@ function onEvent(ev){
   showCameo(id, ev.y);
   if (CAP[id]) caption(ev.y, CAP[id] +
     ` <span style="color:var(--faint)">· ${r.name.split(' — ')[0]}</span>`);
-  hudEra.textContent = eraOf(unlocked, CFG.block.size > 0);
+  hudEra.textContent = eraOf(unlocked, CFG.block.has('newcomen'));
   if (view === 'region'){
     SLOTS[curRegion].forEach((s, i) => {
       if ((s.node === id || (s.nodeAny && s.nodeAny.includes(id))) &&
@@ -1675,7 +1680,8 @@ function onEvent(ev){
   if (id === 'orbit'){
     camQueue = [];
     if (view === 'region') backToGlobe();
-    setTimeout(() => { satT = 0; }, 1200);
+    clearTimeout(satTimer);
+    satTimer = setTimeout(() => { satT = 0; }, 1200);
   }
 }
 
@@ -1707,7 +1713,7 @@ function showFin(){
       ? `This world has been spacefaring ${d} years longer than ours.`
       : d < 0 ? `This world reached space ${-d} years later than ours.`
       : `Right on our schedule.`) +
-      (CFG.block.size ? ' No steam engine ever existed here.' : '');
+      (CFG.block.has('newcomen') ? ' No steam engine ever existed here.' : '');
     const rows = [['orbit','First satellite'],['crewed_orbit','First human in orbit'],
       ['moon_landing','Moon landing'],['station','Stations'],['reusable','Reusable rockets'],
       ['moon_base','Moon base'],['crewed_mars','Humans on Mars'],
@@ -1767,7 +1773,7 @@ function drawPath(){
     prev = null;
     for (const [id] of MILES){
       const v = RUNT[id];
-      if (v >= TL.NEVER) break;
+      if (v >= TL.NEVER) continue;   /* skip never-reached milestones; connect the reached ones */
       const x = xr(v);
       if (prev != null) s += `<line x1="${prev}" x2="${x}" y1="${YU}" y2="${YU}" stroke="${css('--accent')}" stroke-width="2"/>`;
       prev = x;
@@ -1923,7 +1929,8 @@ document.getElementById('btnSkip').addEventListener('click', () => {
   }
   YEAR = PRESENT;
   hudYear.textContent = PRESENT;
-  hudEra.textContent = eraOf(unlocked, CFG.block.size > 0);
+  hudEra.textContent = eraOf(unlocked, CFG.block.has('newcomen'));
+  clearTimeout(satTimer); satTimer = null;
   if (unlocked.has('orbit') && satT < 0) satT = 0;
   if (view === 'region') buildRegion(curRegion);
   drawPath();
