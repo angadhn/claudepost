@@ -450,6 +450,7 @@
       <p id="finP"></p>
       <ul id="finL"></ul>
       <div class="btns">
+        <button class="primary" id="btnMars" style="display:none">sail on to Mars →</button>
         <button class="primary" id="btnAgain">↻ new dice</button>
         <button id="btnClose">keep watching</button>
       </div>
@@ -476,7 +477,11 @@
       graph before the run (blocked nodes, added programmes, stretched or shortened
       lags); “history, exactly” disables the dice so every date is the true one,
       while “build a world” re-rolls each lag ±15% per run. The outlook meter runs
-      a small ensemble of the same simulation in advance and reports the median. The globe is
+      a small ensemble of the same simulation in advance and reports the median.
+      Runs are judged at 2026, but a world on course for Mars within a century of
+      today can sail on: the verdict card offers an epilogue that plays past the
+      present (capped at 2126) while the camera pulls back for the Earth-to-Mars
+      transfer. The globe is
       an orthographic projection of hand-encoded coastlines; the provinces are
       isometric SVG. Full model, calibration, and caveats in
       <a href="../../timelines-1/" data-dir>chapter 4</a>; the graph is
@@ -830,12 +835,94 @@ function project(lon, lat){
 }
 
 let pings = [], satT = -1, moonAng = 0, satTimer = null;
+/* Mars epilogue + Moon celebration state */
+let marsScene = null,      /* {mode:'epilogue'|'midtape', t0, prog, marsYear?} */
+    moonCeleb = null,      /* {start} — 4s dashed transfer arc to the Moon    */
+    epilogueActive = false, epilogueDone = false, epilogueCap = 0;
+const EPI_MAX = 2126;      /* the epilogue never sails past a century from now */
+
+/* a stylized Mars: red-ochre sphere, darker patches, polar cap, same
+   limb-shading treatment as the Earth globe */
+function drawMars(mx, my, r, now, arrived, alpha, darkG){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const base = darkG ? '#a1523a' : '#bd6647';
+  ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.fillStyle = base; ctx.fill();
+  ctx.strokeStyle = darkG ? '#6e3a28' : '#9c5236'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.clip();
+  ctx.fillStyle = darkG ? 'rgba(40,18,10,.35)' : 'rgba(90,35,18,.26)';
+  ctx.beginPath(); ctx.ellipse(mx - r * .3, my + r * .15, r * .42, r * .26, -.4, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(mx + r * .38, my - r * .1, r * .3, r * .18, .5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(mx + r * .05, my + r * .55, r * .34, r * .16, .2, 0, 7); ctx.fill();
+  ctx.fillStyle = darkG ? '#d9cfc0' : '#efe6d8';
+  ctx.beginPath(); ctx.ellipse(mx - r * .12, my - r * .78, r * .36, r * .17, .15, 0, 7); ctx.fill();
+  ctx.restore();
+  const g = ctx.createRadialGradient(mx - r * .35, my - r * .35, r * .2, mx, my, r);
+  g.addColorStop(0, 'rgba(255,255,255,0)');
+  g.addColorStop(1, darkG ? 'rgba(0,0,0,.34)' : 'rgba(90,40,20,.22)');
+  ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.fillStyle = g; ctx.fill();
+  if (arrived){
+    ctx.beginPath(); ctx.arc(mx, my, r + 6 + (now / 400 % 5), 0, 7);
+    ctx.strokeStyle = css('--accent'); ctx.globalAlpha = alpha * .55;
+    ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* dashed transfer arc with a small ship dot at parameter prog (0..1) */
+function drawTransfer(x0, y0, x1, y1, prog, now, alpha){
+  const cx2 = (x0 + x1) / 2, cy2 = Math.min(y0, y1) - Math.abs(x1 - x0) * 0.22;
+  const q = t => ({
+    x: (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx2 + t * t * x1,
+    y: (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy2 + t * t * y1 });
+  ctx.save(); ctx.globalAlpha = alpha * .8;
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(cx2, cy2, x1, y1);
+  ctx.strokeStyle = css('--faint'); ctx.lineWidth = 1.3; ctx.stroke();
+  ctx.setLineDash([]);
+  if (prog > 0){
+    const pc = Math.min(prog, 1);
+    ctx.globalAlpha = alpha * .45;
+    for (let k = 1; k <= 3; k++){
+      const b = q(Math.max(0, pc - k * .03));
+      ctx.beginPath(); ctx.arc(b.x, b.y, 3.4 - k * .8, 0, 7);
+      ctx.fillStyle = css('--accent'); ctx.fill();
+    }
+    ctx.globalAlpha = alpha;
+    const p = q(pc);
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.6, 0, 7);
+    ctx.fillStyle = css('--accent'); ctx.fill();
+  }
+  ctx.restore();
+}
 
 function drawGlobe(now){
   const darkG = root.classList.contains('dark');
   const seaC = darkG ? '#3b4a56' : css('--sea');
   const landC = darkG ? '#9a8d72' : css('--land');
   const edgeC = darkG ? '#6e6250' : css('--landEdge');
+  /* Mars transfer scene: ease the Earth smaller and left, raise Mars right */
+  let sceneE = 0;
+  if (marsScene){
+    if (marsScene.t0 == null) marsScene.t0 = now;
+    const mt = now - marsScene.t0;
+    let eIn = Math.min(1, mt / 1100);
+    if (marsScene.mode === 'midtape'){
+      marsScene.prog = Math.max(0, Math.min(1, (mt - 1100) / 2800));
+      if (mt > 6200) eIn = Math.max(0, 1 - (mt - 6200) / 900);
+      if (mt > 7100){ marsScene = null; eIn = 0; }
+    } else {
+      marsScene.prog = Math.max(0, Math.min(1,
+        (Math.min(YEAR, marsScene.marsYear) - PRESENT) /
+        Math.max(marsScene.marsYear - PRESENT, 1)));
+    }
+    sceneE = eIn < .5 ? 2 * eIn * eIn : 1 - Math.pow(-2 * eIn + 2, 2) / 2;
+  }
+  const sGCX = GCX, sRGL = RGL;
+  if (sceneE > 0){
+    GCX = sGCX - sceneE * (sGCX - CW * 0.26);
+    RGL = sRGL * (1 - 0.42 * sceneE);
+  }
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.clearRect(0, 0, CW, CHh);
   /* soft ground shadow, like the render */
@@ -933,9 +1020,24 @@ function drawGlobe(now){
         ctx.strokeStyle = css('--accent'); ctx.globalAlpha = .45; ctx.stroke();
         ctx.globalAlpha = 1;
       }
+      /* moon-landing celebration: 4s dashed transfer arc + pulsing beacon */
+      if (moonCeleb){
+        if (moonCeleb.start == null) moonCeleb.start = now;
+        const cp = (now - moonCeleb.start) / 4000;
+        if (cp >= 1) moonCeleb = null;
+        else {
+          const dx = mx - GCX, dy = my - GCY, hn = Math.hypot(dx, dy) || 1;
+          drawTransfer(GCX + dx / hn * RGL * 1.04, GCY + dy / hn * RGL * 1.04,
+                       mx - dx / hn * 11, my - dy / hn * 11,
+                       Math.min(1, cp / 0.62), now, 1);
+          ctx.beginPath(); ctx.arc(mx, my, 11 + (now / 300 % 5), 0, 7);
+          ctx.strokeStyle = css('--accent'); ctx.globalAlpha = .6 * (1 - cp * .5);
+          ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1;
+        }
+      }
     }
   }
-  if (unlocked.has('crewed_mars')){
+  if (unlocked.has('crewed_mars') && !marsScene){
     const mx = CW - 64, my = 58;
     ctx.beginPath(); ctx.arc(mx, my, 10, 0, 7);
     ctx.fillStyle = css('--red'); ctx.fill();
@@ -947,6 +1049,18 @@ function drawGlobe(now){
       ctx.fillStyle = css('--accent'); ctx.fill();
     }
   }
+  /* the transfer scene proper: Mars rises on the right, ship sails the arc */
+  if (marsScene && sceneE > 0){
+    const mr = sRGL * 0.52;
+    const mx = CW + mr + 20 - sceneE * (CW + mr + 20 - CW * 0.74);
+    const my = GCY - sRGL * 0.05;
+    const arrived = marsScene.prog >= 1;
+    const ang = Math.atan2(my - GCY, mx - GCX);
+    drawTransfer(GCX + Math.cos(ang) * RGL * 1.04, GCY + Math.sin(ang) * RGL * 1.04,
+                 mx - mr * 1.06, my - mr * 0.08, marsScene.prog, now, sceneE);
+    drawMars(mx, my, mr, now, arrived, sceneE, darkG);
+  }
+  GCX = sGCX; RGL = sRGL;
 }
 
 let holdUntil = 0;
@@ -963,6 +1077,7 @@ addEventListener('pointermove', e => {
 addEventListener('pointerup', e => {
   if (!dragging) return;
   dragging = false;
+  if (marsScene) return;   /* provinces are unreachable mid-transfer */
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
   for (const key in REGIONS){
@@ -1466,6 +1581,7 @@ const VISIT = new Set(['printing','sci_method','mil_rockets','newcomen',
   'moon_voyage','space_sf']);
 
 function directorTick(ts){
+  if (marsScene){ camTarget = null; return; }   /* no camera moves mid-transfer */
   if (!DIRECTOR || ts < holdUntil){ camTarget = null; return; }
   if (view === 'region'){
     if (directorZoomed && ts > dwellUntil){ backToGlobe(); camCooldown = ts + 1300; }
@@ -1631,6 +1747,10 @@ function startWorld(){
     .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
   EIDX = 0; YEAR = 1000; unlocked = new Set(); pings = []; satT = -1; moonAng = 0;
   clearTimeout(satTimer); satTimer = null;
+  marsScene = null; moonCeleb = null;
+  epilogueActive = false; epilogueDone = false; epilogueCap = 0;
+  document.getElementById('btnMars').style.display = 'none';
+  document.getElementById('btnSkip').textContent = 'skip to 2026';
   camQueue = []; camTarget = null; specials = [];
   finShown = false; fin.style.display = 'none';
   capQueue = [];
@@ -1682,6 +1802,14 @@ function onEvent(ev){
     if (view === 'region') backToGlobe();
     clearTimeout(satTimer);
     satTimer = setTimeout(() => { satT = 0; }, 1200);
+  }
+  if (id === 'moon_landing') moonCeleb = { start: null };
+  /* fast worlds reach Mars mid-tape: play the transfer scene right there,
+     then return to the normal globe view (handled in drawGlobe) */
+  if (id === 'crewed_mars' && !epilogueActive && !marsScene){
+    camQueue = [];
+    if (view === 'region') backToGlobe();
+    marsScene = { mode: 'midtape', t0: null, prog: 0 };
   }
 }
 
@@ -1736,8 +1864,35 @@ function showFin(){
     : CFG.exact
       ? `<li>Our world, replayed to the year — nothing bent, no dice.</li>`
       : `<li>History’s own elements, re-rolled with history’s luck.</li>`);
+  /* this world reaches Mars within a century of today: offer the epilogue */
+  document.getElementById('btnMars').style.display =
+    (!epilogueDone && !epilogueActive && RUNT.crewed_mars < TL.NEVER &&
+     RUNT.crewed_mars > PRESENT && RUNT.crewed_mars <= EPI_MAX) ? '' : 'none';
   fin.style.display = 'block';
 }
+
+/* ---------- the Mars epilogue: play on past 2026 to the transfer ---------- */
+function finishEpilogue(){
+  playing = false; hudFf.textContent = '';
+  epilogueActive = false; epilogueDone = true;
+  let line = `Epilogue — humans on Mars, <b>${Math.round(RUNT.crewed_mars)}</b>.`;
+  if (RUNT.mars_settlement < TL.NEVER && RUNT.mars_settlement <= epilogueCap)
+    line += ` A settled Mars follows in ${Math.round(RUNT.mars_settlement)}.`;
+  document.getElementById('finL').insertAdjacentHTML('beforeend', `<li>${line}</li>`);
+  document.getElementById('btnMars').style.display = 'none';
+  fin.style.display = 'block';
+}
+document.getElementById('btnMars').addEventListener('click', () => {
+  fin.style.display = 'none';
+  if (view === 'region') backToGlobe();
+  epilogueCap = Math.min(RUNT.crewed_mars + 4, EPI_MAX);
+  epilogueActive = true;
+  marsScene = { mode: 'epilogue', t0: null, prog: 0, marsYear: RUNT.crewed_mars };
+  document.getElementById('btnMars').style.display = 'none';
+  document.getElementById('btnSkip').textContent = 'skip to arrival';
+  document.getElementById('btnPause').textContent = 'pause';
+  playing = true; lastTs = null;
+});
 
 /* ---------- the trajectory strip (reality vs this run) ---------- */
 const MILES = [['printing','print'],['moon_voyage','Cyrano'],
@@ -1876,15 +2031,20 @@ function tick(ts){
   if (lastTs == null) lastTs = ts;
   const dt = Math.min((ts - lastTs) / 1000, 0.1); lastTs = ts;
   if (playing){
-    const nextY = EIDX < EVENTS.length ? EVENTS[EIDX].y : PRESENT;
+    const cap = epilogueActive ? epilogueCap : PRESENT;
+    const nextY = EIDX < EVENTS.length ? Math.min(EVENTS[EIDX].y, cap) : cap;
     const gap = nextY - YEAR;
-    const mult = gap > 60 ? 9 : gap > 18 ? 4 : 1;
-    hudFf.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
+    /* the epilogue cruises: the whole transfer lasts ~8s regardless of span */
+    const mult = epilogueActive
+      ? Math.max(0.06, (epilogueCap - PRESENT) / (BASE_SPEED * 8))
+      : gap > 60 ? 9 : gap > 18 ? 4 : 1;
+    hudFf.textContent = !epilogueActive && mult > 4 ? '≫≫'
+      : !epilogueActive && mult > 1 ? '≫' : '';
     YEAR += dt * BASE_SPEED * mult;
-    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR && EVENTS[EIDX].y <= PRESENT){
+    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR && EVENTS[EIDX].y <= cap){
       onEvent(EVENTS[EIDX]); EIDX++;
     }
-    hudYear.textContent = Math.round(Math.min(YEAR, PRESENT));
+    hudYear.textContent = Math.round(Math.min(YEAR, cap));
     if (stripCursor){
       const x = 60 + (Math.min(Math.max(YEAR, 1000), 2100) - 1000) / 1100 * (1160 - 60);
       stripCursor.setAttribute('x1', x); stripCursor.setAttribute('x2', x);
@@ -1899,8 +2059,10 @@ function tick(ts){
         }
       }
     }
-    if (YEAR >= PRESENT && !finShown){
+    if (!epilogueActive && YEAR >= PRESENT && !finShown){
       playing = false; hudFf.textContent = ''; finShown = true; showFin();
+    } else if (epilogueActive && YEAR >= epilogueCap){
+      finishEpilogue();
     }
   }
   directorTick(ts);
@@ -1923,10 +2085,24 @@ document.getElementById('btnPause').addEventListener('click', e => {
 });
 document.getElementById('btnSkip').addEventListener('click', () => {
   playing = false;
+  if (epilogueActive){
+    /* skip during the epilogue: jump straight to arrival */
+    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= epilogueCap){
+      YEAR = EVENTS[EIDX].y; onEvent(EVENTS[EIDX]); EIDX++;
+    }
+    YEAR = epilogueCap;
+    hudYear.textContent = Math.round(epilogueCap);
+    hudFf.textContent = '';
+    drawPath();
+    finishEpilogue();
+    return;
+  }
+  moonCeleb = null; marsScene = null;   /* no celebrations after a skip */
   while (EIDX < EVENTS.length && EVENTS[EIDX].y <= PRESENT){
     YEAR = EVENTS[EIDX].y;
     onEvent(EVENTS[EIDX]); EIDX++;
   }
+  moonCeleb = null; marsScene = null;
   YEAR = PRESENT;
   hudYear.textContent = PRESENT;
   hudEra.textContent = eraOf(unlocked, CFG.block.has('newcomen'));
