@@ -89,6 +89,7 @@
   }
   #panel .chips{display:flex; flex-wrap:wrap; gap:.4rem}
   #panel .chips button.ghost{border-style:dashed; color:var(--grey)}
+  #panel .prow.locked{opacity:.4; pointer-events:none}
   #worldSummary{
     font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.82rem;
     color:var(--grey); line-height:1.55; margin:.4rem 0 .3rem;
@@ -283,6 +284,13 @@
     toggle of some kind that explains how this is relevant to what we're doing here
     specifically. Because I suspect Cleodynamics is a generic tool, not something
     specific to just this kind of study that we're doing here.”</p>
+    <p>“And I suspect that maybe the ordering of these items should also be
+    different, because if someone selects exact history, then it should select the
+    right elements in the stuff that we can actually control. Right? Like, the
+    variables. And if you select custom or something like that, then you can start
+    choosing what you want to add and what you don't want to add. Does that make
+    sense? And maybe you should have an explainer for this dice business because I
+    still don't get it. but I haven't read the latest version.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -302,7 +310,13 @@
 
 <main class="prose">
   <div id="panel">
-    <div class="prow"><span class="plab">world elements<em>combine any</em></span>
+    <div class="prow"><span class="plab">mode<em>pick one</em></span>
+      <div class="chips" id="cStart">
+        <button data-v="exact" class="on">history, exactly</button>
+        <button data-v="custom">build a world</button>
+      </div>
+    </div>
+    <div class="prow lockable"><span class="plab">world elements<em>combine any</em></span>
       <div class="chips" id="elements">
         <button data-e="arts">silence the arts</button>
         <button data-e="steam">delete steam</button>
@@ -311,19 +325,21 @@
         <button id="reset" class="ghost">↺ our world</button>
       </div>
     </div>
-    <div class="prow"><span class="plab">the dice<em>pick one</em></span>
+    <div class="prow lockable"><span class="plab">the dice<em>pick one</em></span>
       <div class="chips" id="cSigma">
         <button data-v="exact">exact replay</button>
         <button data-v="hist" class="on">historical</button>
         <button data-v="chaos">chaotic</button>
       </div>
     </div>
-    <div class="prow"><span class="plab">decisions<em>pick one</em></span>
+    <div class="prow lockable"><span class="plab">decisions<em>pick one</em></span>
       <div class="chips" id="cMode">
         <button data-v="ask" class="on">ask me</button>
         <button data-v="hist">auto — as history did</button>
         <button data-v="coin">auto — coin flips</button>
       </div>
+    </div>
+    <div class="prow"><span class="plab"></span>
       <button id="run">▶ Run</button>
     </div>
   </div>
@@ -338,17 +354,26 @@
     chlorates a century early. Every combination is a valid world — all sixteen
     permutations run, including “vision without arts or steam” (a funded programme
     substitutes for the missing literature). ↺ resets everything to our world.</p>
-    <p class="lg"><b>The dice exist because history’s timings were not fated.</b>
-    Every technology arrives after a lag, and the dice set how much each lag can
-    wobble per run: <b>exact replay</b> — no wobble, every technology lands on its
-    true date (orbit 1957, every time); <b>historical</b> — each run re-rolls
-    history’s luck and the satellite wanders by decades; <b>chaotic</b> — the same
-    luck, roughly doubled. <b>Decisions</b>: at the crossroads the run
-    pauses and asks you (“ask me”), answers the way history answered
-    (“as history did”), or flips a coin (“coin flips”). For a hands-off replay of
-    exactly what happened, in the order it happened: <b>exact replay dice +
-    auto-as-history</b>.</p>
-  </details>
+    <p class="lg"><b>The dice, concretely.</b> Take Watt’s engine. The graph says
+    it became <em>possible</em> once Newcomen’s engine and precision boring existed;
+    history then took about forty more years to actually build it. Was forty the
+    only possible number? Surely not — a richer patron, an earlier bankruptcy, a
+    duel, and it’s twenty-five or sixty. Every technology has such a
+    “time-from-possible-to-done,” and the dice decide what happens to those numbers
+    each run: <b>exact replay</b> keeps every one at its historical value, so
+    everything lands on its true date (orbit 1957, every time); <b>historical</b>
+    wobbles each by roughly ±15% — a 40-year step becomes anything from ~34 to
+    ~47 — and because each step waits on the ones before it, small wobbles compound
+    into decades by the twentieth century (the satellite typically lands anywhere
+    from the 1890s to the 2020s); <b>chaotic</b> doubles the wobble. The dice never
+    change <em>what needs what</em> — only how long each step happens to take.</p>
+    <p class="lg"><b>Mode</b> is the master switch above everything: “history,
+    exactly” locks the rows to the settings that reproduce our world (all elements
+    off, exact dice, decisions as history made them) — nothing to configure, just
+    press Run. “Build a world” unlocks the rows. <b>Decisions</b>: at each
+    crossroads the run pauses and asks you (“ask me”), answers as history did, or
+    flips a coin.</p>
+    </details>
 
   <div id="stage">
     <div id="globeWrap"><canvas id="globe"></canvas></div>
@@ -1316,12 +1341,30 @@ let CFG = null, RUNT = null, Z = null, EVENTS = [], EIDX = 0, YEAR = 1000,
     worldKey = 'our', finShown = false, capQueue = [];
 const BASE_SPEED = 26, PRESENT = 2026;
 
-let decideMode = 'ask';
+let decideMode = 'hist';
+let startMode = 'exact';
+function applyStartMode(){
+  const exact = startMode === 'exact';
+  if (exact){
+    Object.assign(TOGGLES, {arts:false, steam:false, vision:false, luck:false, dice:'exact'});
+    decideMode = 'hist';
+  } else {
+    if (TOGGLES.dice === 'exact') TOGGLES.dice = 'hist';
+    decideMode = 'ask';
+  }
+  document.querySelectorAll('#cStart button').forEach(b =>
+    b.classList.toggle('on', b.dataset.v === startMode));
+  document.querySelectorAll('#panel .prow.lockable').forEach(r =>
+    r.classList.toggle('locked', exact));
+  syncToggleUI();
+}
 function syncToggleUI(){
   document.querySelectorAll('#elements button[data-e]').forEach(b =>
     b.classList.toggle('on', !!TOGGLES[b.dataset.e]));
   document.querySelectorAll('#cSigma button').forEach(b =>
     b.classList.toggle('on', b.dataset.v === TOGGLES.dice));
+  document.querySelectorAll('#cMode button').forEach(b =>
+    b.classList.toggle('on', b.dataset.v === decideMode));
   const el = [
     TOGGLES.arts ? 'the arts are silenced' : 'the arts flourish',
     TOGGLES.steam ? 'steam is never invented' : 'steam exists',
@@ -1334,6 +1377,13 @@ function syncToggleUI(){
     chaos: 'chaotic — the luck swings are doubled',
   }[TOGGLES.dice];
   const isOur = !TOGGLES.arts && !TOGGLES.steam && !TOGGLES.vision && !TOGGLES.luck;
+  if (startMode === 'exact'){
+    document.getElementById('worldSummary').innerHTML =
+      '<b>History, exactly:</b> nothing to choose — every technology on its true ' +
+      'date, every crossroads answered as history answered it. Press Run and ' +
+      'watch our world happen. Switch to <b>build a world</b> to start bending it.';
+    return;
+  }
   document.getElementById('worldSummary').innerHTML =
     `<b>This world:</b> ${el.join(' · ')}${isOur ? ' — our world' : ''}.<br>` +
     `<b>Dice:</b> ${dice}. <b>Decisions:</b> ${{
@@ -1342,6 +1392,8 @@ function syncToggleUI(){
       coin: 'a coin answers each crossroads and the tape keeps rolling',
     }[decideMode]}.`;
 }
+document.querySelectorAll('#cStart button').forEach(b =>
+  b.addEventListener('click', () => { startMode = b.dataset.v; applyStartMode(); }));
 document.querySelectorAll('#elements button[data-e]').forEach(b =>
   b.addEventListener('click', () => {
     TOGGLES[b.dataset.e] = !TOGGLES[b.dataset.e];
@@ -1354,12 +1406,8 @@ document.getElementById('reset').addEventListener('click', () => {
 document.querySelectorAll('#cSigma button').forEach(b =>
   b.addEventListener('click', () => { TOGGLES.dice = b.dataset.v; syncToggleUI(); }));
 document.querySelectorAll('#cMode button').forEach(b =>
-  b.addEventListener('click', () => {
-    document.querySelectorAll('#cMode button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); decideMode = b.dataset.v;
-    syncToggleUI();
-  }));
-syncToggleUI();
+  b.addEventListener('click', () => { decideMode = b.dataset.v; syncToggleUI(); }));
+applyStartMode();
 
 function startWorld(){
   CFG = cfgFromToggles();
