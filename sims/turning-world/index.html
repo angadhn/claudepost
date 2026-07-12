@@ -340,6 +340,9 @@
     universe to retain the persons that get born but have their deaths also in
     there because that also affects what gets invented when and where. Uh, but I
     think now it starts to get really complicated.”</p>
+    <p>“The Essone Luck does not seem to be doing much in fact it does nothing at
+    all to the optimism nadir from what I can tell by visually inspecting
+    things.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -1552,31 +1555,56 @@ function updateOutlook(){
     return;
   }
   const cfg = cfgFromToggles();
-  const N = 14;
-  const orbits = [], mars = [];
+  const N = 28;
+  const orbits = [], mars = [], comps = [];
   for (let k = 0; k < N; k++){
     const t = simulate(cfg, mulberry32(777 + k * 131)).t;
     orbits.push(t.orbit);
     mars.push(t.crewed_mars);
+    comps.push(t.composite);
   }
   orbits.sort((a, b) => a - b);
   const med = orbits[N >> 1];
   const marsPct = Math.round(mars.filter(v => v <= 2026).length / N * 100);
   const satPct = Math.round(orbits.filter(v => v <= 2026).length / N * 100);
+  /* our-world baseline, computed once, for honest small-effect deltas */
+  if (!updateOutlook.base){
+    const saveT = {...TOGGLES};
+    Object.assign(TOGGLES, {arts:false, steam:false, vision:false, luck:false});
+    const bcfg = cfgFromToggles();
+    const bo = [];
+    for (let k = 0; k < N; k++) bo.push(simulate(bcfg, mulberry32(777 + k * 131)).t.orbit);
+    bo.sort((x, y) => x - y);
+    updateOutlook.base = bo[N >> 1];
+    Object.assign(TOGGLES, saveT);
+  }
+  const anyOn = TOGGLES.arts || TOGGLES.steam || TOGGLES.vision || TOGGLES.luck;
+  const dv = Math.round(updateOutlook.base - med);
+  let delta = '';
+  if (anyOn && med < TL.NEVER && Math.abs(dv) >= 3)
+    delta = ` <span style="opacity:.8">(Δ vs our world: satellite ${dv > 0 ? dv + ' yr earlier' : (-dv) + ' yr later'})</span>`;
+  else if (anyOn && med < TL.NEVER)
+    delta = ' <span style="opacity:.8">(Δ vs our world: negligible)</span>';
+  if (TOGGLES.luck && !TOGGLES.vision){
+    comps.sort((x, y) => x - y);
+    const cm = comps[N >> 1];
+    if (cm < TL.NEVER)
+      delta += ` <span style="opacity:.8">— tamed chlorates give castable propellant ~${Math.round(cm)}, decades early, yet orbit barely moves: chemistry without a programme is mostly inert</span>`;
+  }
   let frac;                                   /* 0 = grim, 1 = glorious */
   if (med >= TL.NEVER) frac = 0.02;
   else frac = Math.max(0.02, Math.min(0.98, (2150 - med) / (2150 - 1650)));
   needle.setAttribute('cx', (4 + 252 * frac).toFixed(1));
   if (med >= TL.NEVER || med > 2140)
-    txt.innerHTML = '<b>bleak:</b> the sky stays empty — no satellite in sight in most runs';
+    txt.innerHTML = '<b>bleak:</b> the sky stays empty — no satellite in sight in most runs' + delta;
   else if (med > 2026)
-    txt.innerHTML = `<b>pessimistic:</b> satellites typically ~<b>${Math.round(med)}</b> — still earthbound at our present (${satPct}% of runs make it by 2026)`;
+    txt.innerHTML = `<b>pessimistic:</b> satellites typically ~<b>${Math.round(med)}</b> — still earthbound at our present (${satPct}% of runs make it by 2026)` + delta;
   else if (med <= 1900)
-    txt.innerHTML = `<b>far ahead of our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs`;
+    txt.innerHTML = `<b>far ahead of our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs` + delta;
   else if (marsPct >= 60)
-    txt.innerHTML = `<b>optimistic:</b> satellites typically ~<b>${Math.round(med)}</b>; humans on Mars before today in ${marsPct}% of runs`;
+    txt.innerHTML = `<b>optimistic:</b> satellites typically ~<b>${Math.round(med)}</b>; humans on Mars before today in ${marsPct}% of runs` + delta;
   else
-    txt.innerHTML = `<b>about our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs`;
+    txt.innerHTML = `<b>about our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs` + delta;
 }
 document.querySelectorAll('#cStart button').forEach(b =>
   b.addEventListener('click', () => { startMode = b.dataset.v; applyStartMode(); }));
