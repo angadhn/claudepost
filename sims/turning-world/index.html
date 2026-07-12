@@ -144,6 +144,20 @@
     color:var(--grey); opacity:0; transition:opacity .5s;
   }
   #regionName.show{opacity:1}
+  #cameo{
+    position:absolute; left:.9rem; bottom:2.6rem; z-index:6; pointer-events:none;
+    display:flex; align-items:center; gap:.55rem; opacity:0;
+    transform:translateY(8px); transition:opacity .5s, transform .5s;
+  }
+  #cameo.show{opacity:1; transform:none}
+  #cameo svg{width:64px; height:64px; display:block;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,.18))}
+  #cameo .who{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    color:var(--fg); background:var(--bg); border:1px solid var(--rule);
+    border-radius:6px; padding:.25rem .55rem; max-width:13rem; line-height:1.35;
+  }
+  #cameo .who b{color:var(--accent)}
   #caption{
     position:absolute; left:0; right:0; bottom:.6rem; text-align:center;
     font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
@@ -390,6 +404,7 @@
       </div>
     </div>
     <div id="regionName"></div>
+    <div id="cameo"></div>
     <div id="hint">drag to spin · click a beacon to visit a province · the camera follows the action</div>
     <div id="caption"></div>
     <div id="dec">
@@ -937,94 +952,153 @@ function tree(tx, ty){
     `<polygon points="${x},${y - 26} ${x + 7},${y - 10} ${x - 7},${y - 10}" style="fill:var(--terraF)"/>`;
 }
 const SPRITES = {
-  hut: (tx, ty) => isoBox(tx, ty, .8, .8, 12, IT, IL, IR) + roof(tx, ty, .8, .8, 12, 8, GY2),
+  hut: (tx, ty) => isoBox(tx, ty, .8, .8, 12, IT, IL, IR) + roof(tx, ty, .8, .8, 12, 8, GY2) +
+    (() => { const [x, y] = tileXY(tx + .55, ty + .78);
+      return '<rect x="' + (x - 2.5) + '" y="' + (y - 9) + '" width="5" height="8" style="fill:' + IR + '"/>'; })(),
   pagoda: (tx, ty) => isoBox(tx + .15, ty + .15, .7, .7, 16, IT, IL, IR) +
     roof(tx, ty, 1, 1, 16, 7, RD) +
     isoBox(tx + .28, ty + .28, .44, .44, 30, IT, IL, IR) +
     roof(tx + .13, ty + .13, .74, .74, 30, 6, RD) +
-    roof(tx + .3, ty + .3, .4, .4, 42, 7, RD),
-  mill: (tx, ty) => isoBox(tx, ty, .9, .9, 22, IT, IL, IR) + roof(tx, ty, .9, .9, 22, 8, GD2) +
+    roof(tx + .3, ty + .3, .4, .4, 42, 7, RD) +
+    (() => { const [x, y] = tileXY(tx + .5, ty + .5);
+      return '<line x1="' + x + '" y1="' + (y - 49) + '" x2="' + x + '" y2="' + (y - 57) + '" style="stroke:' + GD2 + ';stroke-width:2"/>' +
+        '<circle cx="' + x + '" cy="' + (y - 58) + '" r="2" style="fill:' + GD2 + '"/>'; })(),
+  mill: (tx, ty) => isoBox(tx, ty, .9, .9, 24, IT, IL, IR) + roof(tx, ty, .9, .9, 24, 7, GD2) +
+    (() => { const [x, y] = tileXY(tx + .45, ty + .45); const hy = y - 40;
+      return '<line x1="' + x + '" y1="' + (y - 31) + '" x2="' + x + '" y2="' + hy + '" style="stroke:' + GY2 + ';stroke-width:2.5"/>' +
+        '<g class="sails" data-cx="' + x + '" data-cy="' + hy + '" style="stroke:' + GY2 + ';stroke-width:2">' +
+        '<line x1="' + x + '" y1="' + (hy - 15) + '" x2="' + x + '" y2="' + (hy + 15) + '"/>' +
+        '<line x1="' + (x - 15) + '" y1="' + hy + '" x2="' + (x + 15) + '" y2="' + hy + '"/>' +
+        '<rect x="' + (x - 1.5) + '" y="' + (hy - 15) + '" width="3" height="9" style="fill:' + IT + ';stroke:none"/>' +
+        '<rect x="' + (x - 15) + '" y="' + (hy - 1.5) + '" width="9" height="3" style="fill:' + IT + ';stroke:none"/>' +
+        '<rect x="' + (x - 1.5) + '" y="' + (hy + 6) + '" width="3" height="9" style="fill:' + IT + ';stroke:none"/>' +
+        '<rect x="' + (x + 6) + '" y="' + (hy - 1.5) + '" width="9" height="3" style="fill:' + IT + ';stroke:none"/></g>' +
+        '<circle cx="' + x + '" cy="' + hy + '" r="2.2" style="fill:' + GY2 + '"/>'; })(),
+  alchemy: (tx, ty) => isoBox(tx, ty, .9, .9, 13, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .45, ty + .45);
-      return `<g style="stroke:${GY2};stroke-width:2">
-        <line x1="${x - 10}" y1="${y - 40}" x2="${x + 10}" y2="${y - 20}"/>
-        <line x1="${x + 10}" y1="${y - 40}" x2="${x - 10}" y2="${y - 20}"/></g>`; })(),
-  alchemy: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) +
-    (() => { const [x, y] = tileXY(tx + .45, ty + .45);
-      return `<circle cx="${x}" cy="${y - 20}" r="9" style="fill:${GD2}"/>`; })(),
+      return '<circle cx="' + x + '" cy="' + (y - 20) + '" r="9" style="fill:' + GD2 + '"/>' +
+        '<circle cx="' + (x - 3) + '" cy="' + (y - 23) + '" r="2.4" style="fill:#fff;opacity:.4"/>' +
+        '<rect x="' + (x + 8) + '" y="' + (y - 30) + '" width="4" height="14" style="fill:' + IR + '"/>'; })(),
+  theatre: (tx, ty) => isoBox(tx, ty, 1.35, 1, 18, IT, IL, IR) +
+    (() => {
+      const A = tileXY(tx, ty), D = tileXY(tx, ty + 1), M = tileXY(tx, ty + .5);
+      let cols = '';
+      for (const f of [0.15, 0.42, 0.68, 0.92]){
+        const c = tileXY(tx, ty + f);
+        cols += '<line x1="' + (c[0] + 1) + '" y1="' + (c[1] - 2) + '" x2="' + (c[0] + 1) + '" y2="' + (c[1] - 17) + '" style="stroke:' + IT + ';stroke-width:2.6"/>';
+      }
+      const ped = '<polygon points="' + A[0] + ',' + (A[1] - 18) + ' ' + D[0] + ',' + (D[1] - 18) + ' ' + (M[0] - 7) + ',' + (M[1] - 30) + '" style="fill:' + GY2 + '"/>';
+      const L2 = tileXY(tx + .67, ty + .5);
+      const lyre = '<circle cx="' + L2[0] + '" cy="' + (L2[1] - 27) + '" r="4.5" style="fill:none;stroke:' + GD2 + ';stroke-width:1.6"/>' +
+        '<line x1="' + (L2[0] - 2) + '" y1="' + (L2[1] - 31) + '" x2="' + (L2[0] - 2) + '" y2="' + (L2[1] - 23) + '" style="stroke:' + GD2 + ';stroke-width:1.2"/>' +
+        '<line x1="' + (L2[0] + 2) + '" y1="' + (L2[1] - 31) + '" x2="' + (L2[0] + 2) + '" y2="' + (L2[1] - 23) + '" style="stroke:' + GD2 + ';stroke-width:1.2"/>';
+      const F2 = tileXY(tx + 1.2, ty + .1);
+      const flag = '<line x1="' + F2[0] + '" y1="' + (F2[1] - 18) + '" x2="' + F2[0] + '" y2="' + (F2[1] - 40) + '" style="stroke:' + GY2 + ';stroke-width:1.6"/>' +
+        '<polygon class="flagWave" data-cx="' + F2[0] + '" data-cy="' + (F2[1] - 40) + '" points="' + F2[0] + ',' + (F2[1] - 40) + ' ' + (F2[0] + 11) + ',' + (F2[1] - 37) + ' ' + F2[0] + ',' + (F2[1] - 33) + '" style="fill:' + RD + '"/>';
+      return ped + cols + lyre + flag; })(),
+  university: (tx, ty) => isoBox(tx, ty, 1.35, 1, 17, IT, IL, IR) +
+    (() => { let win = '';
+      for (const f of [0.22, 0.5, 0.78]){
+        const c = tileXY(tx + f * 1.35, ty + 1);
+        win += '<rect x="' + (c[0] - 2) + '" y="' + (c[1] - 14 + f * 4) + '" width="4" height="6" style="fill:' + IR + '"/>';
+      }
+      return win; })() +
+    isoBox(tx + .43, ty + .28, .5, .45, 32, IT, IL, IR) +
+    (() => { const c = tileXY(tx + .68, ty + .5);
+      return '<circle cx="' + c[0] + '" cy="' + (c[1] - 36) + '" r="7.5" style="fill:' + IL + '"/>' +
+        '<line x1="' + c[0] + '" y1="' + (c[1] - 43) + '" x2="' + c[0] + '" y2="' + (c[1] - 48) + '" style="stroke:' + GD2 + ';stroke-width:1.6"/>'; })(),
   candyshop: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) + roof(tx, ty, .9, .9, 14, 6, GD2) +
     (() => { const [x, y] = tileXY(tx + .8, ty + .2);
-      return [0, 1, 2].map(i => `<rect x="${x - 3}" y="${y - 34 + i * 7}" width="6" height="3.5" style="fill:${RD}"/>`).join('') +
-        `<polygon points="${x},${y - 40} ${x - 3.5},${y - 34} ${x + 3.5},${y - 34}" style="fill:${RD}"/>` +
-        `<rect x="${x - 3}" y="${y - 34}" width="6" height="21" style="fill:#fff;opacity:.55"/>`; })(),
+      let st = '';
+      for (const i of [0, 1, 2])
+        st += '<rect x="' + (x - 3) + '" y="' + (y - 34 + i * 7) + '" width="6" height="3.5" style="fill:' + RD + '"/>';
+      return st +
+        '<polygon points="' + x + ',' + (y - 40) + ' ' + (x - 3.5) + ',' + (y - 34) + ' ' + (x + 3.5) + ',' + (y - 34) + '" style="fill:' + RD + '"/>' +
+        '<rect x="' + (x - 3) + '" y="' + (y - 34) + '" width="6" height="21" style="fill:#fff;opacity:.55"/>'; })(),
   gantry: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
-    return `<g style="stroke:${GY2};stroke-width:2.5">
-      <line x1="${x - 8}" y1="${y}" x2="${x - 8}" y2="${y - 52}"/>
-      <line x1="${x - 8}" y1="${y - 16}" x2="${x + 4}" y2="${y - 16}"/>
-      <line x1="${x - 8}" y1="${y - 34}" x2="${x + 4}" y2="${y - 34}"/>
-      <line x1="${x - 8}" y1="${y - 50}" x2="${x + 4}" y2="${y - 50}"/></g>`; })(),
+    return '<g style="stroke:' + GY2 + ';stroke-width:2.5">' +
+      '<line x1="' + (x - 8) + '" y1="' + y + '" x2="' + (x - 8) + '" y2="' + (y - 52) + '"/>' +
+      '<line x1="' + (x - 8) + '" y1="' + (y - 16) + '" x2="' + (x + 4) + '" y2="' + (y - 16) + '"/>' +
+      '<line x1="' + (x - 8) + '" y1="' + (y - 34) + '" x2="' + (x + 4) + '" y2="' + (y - 34) + '"/>' +
+      '<line x1="' + (x - 8) + '" y1="' + (y - 50) + '" x2="' + (x + 4) + '" y2="' + (y - 50) + '"/></g>'; })(),
   pad: (tx, ty) => diamond(tx + .5, ty + .5, IR) +
     (() => { const [x, y] = tileXY(tx + .5, ty + .5);
-      return `<line x1="${x + 12}" y1="${y - 2}" x2="${x + 12}" y2="${y - 58}" style="stroke:${GY2};stroke-width:3"/>` +
-        `<line x1="${x + 12}" y1="${y - 22}" x2="${x - 2}" y2="${y - 22}" style="stroke:${GY2};stroke-width:2"/>` +
-        `<line x1="${x + 12}" y1="${y - 44}" x2="${x - 2}" y2="${y - 44}" style="stroke:${GY2};stroke-width:2"/>`; })(),
-  hall: (tx, ty) => isoBox(tx, ty, 1.3, .9, 20, IT, IL, IR) + roof(tx, ty, 1.3, .9, 20, 9, GY2) +
-    (() => { const [x, y] = tileXY(tx + .1, ty + .9);
-      return [0, 1, 2, 3].map(i =>
-        `<line x1="${x + 8 + i * 9}" y1="${y - 1 + i * 4.5}" x2="${x + 8 + i * 9}" y2="${y - 19 + i * 4.5}" style="stroke:${IT};stroke-width:3"/>`).join(''); })(),
+      return '<line x1="' + (x + 12) + '" y1="' + (y - 2) + '" x2="' + (x + 12) + '" y2="' + (y - 58) + '" style="stroke:' + GY2 + ';stroke-width:3"/>' +
+        '<line x1="' + (x + 12) + '" y1="' + (y - 22) + '" x2="' + (x - 2) + '" y2="' + (y - 22) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
+        '<line x1="' + (x + 12) + '" y1="' + (y - 44) + '" x2="' + (x - 2) + '" y2="' + (y - 44) + '" style="stroke:' + GY2 + ';stroke-width:2"/>'; })(),
   engine: (tx, ty) => isoBox(tx, ty, 1, .9, 18, IT, IL, IR) + roof(tx, ty, 1, .9, 18, 7, RD) +
-    isoBox(tx + .72, ty + .08, .2, .2, 44, IL, IL, IR),
-  works: (tx, ty) => isoBox(tx, ty, 1.3, 1, 16, IT, IL, IR) +
-    roof(tx, ty, .62, 1, 16, 7, IL) + roof(tx + .65, ty, .62, 1, 16, 7, IL),
+    isoBox(tx + .72, ty + .08, .2, .2, 44, IL, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .3, ty + .45);
+      return '<line class="beamArm2" data-cx="' + x + '" data-cy="' + (y - 24) + '" x1="' + (x - 12) + '" y1="' + (y - 24) + '" x2="' + (x + 12) + '" y2="' + (y - 24) + '" style="stroke:' + GY2 + ';stroke-width:3.5"/>' +
+        '<line x1="' + x + '" y1="' + (y - 24) + '" x2="' + x + '" y2="' + (y - 6) + '" style="stroke:' + GY2 + ';stroke-width:2"/>'; })(),
+  factory: (tx, ty) => isoBox(tx, ty, 1.3, 1, 16, IT, IL, IR) +
+    roof(tx, ty, .62, 1, 16, 7, IL) + roof(tx + .65, ty, .62, 1, 16, 7, IL) +
+    (() => { const c = tileXY(tx + 1.28, ty + .8); const x = c[0], y = c[1];
+      return '<g class="flywheel" data-cx="' + x + '" data-cy="' + (y - 10) + '" style="stroke:' + GY2 + ';stroke-width:1.8">' +
+        '<circle cx="' + x + '" cy="' + (y - 10) + '" r="7" style="fill:none"/>' +
+        '<line x1="' + (x - 7) + '" y1="' + (y - 10) + '" x2="' + (x + 7) + '" y2="' + (y - 10) + '"/>' +
+        '<line x1="' + x + '" y1="' + (y - 17) + '" x2="' + x + '" y2="' + (y - 3) + '"/></g>' +
+        '<line x1="' + x + '" y1="' + (y - 3) + '" x2="' + (x - 14) + '" y2="' + (y + 2) + '" style="stroke:' + GY2 + ';stroke-width:1.2"/>'; })(),
   arsenal: (tx, ty) => isoBox(tx, ty, 1.5, .7, 14, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx, ty);
-      return `<line x1="${x}" y1="${y - 14}" x2="${x}" y2="${y - 38}" style="stroke:${GY2};stroke-width:2"/>` +
-        `<polygon points="${x},${y - 38} ${x + 12},${y - 34} ${x},${y - 30}" style="fill:${RD}"/>`; })(),
+      return '<line x1="' + x + '" y1="' + (y - 14) + '" x2="' + x + '" y2="' + (y - 38) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
+        '<polygon class="flagWave" data-cx="' + x + '" data-cy="' + (y - 38) + '" points="' + x + ',' + (y - 38) + ' ' + (x + 12) + ',' + (y - 34) + ' ' + x + ',' + (y - 30) + '" style="fill:' + RD + '"/>'; })(),
   converter: (tx, ty) => isoBox(tx, ty, .9, .9, 10, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .45, ty + .45);
-      return `<ellipse cx="${x}" cy="${y - 22}" rx="10" ry="12" style="fill:${IR}"/>` +
-        `<ellipse class="glow" cx="${x}" cy="${y - 31}" rx="6" ry="3" style="fill:${AC2}"/>`; })(),
+      return '<ellipse cx="' + x + '" cy="' + (y - 22) + '" rx="10" ry="12" style="fill:' + IR + '"/>' +
+        '<ellipse class="glow" cx="' + x + '" cy="' + (y - 31) + '" rx="6" ry="3" style="fill:' + AC2 + '"/>'; })(),
   mast: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
-    return `<g style="stroke:${GY2};stroke-width:2">
-      <line x1="${x - 6}" y1="${y}" x2="${x}" y2="${y - 60}"/>
-      <line x1="${x + 6}" y1="${y}" x2="${x}" y2="${y - 60}"/>
-      <line x1="${x - 4}" y1="${y - 20}" x2="${x + 4}" y2="${y - 20}"/>
-      <line x1="${x - 2.5}" y1="${y - 40}" x2="${x + 2.5}" y2="${y - 40}"/></g>
-      <circle cx="${x}" cy="${y - 62}" r="2.5" style="fill:${AC2}"/>`; })(),
+    return '<g style="stroke:' + GY2 + ';stroke-width:2">' +
+      '<line x1="' + (x - 6) + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 60) + '"/>' +
+      '<line x1="' + (x + 6) + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 60) + '"/>' +
+      '<line x1="' + (x - 4) + '" y1="' + (y - 20) + '" x2="' + (x + 4) + '" y2="' + (y - 20) + '"/>' +
+      '<line x1="' + (x - 2.5) + '" y1="' + (y - 40) + '" x2="' + (x + 2.5) + '" y2="' + (y - 40) + '"/></g>' +
+      '<circle cx="' + x + '" cy="' + (y - 62) + '" r="2.5" style="fill:' + AC2 + '"/>'; })(),
   clock: (tx, ty) => isoBox(tx + .2, ty + .2, .6, .6, 46, IT, IL, IR) +
     roof(tx + .12, ty + .12, .76, .76, 46, 10, RD) +
     (() => { const [x, y] = tileXY(tx + .5, ty + .8);
-      return `<circle cx="${x}" cy="${y - 34}" r="6" style="fill:var(--bg)"/>` +
-        `<line class="clockhand" x1="${x}" y1="${y - 34}" x2="${x}" y2="${y - 39}" style="stroke:${GY2};stroke-width:1.6" data-cx="${x}" data-cy="${y - 34}"/>`; })(),
-  print: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) + roof(tx, ty, .9, .9, 14, 6, GY2),
+      return '<circle cx="' + x + '" cy="' + (y - 34) + '" r="6" style="fill:var(--bg)"/>' +
+        '<line class="clockhand" x1="' + x + '" y1="' + (y - 34) + '" x2="' + x + '" y2="' + (y - 39) + '" style="stroke:' + GY2 + ';stroke-width:1.6" data-cx="' + x + '" data-cy="' + (y - 34) + '"/>'; })(),
+  print: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) + roof(tx, ty, .9, .9, 14, 6, GY2) +
+    (() => { const [x, y] = tileXY(tx + .2, ty + .95);
+      let st = '';
+      for (const i of [0, 1, 2])
+        st += '<rect x="' + (x - 6 + i * 2) + '" y="' + (y - 6 - i * 2.6) + '" width="12" height="2" style="fill:#fff;opacity:.7"/>';
+      return st; })(),
   obs: (tx, ty) => isoBox(tx, ty, .8, .8, 14, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .4, ty + .4);
-      return `<circle cx="${x}" cy="${y - 18}" r="9" style="fill:${IL}"/>` +
-        `<line x1="${x + 2}" y1="${y - 24}" x2="${x + 10}" y2="${y - 34}" style="stroke:${GY2};stroke-width:2.5"/>`; })(),
+      return '<circle cx="' + x + '" cy="' + (y - 18) + '" r="9" style="fill:' + IL + '"/>' +
+        '<line class="telesweep" data-cx="' + x + '" data-cy="' + (y - 20) + '" x1="' + x + '" y1="' + (y - 20) + '" x2="' + (x + 11) + '" y2="' + (y - 32) + '" style="stroke:' + GY2 + ';stroke-width:2.5"/>'; })(),
   powder: (tx, ty) => isoBox(tx, ty, 1, .8, 12, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .2, ty + .95);
-      return [0, 1].map(i => `<ellipse cx="${x + i * 12}" cy="${y - 4 + i * 5}" rx="5" ry="6" style="fill:${GD2}"/>`).join(''); })(),
+      let st = '';
+      for (const i of [0, 1])
+        st += '<ellipse cx="' + (x + i * 12) + '" cy="' + (y - 4 + i * 5) + '" rx="5" ry="6" style="fill:' + GD2 + '"/>';
+      return st; })(),
   turbine: (tx, ty) => isoBox(tx, ty, 1, .8, 16, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .5, ty + .4);
-      return `<polygon points="${x},${y - 42} ${x + 7},${y - 26} ${x - 7},${y - 26}" style="fill:${GY2}"/>`; })(),
+      return '<polygon points="' + x + ',' + (y - 42) + ' ' + (x + 7) + ',' + (y - 26) + ' ' + (x - 7) + ',' + (y - 26) + '" style="fill:' + GY2 + '"/>'; })(),
   lique: (tx, ty) => isoBox(tx, ty, .9, .7, 10, IT, IL, IR) +
     (() => { const [x, y] = tileXY(tx + .3, ty + .55);
-      return [0, 1].map(i =>
-        `<rect x="${x - 5 + i * 14}" y="${y - 34 + i * 6}" width="10" height="22" rx="5" style="fill:${IL}"/>`).join(''); })(),
+      let st = '';
+      for (const i of [0, 1])
+        st += '<rect x="' + (x - 5 + i * 14) + '" y="' + (y - 34 + i * 6) + '" width="10" height="22" rx="5" style="fill:' + IL + '"/>';
+      return st; })(),
   armory: (tx, ty) => isoBox(tx, ty, 1.1, .8, 14, IT, IL, IR) + roof(tx, ty, 1.1, .8, 14, 6, GY2),
   tele: (tx, ty) => (() => { const [x, y] = tileXY(tx + .3, ty + .3);
-    const [x2, y2] = tileXY(tx + 1.3, ty + 1.05);
-    return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 28}" style="stroke:${GY2};stroke-width:2"/>
-      <line x1="${x - 6}" y1="${y - 25}" x2="${x + 6}" y2="${y - 25}" style="stroke:${GY2};stroke-width:1.6"/>
-      <line x1="${x2}" y1="${y2}" x2="${x2}" y2="${y2 - 28}" style="stroke:${GY2};stroke-width:2"/>
-      <line x1="${x2 - 6}" y1="${y2 - 25}" x2="${x2 + 6}" y2="${y2 - 25}" style="stroke:${GY2};stroke-width:1.6"/>
-      <path d="M${x},${y - 25} Q${(x + x2) / 2},${(y + y2) / 2 - 18} ${x2},${y2 - 25}" style="fill:none;stroke:${GY2};stroke-width:1.2"/>`; })(),
+    const c2 = tileXY(tx + 1.3, ty + 1.05); const x2 = c2[0], y2 = c2[1];
+    return '<line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 28) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
+      '<line x1="' + (x - 6) + '" y1="' + (y - 25) + '" x2="' + (x + 6) + '" y2="' + (y - 25) + '" style="stroke:' + GY2 + ';stroke-width:1.6"/>' +
+      '<line x1="' + x2 + '" y1="' + y2 + '" x2="' + x2 + '" y2="' + (y2 - 28) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
+      '<line x1="' + (x2 - 6) + '" y1="' + (y2 - 25) + '" x2="' + (x2 + 6) + '" y2="' + (y2 - 25) + '" style="stroke:' + GY2 + ';stroke-width:1.6"/>' +
+      '<path d="M' + x + ',' + (y - 25) + ' Q' + ((x + x2) / 2) + ',' + ((y + y2) / 2 - 18) + ' ' + x2 + ',' + (y2 - 25) + '" style="fill:none;stroke:' + GY2 + ';stroke-width:1.2"/>'; })(),
   tower: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
-    return `<g style="stroke:${GY2};stroke-width:2">
-      <line x1="${x - 7}" y1="${y}" x2="${x - 2}" y2="${y - 46}"/>
-      <line x1="${x + 7}" y1="${y}" x2="${x + 2}" y2="${y - 46}"/>
-      <line x1="${x - 5}" y1="${y - 16}" x2="${x + 5}" y2="${y - 16}"/>
-      <line x1="${x - 3.5}" y1="${y - 32}" x2="${x + 3.5}" y2="${y - 32}"/></g>
-      <circle cx="${x}" cy="${y - 49}" r="3.5" style="fill:${RD}"/>`; })(),
+    return '<g style="stroke:' + GY2 + ';stroke-width:2">' +
+      '<line x1="' + (x - 7) + '" y1="' + y + '" x2="' + (x - 2) + '" y2="' + (y - 46) + '"/>' +
+      '<line x1="' + (x + 7) + '" y1="' + y + '" x2="' + (x + 2) + '" y2="' + (y - 46) + '"/>' +
+      '<line x1="' + (x - 5) + '" y1="' + (y - 16) + '" x2="' + (x + 5) + '" y2="' + (y - 16) + '"/>' +
+      '<line x1="' + (x - 3.5) + '" y1="' + (y - 32) + '" x2="' + (x + 3.5) + '" y2="' + (y - 32) + '"/></g>' +
+      '<circle cx="' + x + '" cy="' + (y - 49) + '" r="3.5" style="fill:' + RD + '"/>'; })(),
 };
 const TERRA = {
   britain: ["wwwwwwwwwwww","wwggfggwwwww","wgggggggwwww","wggfggggdgww",
@@ -1058,7 +1132,7 @@ const SLOTS = {
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.4},
            {node:'orbit', sprite:'pad', tx:9, ty:6}],
   levant: [{always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
-           {node:'acids', sprite:'alchemy', tx:5, ty:6},
+           {node:'acids', sprite:'alchemy', tx:5, ty:6, smoke:{dx:.62, dy:.45, off:32, tint:'var(--gold)'}},
            {node:'rocket_candy', sprite:'candyshop', tx:6.6, ty:5},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.6},
            {node:'orbit', sprite:'pad', tx:8.6, ty:6.4}],
@@ -1066,17 +1140,18 @@ const SLOTS = {
            {node:'mil_rockets', sprite:'arsenal', tx:5, ty:6},
            {node:'rocket_candy', sprite:'candyshop', tx:7, ty:5.6},
            {node:'sounding', sprite:'gantry', tx:8.4, ty:4}],
-  britain:[{always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'hall', tx:4.6, ty:3},
+  britain:[{always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'university', tx:4.6, ty:3},
            {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
-           {node:'machine_tools', sprite:'works', tx:4, ty:6.4},
+           {node:'machine_tools', sprite:'factory', tx:4, ty:6.4},
            {node:'rocket_eq', sprite:'arsenal', tx:7, ty:6},
            {node:'bessemer', sprite:'converter', tx:5.6, ty:8},
-           {node:'radio', sprite:'mast', tx:8.6, ty:3.2},
+           {node:'radio', sprite:'mast', tx:8.6, ty:3.2, rings:[.5,.5,62]},
            {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
            {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
   europe: [{always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
            {node:'printing', sprite:'print', tx:6.2, ty:3},
            {node:'telescope', sprite:'obs', tx:7.8, ty:3.6},
+           {node:'moon_voyage', sprite:'theatre', tx:5.3, ty:4.9},
            {node:'smokeless', sprite:'powder', tx:4.4, ty:7},
            {node:'delaval', sprite:'turbine', tx:6.4, ty:6.2},
            {node:'liquefaction', sprite:'lique', tx:8, ty:7.2},
@@ -1094,7 +1169,7 @@ const SLOTS = {
 };
 
 let curRegion = null, isoSmoke = [], isoSources = [], isoRockets = [],
-    villagers = [], isoFx = null, isoSvg = null;
+    ringSrcs = [], villagers = [], isoFx = null, isoSvg = null;
 
 const ISO_W = 1180, ISO_H = 560;   /* fixed design space; SVG scales to fit */
 function buildRegion(key){
@@ -1114,14 +1189,17 @@ function buildRegion(key){
     }
   let blds = '';
   SLOTS[key].forEach((s, i) => {
-    blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">${SPRITES[s.sprite](s.tx, s.ty)}</g>`;
+    const [sx, sy] = tileXY(s.tx + .55, s.ty + .55);
+    blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">` +
+      `<ellipse cx="${sx}" cy="${sy + 2}" rx="${TW * .95}" ry="${TH * .8}" style="fill:#000;opacity:.09"/>` +
+      SPRITES[s.sprite](s.tx, s.ty) + `</g>`;
   });
   isoDiv.innerHTML = `<svg viewBox="0 0 ${ISO_W} ${ISO_H}" preserveAspectRatio="xMidYMid meet">
     <g id="terra">${tiles}</g><g id="deco">${deco}</g>
     <g id="blds">${blds}</g><g id="isofx"></g></svg>`;
   isoSvg = isoDiv.querySelector('svg');
   isoFx = isoSvg.querySelector('#isofx');
-  isoSources = []; isoSmoke = []; isoRockets = [];
+  isoSources = []; isoSmoke = []; isoRockets = []; ringSrcs = [];
   villagers = [0, 1, 2].map(i => ({x: 5 + i, y: 5, tx: 3 + Math.random() * 6,
                                    ty: 3 + Math.random() * 6, sp: .25 + Math.random() * .2}));
   SLOTS[key].forEach((s, i) => {
@@ -1139,8 +1217,74 @@ function revealSlot(key, i){
   const g = isoSvg && isoSvg.querySelector(`#slot_${key}_${i}`);
   if (!g) return;
   g.style.opacity = 1;
-  if (s.smoke){ const [x, y] = tileXY(s.tx + .82, s.ty + .18);
-    isoSources.push({x, y: y - 44, t: Math.random()}); }
+  if (s.smoke){
+    const o = s.smoke === 1 ? {} : s.smoke;
+    const [x, y] = tileXY(s.tx + (o.dx ?? .82), s.ty + (o.dy ?? .18));
+    isoSources.push({x, y: y - (o.off ?? 44), t: Math.random(), tint: o.tint});
+  }
+  if (s.rings){ const [x, y] = tileXY(s.tx + s.rings[0], s.ty + s.rings[1]);
+    ringSrcs.push({x, y: y - s.rings[2], ph: Math.random()}); }
+}
+
+
+/* ---------- character cameos: hand-drawn medallions ---------- */
+function bust(inner){
+  return '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" style="fill:var(--card);stroke:var(--accent);stroke-width:2"/>' + inner + '</svg>';
+}
+const FACES = {
+  kepler: bust('<ellipse cx="32" cy="47" rx="15" ry="9" style="fill:var(--grey)"/>' +
+    '<ellipse cx="32" cy="46" rx="17" ry="5" style="fill:#fff;opacity:.85"/>' +
+    '<circle cx="32" cy="30" r="11" style="fill:var(--land)"/>' +
+    '<path d="M22,26 q10,-10 20,0 l-2,-7 q-8,-6 -16,0 Z" style="fill:var(--grey)"/>' +
+    '<path d="M29,40 l3,9 3,-9" style="fill:var(--grey)"/>' +
+    '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="30" r="1.4" style="fill:var(--fg)"/>' +
+    '<circle cx="49" cy="16" r="3" style="fill:none;stroke:var(--gold);stroke-width:1.2"/>' +
+    '<circle cx="49" cy="16" r="1" style="fill:var(--gold)"/>'),
+  cyrano: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--blue)"/>' +
+    '<circle cx="32" cy="31" r="10" style="fill:var(--land)"/>' +
+    '<path d="M32,31 l10,4 -10,1 Z" style="fill:var(--land);stroke:var(--grey);stroke-width:.6"/>' +
+    '<path d="M18,24 q14,-14 28,-1 l3,-3 q-6,-6 -10,-6 l2,-4 -6,3 q-12,-2 -17,11 Z" style="fill:var(--grey)"/>' +
+    '<path d="M14,21 q18,-8 36,-2" style="fill:none;stroke:var(--red);stroke-width:3"/>' +
+    '<path d="M44,14 q4,-6 8,-4 q-2,4 -8,4" style="fill:var(--red)"/>' +
+    '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/>' +
+    '<line x1="46" y1="46" x2="58" y2="34" style="stroke:var(--grey);stroke-width:1.6"/>'),
+  newton: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--red)"/>' +
+    '<circle cx="32" cy="30" r="10" style="fill:var(--land)"/>' +
+    '<path d="M20,42 q-3,-20 12,-22 q15,2 12,22 l-5,0 q4,-16 -7,-17 q-11,1 -7,17 Z" style="fill:#e8e5de;stroke:var(--grey);stroke-width:.8"/>' +
+    '<circle cx="28" cy="29" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="29" r="1.4" style="fill:var(--fg)"/>' +
+    '<circle cx="50" cy="47" r="4" style="fill:var(--red)"/>' +
+    '<path d="M50,43 q1,-3 3,-3" style="fill:none;stroke:var(--green);stroke-width:1.4"/>'),
+  watt: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--grey)"/>' +
+    '<circle cx="32" cy="30" r="10" style="fill:var(--land)"/>' +
+    '<path d="M22,28 q0,-9 10,-9 q10,0 10,9 l-3,-1 q0,-6 -7,-6 q-7,0 -7,6 Z" style="fill:var(--grey)"/>' +
+    '<path d="M22,30 q-1,8 4,10 M42,30 q1,8 -4,10" style="fill:none;stroke:var(--grey);stroke-width:3"/>' +
+    '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="30" r="1.4" style="fill:var(--fg)"/>' +
+    '<circle cx="49" cy="18" r="5" style="fill:none;stroke:var(--gold);stroke-width:1.4"/>' +
+    '<line x1="49" y1="18" x2="49" y2="14.5" style="stroke:var(--gold);stroke-width:1.2"/>'),
+  verne: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--blue)"/>' +
+    '<circle cx="32" cy="29" r="10" style="fill:var(--land)"/>' +
+    '<path d="M22,31 q10,16 20,0 l0,6 q-10,10 -20,0 Z" style="fill:#e8e5de"/>' +
+    '<path d="M21,24 q11,-7 22,0 l-1,-5 q-10,-6 -20,0 Z" style="fill:#e8e5de"/>' +
+    '<circle cx="28" cy="28" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="28" r="1.4" style="fill:var(--fg)"/>' +
+    '<path d="M45,40 l10,-6 2,3 -10,6 Z" style="fill:var(--gold)"/>' +
+    '<circle cx="53" cy="20" r="4" style="fill:none;stroke:var(--grey);stroke-width:1.2"/>'),
+};
+const CAMEOS = {
+  somnium:     ['kepler', '<b>Johannes Kepler</b> dreams a voyage to the Moon'],
+  moon_voyage: ['cyrano', '<b>Cyrano de Bergerac</b> straps fireworks to a chair and writes the first space rocket'],
+  calculus:    ['newton', '<b>Isaac Newton</b> — the falling apple and the orbit are the same fall'],
+  watt:        ['watt',   '<b>James Watt</b> hears the engine wasting its heat'],
+  space_sf:    ['verne',  '<b>Jules Verne</b> fires the imagination of every future engineer'],
+};
+const cameoEl = document.getElementById('cameo');
+let cameoTimer = null;
+function showCameo(id, y){
+  const c = CAMEOS[id];
+  if (!c) return;
+  cameoEl.innerHTML = FACES[c[0]] + `<span class="who">${Math.round(y)} — ${c[1]}</span>`;
+  cameoEl.classList.add('show');
+  clearTimeout(cameoTimer);
+  cameoTimer = setTimeout(() => cameoEl.classList.remove('show'), 4600);
 }
 
 /* ---------- view state + director's camera ---------- */
@@ -1448,6 +1592,7 @@ function onEvent(ev){
   const r = REGIONS[home];
   pings.push({lon: r.lon, lat: r.lat, age: 0,
               col: id === 'orbit' ? css('--accent') : css('--grey')});
+  showCameo(id, ev.y);
   if (CAP[id]) caption(ev.y, CAP[id] +
     ` <span style="color:var(--faint)">· ${r.name.split(' — ')[0]}</span>`);
   hudEra.textContent = eraOf(unlocked, CFG.block.size > 0);
@@ -1582,7 +1727,7 @@ function isoTick(dt, now){
   for (const s of isoSources){
     s.t -= dt;
     if (s.t <= 0){ s.t = .32 + Math.random() * .2;
-      isoSmoke.push({x: s.x + (Math.random() - .5) * 3, y: s.y, age: 0}); }
+      isoSmoke.push({x: s.x + (Math.random() - .5) * 3, y: s.y, age: 0, tint: s.tint}); }
   }
   isoSmoke.forEach(p => { p.age += dt; p.y -= 16 * dt; p.x += 5 * dt; });
   isoSmoke = isoSmoke.filter(p => p.age < 2);
@@ -1594,7 +1739,11 @@ function isoTick(dt, now){
   }
   let out = '';
   for (const p of isoSmoke)
-    out += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(2 + p.age * 4).toFixed(1)}" style="fill:var(--grey);opacity:${(0.34 - p.age * .17).toFixed(2)}"/>`;
+    out += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(2 + p.age * 4).toFixed(1)}" style="fill:${p.tint || 'var(--grey)'};opacity:${(0.34 - p.age * .17).toFixed(2)}"/>`;
+  for (const rs of ringSrcs){
+    const ph = ((now / 2100) + rs.ph) % 1;
+    out += `<circle cx="${rs.x}" cy="${rs.y}" r="${(ph * 26).toFixed(1)}" style="fill:none;stroke:var(--accent);stroke-width:1.3;opacity:${(0.5 * (1 - ph)).toFixed(2)}"/>`;
+  }
   for (const rk of isoRockets){
     rk.t += dt;
     const y = rk.y0 - rk.t * rk.t * 95;
@@ -1608,7 +1757,12 @@ function isoTick(dt, now){
     if (dist < .05){ v.tx = 2.5 + Math.random() * 7; v.ty = 2.5 + Math.random() * 7; }
     else { v.x += dx / dist * v.sp * dt; v.y += dy / dist * v.sp * dt; }
     const [x, y] = tileXY(v.x, v.y);
-    out += `<circle cx="${x.toFixed(1)}" cy="${(y - 3).toFixed(1)}" r="2.4" style="fill:var(--fg);opacity:.7"/>`;
+    const step = Math.sin(now / 90 + v.x * 9) * 2.6;
+    out += `<g style="stroke:var(--fg);stroke-width:1.4;opacity:.75">` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 8).toFixed(1)}" x2="${(x + step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 8).toFixed(1)}" x2="${(x - step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 13).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y - 8).toFixed(1)}"/></g>` +
+      `<circle cx="${x.toFixed(1)}" cy="${(y - 15).toFixed(1)}" r="2.2" style="fill:var(--fg);opacity:.75"/>`;
   }
   isoFx.innerHTML = out;
   isoSvg.querySelectorAll('.shimmer').forEach(el => {
@@ -1619,6 +1773,16 @@ function isoTick(dt, now){
     `rotate(${(now / 25) % 360} ${hand.dataset.cx} ${hand.dataset.cy})`);
   isoSvg.querySelectorAll('.glow').forEach(el =>
     el.style.opacity = .55 + Math.sin(now / 320) * .35);
+  isoSvg.querySelectorAll('.sails').forEach(el =>
+    el.setAttribute('transform', `rotate(${(now / 22) % 360} ${el.dataset.cx} ${el.dataset.cy})`));
+  isoSvg.querySelectorAll('.flywheel').forEach(el =>
+    el.setAttribute('transform', `rotate(${(now / 6) % 360} ${el.dataset.cx} ${el.dataset.cy})`));
+  isoSvg.querySelectorAll('.beamArm2').forEach(el =>
+    el.setAttribute('transform', `rotate(${(Math.sin(now / 380) * 8).toFixed(2)} ${el.dataset.cx} ${el.dataset.cy})`));
+  isoSvg.querySelectorAll('.telesweep').forEach(el =>
+    el.setAttribute('transform', `rotate(${(Math.sin(now / 2600) * 16).toFixed(2)} ${el.dataset.cx} ${el.dataset.cy})`));
+  isoSvg.querySelectorAll('.flagWave').forEach(el =>
+    el.setAttribute('transform', `rotate(${(Math.sin(now / 260) * 9).toFixed(2)} ${el.dataset.cx} ${el.dataset.cy})`));
 }
 
 function tick(ts){
