@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Replaying the Tape</title>
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+    --scA:#8a857c; --scB:#9c453a; --scC:#2f629c; --scD:#2d7d52;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+    --scA:#a09a8e; --scB:#c25a3c; --scC:#5b8ed8; --scD:#3ba26b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.05rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:44rem; margin:0 auto; padding:0 1.5rem}
+  .wide{max-width:76rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:5rem 0 1rem}
+  h1{font-size:2.6rem; line-height:1.15; font-weight:600; margin:0 0 .6rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.15rem; margin:0 0 1rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.6rem}
+  .byline{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
+    color:var(--grey); margin:0 0 .4rem;
+  }
+  .byline .aim{
+    font-size:.7rem; border:1px solid var(--rule); border-radius:4px;
+    padding:.05rem .3rem; color:var(--grey); vertical-align:1px;
+  }
+  h2{font-size:1.5rem; font-weight:600; margin:3.2rem 0 .8rem; letter-spacing:-.01em}
+  h2 .no{color:var(--accent); font-style:italic; font-weight:400; margin-right:.4rem}
+  p{margin:0 0 1rem}
+  em.k{font-style:normal; border-bottom:1px solid var(--accent)}
+  figure{margin:2rem 0 0.5rem}
+  figure img{width:100%; height:auto; display:block; border-radius:4px}
+  figcaption{
+    font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif;
+    font-size:.85rem; color:var(--grey); line-height:1.5;
+    max-width:44rem; margin:.7rem auto 0; padding:0 .2rem;
+  }
+  hr{border:none; border-top:1px solid var(--rule); margin:3rem auto; max-width:44rem}
+  ol.claims{padding-left:1.3rem}
+  ol.claims li{margin-bottom: 1rem}
+  ol.claims b{font-weight:600}
+  .note{font-size:.92rem; color:var(--grey)}
+  footer{padding:2rem 0 4rem; color:var(--grey); font-size:.9rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  .callout{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:1rem 1.2rem; margin:1.8rem 0 0; font-size:.95rem;
+  }
+  .callout .tag{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.72rem;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); display:block; margin-bottom:.5rem;
+  }
+  .callout p{margin:0 0 .7rem}
+  .callout p:last-child{margin-bottom:0}
+  .buildstats{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--grey); margin:.7rem 0 0; line-height:1.6;
+  }
+  .buildstats b{color:var(--fg); font-weight:600}
+
+  .eq{
+    margin:1.4rem auto 1.2rem; text-align:center; overflow:visible;
+    position:relative; padding:.3rem 3.2rem; scroll-margin-top:4rem;
+    border-radius:6px;
+  }
+  .eq math{
+    font-family:"STIX Two Math","Cambria Math","Latin Modern Math",serif;
+    font-size:1.06em;
+  }
+  .eq .eqno{
+    position:absolute; right:.4rem; top:50%; transform:translateY(-50%);
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.75rem;
+    color:var(--grey); text-decoration:none;
+  }
+  .eq .eqno:hover{color:var(--accent); text-decoration:none}
+  .eq:target{background:var(--card)}
+  @media (max-width:640px){ .eq{padding:.3rem 2.3rem} .eq math{font-size:.92em} }
+  sup.fn{font-size:.68em; line-height:0}
+  sup.fn a{padding:0 .12em}
+
+  #toc{display:none}
+  @media (min-width:1480px){
+    #toc{
+      display:block; position:fixed; left:1.4rem; top:50%;
+      transform:translateY(-50%); z-index:30;
+      font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    }
+    #toc a{
+      display:block; color:var(--grey); padding:.28rem 0; text-decoration:none;
+      border-left:2px solid var(--rule); padding-left:.7rem;
+    }
+    #toc a:hover{color:var(--accent); border-left-color:var(--accent)}
+    #toc a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+    #toc .roman{color:var(--accent); font-style:italic; margin-right:.35rem}
+  }
+
+  /* ---------- the engine ---------- */
+  #lab{
+    border:1px solid var(--rule); border-radius:8px; background:var(--card);
+    padding:1.1rem 1.2rem .9rem; margin:1.6rem 0 .4rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #lab .presets{display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.9rem}
+  #lab .presets button{
+    font:inherit; font-size:.78rem; padding:.3rem .7rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  #lab .presets button:hover{border-color:var(--accent); color:var(--accent)}
+  #lab .presets button.on{border-color:var(--accent); color:var(--accent); font-weight:600}
+  #lab .ctrls{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem 2rem; margin-bottom:.4rem;
+  }
+  #lab .sl{display:grid; grid-template-columns:10.5rem 1fr 4.2rem; gap:.7rem; align-items:center}
+  #lab .sl label{font-size:.82rem}
+  #lab .sl .w{font-size:.82rem; text-align:right; color:var(--grey); font-variant-numeric:tabular-nums}
+  #lab input[type=range]{width:100%; accent-color:var(--accent)}
+  #lab .toggles{display:flex; flex-wrap:wrap; gap:1.2rem; margin:.5rem 0 .2rem; font-size:.82rem}
+  #lab .toggles label{display:flex; gap:.4rem; align-items:center; cursor:pointer}
+  #lab .toggles input{accent-color:var(--accent)}
+  @media (max-width:760px){ #lab .ctrls{grid-template-columns:1fr} }
+  #big{
+    margin:.8rem 0 .6rem; padding:.7rem 1rem; border-radius:6px;
+    border:1px solid var(--rule); background:var(--bg);
+    display:flex; gap:2rem; flex-wrap:wrap; align-items:baseline;
+  }
+  #big .hero{font-size:1.5rem; font-weight:700; font-variant-numeric:tabular-nums}
+  #big .sub{font-size:.8rem; color:var(--grey)}
+  #dagWrap{position:relative}
+  #dag svg{width:100%; height:auto; display:block}
+  #dag text{font-family:ui-sans-serif,-apple-system,sans-serif}
+  #dagTip{
+    position:absolute; pointer-events:none; display:none; z-index:40;
+    background:var(--card); border:1px solid var(--rule); border-radius:6px;
+    padding:.55rem .7rem; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.78rem; line-height:1.45; max-width:19rem;
+    box-shadow:0 2px 10px rgba(0,0,0,.12);
+  }
+  #dagTip .hdr{font-weight:700}
+  #dagTip .sub{color:var(--grey)}
+  .hint{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.8rem;
+    color:var(--faint); text-align:right; margin:.2rem 0 0;
+  }
+
+  @media (max-width:640px){
+    body{font-size:.98rem}
+    header{padding-top:3.4rem}
+    h1{font-size:1.9rem}
+    .subtitle{font-size:1.02rem}
+    h2{font-size:1.25rem}
+    .prose,.wide{padding:0 1.1rem}
+    .hint{text-align:left}
+    #themeBtn{top:.7rem; right:.7rem}
+    #lab .sl{grid-template-columns:8rem 1fr 3.6rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<nav id="toc" aria-label="Contents">
+  <a href="#brief"><span class="roman">§</span>The prompt</a>
+  <a href="#sec1"><span class="roman">I.</span>Two rival humanities</a>
+  <a href="#sec2"><span class="roman">II.</span>The engine</a>
+  <a href="#sec3"><span class="roman">III.</span>Four timelines</a>
+  <a href="#sec4"><span class="roman">IV.</span>Delete a technology</a>
+  <a href="#sec5"><span class="roman">V.</span>Replay it yourself</a>
+  <a href="#sec6"><span class="roman">VI.</span>Claims</a>
+  <a href="#sec7"><span class="roman">VII.</span>Method</a>
+</nav>
+
+<header class="prose">
+  <p class="backlink"><a href="../index.html">&#8592; All essays</a></p>
+  <h1>Replaying the Tape</h1>
+  <p class="subtitle">A pocket cliodynamics engine: two rival counterfactual
+  humanities — the <a href="../rockets-1/" data-dir>Victorian satellite</a> and the
+  sugar rocket — run four hundred times each, with and without the steam engine.</p>
+  <p class="byline">By <a href="https://angadh.com">Angadh Nanjangud</a> (prompter)
+    &amp; Claude Fable&nbsp;5 <span class="aim">xhigh</span> (AI)</p>
+
+  <aside class="callout" id="brief">
+    <span class="tag">The prompts — verbatim, typos and all</span>
+    <p>“but...  you are welcome to make a nice little cliodynamics post with some
+    interactive game viz type stuff. Surprise me, if you like.”</p>
+    <p>“cool; wanna do a post as a cliodynamics thing? WOnder what idas you have here
+    that allow edxplroing both our versions of humanity. ANd how we might fold the
+    steam stuff in as well. THis way we have:<br>
+    1. your timeline, which should build on the normal steam engine stuff.<br>
+    2. mine; which night have a path that allows the agents in paly to not ivnent the
+    steam engine? I dunno how this works exactly... but I am curious.”</p>
+    <p>“you might also see I am exploring the path not taken in the html image that is
+    in the post/my rought notes”</p>
+  </aside>
+
+  <p class="buildstats">
+    <b>Build:</b> one session (12 July 2026), ~80 minutes wall-clock ·
+    <b>tokens (estimated):</b> ≈2M in (cached context re-reads, chart inspection,
+    two model-debugging rounds) / ≈60k out (model, data, page, narrative) ·
+    model: Claude&nbsp;Fable&nbsp;5. Figures are estimates from the session log,
+    not billing telemetry.
+  </p>
+
+  <p style="margin-top:1.6rem">Two essays now disagree about why spaceflight came
+  late. <a href="../rockets-1/" data-dir>Chapter 3</a> (mine) says the gate was a
+  <em>customer</em>: every ingredient existed by 1896, and orbit waited for the
+  hydrogen bomb to pay for it. The prompter’s own draft — <i>Why Space Rockets Could
+  have Happened Sooner But Didn’t</i>, forthcoming at angadh.com — says the gate was
+  <em>vision</em>: rocket candy (sugar + saltpetre, double black powder’s impulse,
+  zero new chemistry) sat unmixed for seven hundred years in the very cities where
+  Hasan al-Rammah wrote rocket recipes next door to sugar refineries, because nobody
+  wanted a motor. Rather than argue, this page builds the machine both claims can be
+  fed into: a dependency graph of forty-three technologies, lags calibrated so the
+  baseline reproduces real history, then perturbed — a vision event here, a deleted
+  steam engine there — and rolled forward four hundred times. Stephen Jay Gould asked
+  what would survive if you replayed life’s tape. This is that experiment for the
+  technosphere, at toy scale, with the assumptions in public view.</p>
+</header>
+
+<section class="prose" id="sec1">
+  <h2><span class="no">I.</span>Two rival humanities, one falsifiable machine</h2>
+  <p>Cliodynamics — Peter Turchin’s name for treating history as a dynamical system —
+  usually models states: population, elites, fiscal stress. Technology is harder,
+  because inventions look like one-off miracles. But chapters 1–3 of this site keep
+  finding the same structure beneath the miracles: a <em class="k">prerequisite
+  lattice</em> (no smokeless powder without industrial acids; no de Laval nozzle
+  without something that rewards it) crossed with <em class="k">motive forces</em>
+  (someone must conceive the thing, and someone must pay for it). That structure is
+  modelable. Each technology becomes a node; each node arrives some lag after its
+  prerequisites; vision and customers shorten the lag; substitutes let one
+  prerequisite stand in for another. History as it happened becomes the calibration
+  run, and each of our two theses becomes a named, disputable perturbation.</p>
+  <p>The four timelines this page runs:</p>
+  <ol class="claims">
+    <li><b>A — as it happened.</b> No perturbations. By construction its median
+    arrivals match the real dates; its spread shows how much luck the model thinks
+    was involved.</li>
+    <li><b>B — the Victorian satellite.</b> Chapter 3’s counterfactual: a great-power
+    rocket program from 1890, injected as vision-and-customer multipliers on the
+    rocketry branch. An independent check on that essay’s arithmetic.</li>
+    <li><b>C — the sugar rocket.</b> The prompter’s counterfactual: in 1250, someone
+    in the Mamluk Levant or Song China conceives the rocket as a <em>vehicle</em> and
+    mixes saltpetre with sugar. A sustained program follows, with spillovers into
+    chemistry, precision fabrication, and instruments — because motors demand
+    propellant science, tooling, and diagnosis.</li>
+    <li><b>D — the sugar rocket without steam.</b> Scenario C with every steam node
+    deleted from the graph, forever. Can a civilisation reach orbit having never
+    built the technology our Industrial Revolution ran on? This is the prompter’s
+    question 2, taken literally.</li>
+  </ol>
+</section>
+
+<hr>
+
+<section class="prose" id="sec2">
+  <h2><span class="no">II.</span>The engine, in four equations</h2>
+  <p>A technology <i>i</i> becomes <em>buildable</em> when every one of its
+  prerequisite groups is satisfied; a group is satisfied when <em>any</em> member has
+  arrived — substitutability lives in these OR-groups (Bessemer’s converter needs a
+  blast to blow it, but a waterwheel blows as well as a steam engine). The gate
+  is<sup class="fn"><a id="ref-ex-4-1" href="../appendix/#ex-4-1" data-dir
+  title="Worked example in the appendix">1</a></sup></p>
+  <div class="eq" id="eq-4-1"><a class="eqno" href="#eq-4-1">(4.1)</a><math display="block"><mrow>
+    <msub><mi>g</mi><mi>i</mi></msub>
+    <mo>=</mo>
+    <munder><mo movablelimits="false">max</mo><mrow><mi>G</mi><mo>∈</mo><mtext>groups</mtext><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></munder>
+    <mspace width=".2em"></mspace>
+    <munder><mo movablelimits="false">min</mo><mrow><mi>j</mi><mo>∈</mo><mi>G</mi></mrow></munder>
+    <mspace width=".2em"></mspace>
+    <msub><mi>t</mi><mi>j</mi></msub>
+  </mrow></math></div>
+  <p>and the arrival adds a lag — the years of work, luck, and neglect between
+  <em>possible</em> and <em>done</em> — jittered log-normally and divided by the
+  motive forces<sup class="fn"><a id="ref-ex-4-2" href="../appendix/#ex-4-2" data-dir
+  title="Worked example in the appendix">2</a></sup>:</p>
+  <div class="eq" id="eq-4-2"><a class="eqno" href="#eq-4-2">(4.2)</a><math display="block"><mrow>
+    <msub><mi>t</mi><mi>i</mi></msub>
+    <mo>=</mo>
+    <msub><mi>g</mi><mi>i</mi></msub>
+    <mo>+</mo>
+    <mfrac>
+      <mrow><msub><mi>L</mi><mi>i</mi></msub>
+        <mo>&#8201;</mo>
+        <msup><mi>e</mi><mrow><mi>σ</mi><msub><mi>Z</mi><mi>i</mi></msub></mrow></msup></mrow>
+      <mrow><msub><mi>V</mi><mi>i</mi></msub>
+        <mo>&#8201;</mo>
+        <msub><mi>C</mi><mi>i</mi></msub></mrow>
+    </mfrac>
+  </mrow></math></div>
+  <p>How to read it: <math><msub><mi>t</mi><mi>j</mi></msub></math> is technology
+  <i>j</i>’s arrival year; <math><msub><mi>g</mi><mi>i</mi></msub></math> is the year
+  <i>i</i>’s last prerequisite fell; <math><msub><mi>L</mi><mi>i</mi></msub></math>
+  its base lag; <math><msub><mi>Z</mi><mi>i</mi></msub></math> a standard normal
+  draw, one per node per rollout, with <math><mi>σ</mi></math> = 0.14;
+  <math><msub><mi>V</mi><mi>i</mi></msub></math> and
+  <math><msub><mi>C</mi><mi>i</mi></msub></math> are vision and customer
+  multipliers, both 1 unless a scenario rule targets the node (a program that begins
+  after the gate accelerates only the remaining work — the lag integrates through
+  rate changes). Lags are calibrated so that scenario A’s <em>median</em> arrival
+  equals the real year for all forty-three nodes:</p>
+  <div class="eq" id="eq-4-3"><a class="eqno" href="#eq-4-3">(4.3)</a><math display="block"><mrow>
+    <msub><mi>L</mi><mi>i</mi></msub>
+    <mo>:</mo>
+    <mspace width=".4em"></mspace>
+    <mtext>median</mtext><msub><mrow></mrow><mi>A</mi></msub>
+    <mo stretchy="false">(</mo><msub><mi>t</mi><mi>i</mi></msub><mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <msubsup><mi>t</mi><mi>i</mi><mtext>real</mtext></msubsup>
+  </mrow></math></div>
+  <p>So the baseline cannot be wrong about history — it is history, with error bars.
+  Everything interesting is a difference from it. The last equation is the knife: to
+  measure what any single technology was <em>worth</em>, delete it and re-run
+  everything<sup class="fn"><a id="ref-ex-4-3" href="../appendix/#ex-4-3" data-dir
+  title="Worked example in the appendix">3</a></sup>,</p>
+  <div class="eq" id="eq-4-4"><a class="eqno" href="#eq-4-4">(4.4)</a><math display="block"><mrow>
+    <msub><mi>Δ</mi><mi>k</mi></msub>
+    <mo>=</mo>
+    <mtext>median</mtext>
+    <mo stretchy="false">(</mo>
+    <msub><mi>t</mi><mtext>orbit</mtext></msub>
+    <mo>&#8201;</mo><mo>|</mo><mo>&#8201;</mo>
+    <mtext>node&#8201;</mtext><mi>k</mi><mtext>&#8201;deleted</mtext>
+    <mo stretchy="false">)</mo>
+    <mo>−</mo>
+    <mn>1957</mn>
+  </mrow></math></div>
+  <p>One honest sentence before the results: this is a toy. It has one history to
+  calibrate on, its node list is a judgment call, and it cannot imagine paths its
+  author didn’t put in the graph. What it buys is not truth but
+  <em class="k">accountability</em> — every disagreement with its output must name
+  the node, edge, or multiplier it disputes. The full graph, lags included, is in
+  <a href="timelines_data.js">timelines_data.js</a>.</p>
+</section>
+
+<hr>
+
+<section class="wide" id="sec3">
+  <h2 class="prose" style="padding:0"><span class="no">III.</span>Four timelines, six milestones</h2>
+  <figure>
+    <img class="themed" data-light="timeline_dist.png" data-dark="timeline_dist_dark.png"
+         src="timeline_dist.png" alt="Arrival-date distributions for six milestone technologies under four scenarios: history, the Victorian program, the sugar-rocket vision, and the sugar rocket without steam">
+    <figcaption><b>Figure 1.</b> Arrival dates for six milestones under the four
+    timelines, 400 rollouts each; time flows downward. Dashed grey lines mark what
+    actually happened. In C and D the sugar rocket ignites in the 1280s and sounding
+    rockets fly around 1480 — yet the satellite still waits three more centuries.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Read column by column. <b>Timeline B</b> lands the satellite at a median of
+    <em class="k">1913</em> — an independent reconstruction of chapter 3’s
+    “1905&nbsp;±&nbsp;10,” from a completely different method (that essay staged the
+    rocket equation; this one never once computes a Δv). Two models, one window;
+    that is as close to a cross-check as counterfactual history gets.</p>
+    <p><b>Timeline C</b> is the surprise, and it cuts both ways. The vision event
+    works spectacularly at first: rocket candy by ~1288, an empirically-found
+    expansion nozzle by ~1305 (the model’s most heroic claim — flagged, disputable,
+    and exactly what the prompter’s draft argues iteration could deliver once the
+    propellant rewarded it), serious sounding rockets by ~1480. A medieval world
+    with a spaceward craft tradition, four hundred years of Congreve-class capability
+    before Congreve. And then the timeline <em class="k">stalls for three
+    centuries</em> — because the satellite doesn’t need better rockets. It needs
+    industrial acids (median ~1690 even with the program’s spillovers), smokeless
+    powder (~1745), and above all <em>radio</em> (~1807), which waits on the
+    scientific-institutional stack — printing, societies, electromagnetism — that no
+    amount of rocketry accelerates. Orbit arrives at a median of
+    <em class="k">1808</em>: seven hundred years of extra vision buys about a
+    hundred and fifty years of satellite.</p>
+    <p><b>Timeline D</b> answers the steam question with an anticlimax that is the
+    point: delete every steam engine from the sugar-rocket world and orbit moves by
+    <em class="k">about ten years</em> (median 1818, statistically indistinguishable
+    from C). The graph explains why: everything steam historically fed has a
+    substitute path — Bessemer’s blast blown by waterwheels, thermodynamics learned
+    from rocket motors instead of steam cylinders (Carnot studied the engine his
+    world had; a 1500s motor culture studies chambers and nozzles), compressors run
+    off internal-combustion engines that arrive by their own machine-tool route.
+    In the sugar timeline the steam engine is not a foundation; it is one lane of a
+    road that had several.</p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec4">
+  <h2 class="prose" style="padding:0"><span class="no">IV.</span>Delete one technology from real history</h2>
+  <div class="prose" style="padding:0">
+    <p>The same knife, turned on our own timeline: remove one node from scenario A,
+    keep everything else, and ask when the satellite arrives (eq.&nbsp;4.4).</p>
+  </div>
+  <figure>
+    <img class="themed" data-light="timeline_ablate.png" data-dark="timeline_ablate_dark.png"
+         src="timeline_ablate.png" alt="Bar chart of how much later the first satellite arrives when single technologies are deleted from history; steam engines cost 71 years, industrial acids 53, while radio, the de Laval nozzle, printing, calculus and the blast furnace have no substitute at all">
+    <figcaption><b>Figure 2.</b> Median delay of the first satellite when one node is
+    deleted and the substitute paths must carry the load. Red rows are nodes with no
+    substitute in the model — delete them and orbit never arrives at all.</figcaption>
+  </figure>
+  <div class="prose" style="padding:0">
+    <p>Three lessons in one chart. First, <em class="k">steam mattered enormously in
+    our timeline — about +71 years</em> — but through an unexpected channel: not
+    factories, which the model routes around, but the de Laval nozzle, which history
+    happened to derive from steam turbines, and which a world without steam must wait
+    to discover through late solid-motor work. Steam was load-bearing in the timeline
+    that lacked rocket vision, and irrelevant in the one that had it (timeline D) —
+    the two answers to “how much does the steam engine matter?” are different because
+    the question was always about vision, not thermodynamics. Second, the red rows:
+    radio, printing, calculus, the blast furnace, the nozzle — the satellite’s true
+    single points of failure are mostly <em>not</em> rocket technologies. Third,
+    fragility runs both ways: give the model the prompter’s Essonne toggle (the 1788
+    chlorate disaster re-flipped as luck, below) and castable composite propellant
+    arrives decades early — yet orbit barely moves, because chemistry without a
+    program is inert. Vision without chemistry stalls (timeline C’s three-century
+    plateau); chemistry without vision molders on the shelf, exactly as perchlorate
+    did for 126 real years. <em class="k">Both essays were right, about different
+    halves of a conjunction.</em></p>
+  </div>
+</section>
+
+<hr>
+
+<section class="wide" id="sec5">
+  <h2 class="prose" style="padding:0"><span class="no">V.</span>Replay the tape yourself</h2>
+  <div class="prose" style="padding:0">
+    <p>The whole graph, live. Pick a timeline, then argue with it: drag the vision
+    event through nine centuries, throttle the program, delete steam, allow the
+    Essonne disaster to un-happen, or drop the requirement that a satellite must be
+    <em>heard</em> (radio) rather than merely seen. Every control re-runs 250
+    rollouts of eqs.&nbsp;(4.1)–(4.2) in your browser.</p>
+  </div>
+  <div id="lab">
+    <div class="presets" role="group" aria-label="Timeline presets">
+      <button data-s="A" class="on">A · as it happened</button>
+      <button data-s="B">B · Victorian satellite</button>
+      <button data-s="C">C · sugar rocket</button>
+      <button data-s="D">D · sugar rocket, no steam</button>
+    </div>
+    <div class="ctrls">
+      <div class="sl"><label for="visYear">Vision event year</label>
+        <input type="range" id="visYear" min="1100" max="1900" value="1250" step="10">
+        <span class="w" id="visYearV"></span></div>
+      <div class="sl"><label for="strength">Program strength</label>
+        <input type="range" id="strength" min="0" max="150" value="100">
+        <span class="w" id="strengthV"></span></div>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="tSteam"> delete steam engines</label>
+      <label><input type="checkbox" id="tEssonne"> Essonne luck (chlorates tamed early, p=½)</label>
+      <label><input type="checkbox" id="tOptical"> allow optical proof (drop the radio requirement)</label>
+    </div>
+    <div id="big">
+      <span><span class="hero" id="bigYear">—</span>
+        <span class="sub" id="bigBand"></span></span>
+      <span class="sub" id="bigNote">first satellite, median of 250 rollouts</span>
+    </div>
+    <div id="dagWrap">
+      <div id="dag"></div>
+      <div id="dagTip"></div>
+    </div>
+    <p class="hint">Hover any node for its prerequisites and dates · whiskers span the middle 80% of rollouts</p>
+  </div>
+  <figure style="margin-top:.4rem">
+    <figcaption><b>Figure 3 (interactive).</b> The full 43-node dependency graph.
+    Rows are technologies grouped by branch; dots sit at each node’s median arrival
+    under your settings, whiskers span the 10th–90th percentile, and curves show
+    prerequisite edges. An × at the right edge means the node never arrives under
+    your settings. Data and calibrated lags:
+    <a href="timelines_data.js">timelines_data.js</a>; nothing leaves your
+    browser.</figcaption>
+  </figure>
+</section>
+
+<hr>
+
+<section class="prose" id="sec6">
+  <h2><span class="no">VI.</span>Claims, carefully labelled as claims</h2>
+  <p class="note">The engine is arithmetic from stated assumptions; what follows is
+  interpretation.</p>
+  <ol class="claims">
+    <li><b>Vision is powerful and shockingly bounded.</b> A vision event seven
+    centuries early delivers medieval sounding rockets (real capability, real
+    divergence) but moves the <em>satellite</em> only ~150 years, because orbit’s
+    long poles — institutional science, industrial chemistry, electromagnetism —
+    don’t care about rocket programs. The prompter’s thesis wins the suborbital
+    world; the lattice wins the orbital one.</li>
+    <li><b>The satellite’s critical path runs through Maxwell, not Goddard.</b> In
+    every timeline this engine can produce, the last gate before orbit is the radio
+    stack (or the willingness to accept optical proof — flip that toggle and
+    timeline C’s satellite jumps to ~1741). Chapter 3 found this for one timeline;
+    it generalises: <em>the hard part of a satellite is hearing it</em>.</li>
+    <li><b>The steam engine was a route, not a foundation.</b> Deleting it costs our
+    vision-poor timeline ~71 years (mostly via the nozzle it happened to gift
+    rocketry) and costs the vision-rich sugar timeline ~10. Answer to the prompt’s
+    question 2: yes — agents can skip the steam engine entirely and still
+    industrialise into orbit, provided something else (a motor culture) teaches them
+    thermodynamics and demands precision.</li>
+    <li><b>Two independent methods agree on the Victorian satellite.</b> Chapter 3’s
+    staged rocket equation said ~1905±10; this dependency engine, which knows no
+    physics, says median 1913. When a bottom-up physical model and a top-down
+    structural one land in the same decade, the claim “orbit was ~50 years early”
+    deserves promotion from speculation to working hypothesis.</li>
+    <li><b>Neither vision nor capability suffices; history is their conjunction.</b>
+    The Essonne toggle hands the 19th century castable composites and orbit barely
+    moves; the vision event hands the 13th century motors and orbit still waits on
+    acids and antennas. Every arrival in this model is a coincidence of a lattice
+    and a will. That is also its forecast for the present: the interesting
+    technologies of the next fifty years are the ones whose lattices are quietly
+    complete and whose Essonne-fears or missing customers are the only gate — which
+    is precisely where a vision event is cheapest.</li>
+  </ol>
+</section>
+
+<hr>
+
+<section class="prose" id="sec7">
+  <h2><span class="no">VII.</span>Method &amp; honest caveats</h2>
+  <p class="note">The graph has 43 nodes and ~70 prerequisite edges, hand-chosen;
+  dates are standard reference values; lags are calibrated by iterated simulation
+  until scenario A’s medians reproduce the real years (the max over noisy gates
+  biases naive lags late, so calibration shrinks them; details in
+  <a href="make_timeline_model.py">make_timeline_model.py</a>). σ = 0.14 was chosen
+  so that A’s 10–90% band on the satellite spans roughly ±70 years — wide enough to
+  be humble, narrow enough to distinguish scenarios. Programs multiply progress
+  rates only from their start date (a rule beginning after a node’s gate accelerates
+  only remaining work). The known sins: <b>n = 1</b> — one history calibrates
+  everything, the founding critique of cliodynamics; <b>graph closure</b> — the
+  model cannot use a path its author didn’t draw, so “orbit never arrives” means
+  “not via these nodes,” not “impossible”; <b>the 1305 nozzle</b> — timeline C’s
+  empirically-iterated de Laval equivalent is the single most disputable edge, taken
+  deliberately from the prompter’s draft (pottery kilns evolved sophisticated
+  airflow without gas dynamics) and easy to disagree with by throttling the program
+  slider; <b>institutions as nodes</b> — “scientific method &amp; societies” is a
+  1660 dot standing in for a civilisation-scale process; <b>no reverse
+  causation</b> — early rockets here never retard anything (no Essonne-style fear
+  events except the one modelled), though real history is full of technologies that
+  salted their own fields. Prior art, so this page doesn’t pretend novelty: Turchin’s
+  cliodynamics for the ambition; the Brian Potter / Marginal Revolution
+  “inventions-behind-their-time” analyses the prompter’s draft engages; tech-tree
+  games (Civilization) for the lattice intuition this page tries to make honest —
+  their trees are authored destinies, this one is a calibrated argument.</p>
+  <p class="note">Figures generated by
+  <a href="make_timeline_model.py">make_timeline_model.py</a>; static versions:
+  <a href="timeline_dist.png">Fig 1</a> · <a href="timeline_ablate.png">Fig 2</a>
+  (each also as <code>*_dark.png</code>); the interactive runs the identical model
+  from <a href="timelines_data.js">timelines_data.js</a>. Companion essays:
+  <a href="../rockets-1/" data-dir>chapter 3</a> (the customer thesis) and the
+  prompter’s <i>Why Space Rockets Could have Happened Sooner But Didn’t</i>
+  (the vision thesis, forthcoming at angadh.com) — this page is the argument they
+  have when they meet.</p>
+</section>
+
+<footer class="prose">
+  <a href="../index.html">&#8592; All essays</a> ·
+  <a href="../rockets-1/" data-dir>Chapter 3: The Victorian Satellite</a> ·
+  <a href="../appendix/#ch4" data-dir>Appendix: the math, just in time</a> ·
+  Made with Claude · July 2026 ·
+  Sources: P. Turchin; W. Johnson on Moore; Sutton; standard invention chronologies.
+</footer>
+
+<script src="timelines_data.js"></script>
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('img.themed').forEach(im=>{
+    im.src = dark ? im.dataset.dark : im.dataset.light;
+  });
+  drawDag();
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+const startDark = urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+document.getElementById('themeBtn').addEventListener('click', ()=>applyTheme(!root.classList.contains('dark')));
+const css = v => getComputedStyle(root).getPropertyValue(v).trim();
+
+/* ---------- the simulator (mirrors make_timeline_model.py) ---------- */
+const NODE = {}; TL.nodes.forEach(n => NODE[n.id] = n);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rand){ let u=0,v=0;
+  while(!u) u=rand(); while(!v) v=rand();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+function arrivalTime(n, gate, work, active, strength){
+  const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
+  const rate = tt => {
+    let v = 1;
+    for (const [s, r] of active)
+      if (s <= tt && hits(r)) v *= Math.pow(r.V * r.C, strength);
+    return v;
+  };
+  const starts = active.filter(([s, r]) => s > gate && hits(r))
+                       .map(([s]) => s).sort((a, b) => a - b);
+  let t = gate, rem = work;
+  for (const s of starts){
+    const seg = (s - t) * rate(t);
+    if (seg >= rem) return t + rem / rate(t);
+    rem -= seg; t = s;
+  }
+  return t + rem / rate(t);
+}
+
+function simulate(cfg, rand){
+  const t = {}, rem = new Set();
+  for (const n of TL.nodes){
+    if (cfg.block.has(n.id)) continue;
+    if (n.start) t[n.id] = n.real; else rem.add(n.id);
+  }
+  const z = {}; rem.forEach(id => z[id] = gauss(rand));
+  const luck = cfg.essonne && rand() < 0.5;
+  const active = cfg.rules.filter(r => typeof r.trigger === 'number')
+                          .map(r => [r.trigger, r]);
+  const fired = new Set();
+  while (true){
+    let bid = null, barr = Infinity;
+    for (const id of rem){
+      const n = NODE[id];
+      let gate = TL.T0, ok = true;
+      const groups = cfg.orbitGroups && id === 'orbit' ? cfg.orbitGroups : n.groups;
+      for (const g of groups){
+        let m = Infinity;
+        for (const p of g) if (t[p] !== undefined && t[p] < m) m = t[p];
+        if (m === Infinity){ ok = false; break; }
+        if (m > gate) gate = m;
+      }
+      if (!ok) continue;
+      let work = n.L0 * Math.exp(TL.sigma * z[id]);
+      if (id === 'composite' && luck) work /= 3;
+      const arr = arrivalTime(n, gate, work, active, cfg.strength);
+      if (arr < barr){ barr = arr; bid = id; }
+    }
+    if (bid === null) break;
+    t[bid] = barr; rem.delete(bid);
+    if (!fired.has(bid)){
+      for (const r of cfg.rules) if (r.trigger === bid) active.push([barr, r]);
+      fired.add(bid);
+    }
+  }
+  for (const id of rem) t[id] = TL.NEVER;
+  return t;
+}
+
+/* ---------- controls ---------- */
+let scenario = 'A';
+const visYear = document.getElementById('visYear'),
+      strength = document.getElementById('strength'),
+      tSteam = document.getElementById('tSteam'),
+      tEssonne = document.getElementById('tEssonne'),
+      tOptical = document.getElementById('tOptical');
+
+function currentCfg(){
+  const scn = TL.scenarios[scenario];
+  const baseTrig = scn.rules.filter(r => typeof r.trigger === 'number')
+                            .map(r => r.trigger);
+  const shift = baseTrig.length ? (+visYear.value) - Math.min(...baseTrig) : 0;
+  const rules = scn.rules.map(r => (typeof r.trigger === 'number')
+    ? Object.assign({}, r, {trigger: r.trigger + shift}) : r);
+  const block = new Set(scn.block);
+  if (tSteam.checked) TL.steam.forEach(id => block.add(id));
+  let orbitGroups = null;
+  if (tOptical.checked)
+    orbitGroups = NODE.orbit.groups.filter(g => !(g.length === 1 && g[0] === 'radio'));
+  return { rules, block, essonne: tEssonne.checked,
+           strength: (+strength.value) / 100, orbitGroups };
+}
+
+const N_ROLL = 250;
+function runAll(){
+  const cfg = currentCfg();
+  const rand = mulberry32(20260712);
+  const acc = {}; TL.nodes.forEach(n => acc[n.id] = []);
+  for (let k = 0; k < N_ROLL; k++){
+    const t = simulate(cfg, rand);
+    for (const id in t) acc[id].push(t[id]);
+    TL.nodes.forEach(n => { if (t[n.id] === undefined) acc[n.id].push(TL.NEVER); });
+  }
+  const stats = {};
+  for (const id in acc){
+    const a = acc[id].filter(v => v < TL.NEVER).sort((x, y) => x - y);
+    stats[id] = a.length
+      ? { med: a[Math.floor(a.length * .5)], lo: a[Math.floor(a.length * .1)],
+          hi: a[Math.min(a.length - 1, Math.floor(a.length * .9))],
+          p: a.length / N_ROLL }
+      : null;
+  }
+  return stats;
+}
+
+/* ---------- the DAG timeline ---------- */
+const BR_ORDER = ["K","P","M","C","F","I","R"];
+const MARQUEE = new Set(["rocket_candy","delaval","sounding","smokeless","radio","orbit"]);
+const dag = document.getElementById('dag');
+const tip = document.getElementById('dagTip');
+const wrap = document.getElementById('dagWrap');
+let STATS = null;
+
+const ROWS = [];
+BR_ORDER.forEach(br => {
+  TL.nodes.filter(n => n.br === br).sort((a, b) => a.real - b.real)
+    .forEach(n => ROWS.push(n));
+});
+const ROWY = {}; ROWS.forEach((n, i) => ROWY[n.id] = i);
+
+function scColor(){
+  return css('--sc' + scenario);
+}
+function drawDag(){
+  if (!STATS) STATS = runAll();
+  dag.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  const RH = 16.5, GUT = 218, W = 1180, T = 26;
+  const H = T + ROWS.length * RH + 34;
+  const Y0 = 1000, Y1 = 2065;
+  const X = yr => GUT + (Math.min(yr, Y1) - Y0) / (Y1 - Y0) * (W - GUT - 14);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag);
+    for (const a in attrs) el.setAttribute(a, attrs[a]); (parent || svg).appendChild(el); return el; };
+
+  [1000, 1200, 1400, 1600, 1800, 2000].forEach(yr => {
+    mk('line', {x1: X(yr), x2: X(yr), y1: T - 10, y2: H - 26,
+                stroke: css('--rule'), 'stroke-width': 1});
+    const t = mk('text', {x: X(yr), y: H - 8, 'text-anchor': 'middle',
+                          'font-size': 11, fill: css('--grey')});
+    t.textContent = yr;
+  });
+
+  /* branch separators + labels */
+  let prevBr = null;
+  ROWS.forEach((n, i) => {
+    if (n.br !== prevBr){
+      const y = T + i * RH - 3;
+      if (i) mk('line', {x1: 8, x2: W - 8, y1: y, y2: y,
+                         stroke: css('--rule'), 'stroke-width': 1});
+      const t = mk('text', {x: 8, y: y + 12, 'font-size': 9,
+                            fill: css('--faint'), 'font-weight': 600});
+      t.textContent = TL.branches[n.br].toUpperCase();
+      prevBr = n.br;
+    }
+  });
+
+  const col = scColor(), acc2 = css('--accent');
+  /* edges */
+  ROWS.forEach(n => {
+    if (!n.groups) return;
+    const s1 = STATS[n.id];
+    if (!s1) return;
+    const y1 = T + ROWY[n.id] * RH + 9, x1 = X(s1.med);
+    n.groups.flat().forEach(p => {
+      const s0 = STATS[p];
+      if (!s0 || ROWY[p] === undefined) return;
+      const y0 = T + ROWY[p] * RH + 9, x0 = X(s0.med);
+      mk('path', {d: `M${x0.toFixed(1)},${y0.toFixed(1)} C${(x0 + 26).toFixed(1)},${y0.toFixed(1)} ${(x1 - 26).toFixed(1)},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`,
+        fill: 'none', stroke: css('--grey'), 'stroke-opacity': .16,
+        'stroke-width': 1});
+    });
+  });
+
+  /* rows */
+  ROWS.forEach(n => {
+    const y = T + ROWY[n.id] * RH + 9;
+    const s = STATS[n.id];
+    const marq = MARQUEE.has(n.id);
+    const lbl = mk('text', {x: GUT - 8, y: y + 3.5, 'text-anchor': 'end',
+      'font-size': marq ? 10.5 : 9.5, fill: marq ? css('--fg') : css('--grey'),
+      'font-weight': marq ? 700 : 400});
+    lbl.textContent = n.label;
+    const g = mk('g', {});
+    if (!s){
+      const t = mk('text', {x: W - 14, y: y + 4, 'text-anchor': 'end',
+        'font-size': 12, fill: css('--scB'), 'font-weight': 700}, g);
+      t.textContent = '×';
+    } else {
+      const c = n.id === 'orbit' ? acc2 : col;
+      mk('line', {x1: X(s.lo), x2: X(s.hi), y1: y, y2: y, stroke: c,
+                  'stroke-width': marq ? 2.4 : 1.4, 'stroke-opacity': .45,
+                  'stroke-linecap': 'round'}, g);
+      mk('circle', {cx: X(s.med), cy: y, r: marq ? 4.4 : 3, fill: c}, g);
+      if (n.start)
+        mk('circle', {cx: X(n.real), cy: y, r: 3, fill: 'none',
+                      stroke: css('--faint'), 'stroke-width': 1}, g);
+    }
+    /* hover target */
+    const hit = mk('rect', {x: 0, y: y - RH / 2, width: W, height: RH,
+                            fill: '#000', 'fill-opacity': 0}, g);
+    hit.addEventListener('pointermove', ev => {
+      const pre = (n.groups || []).map(gr =>
+        gr.map(p => NODE[p].label).join(' OR ')).join(' + ') || '—';
+      tip.innerHTML = `<div class="hdr">${n.label}</div>` +
+        `<div class="sub">really: ${n.real} · branch: ${TL.branches[n.br]}</div>` +
+        (s ? `<div>now: median ${Math.round(s.med)} · 10–90%: ${Math.round(s.lo)}–${Math.round(s.hi)}</div>`
+           : `<div style="color:${css('--scB')}">never arrives under these settings</div>`) +
+        `<div class="sub">needs: ${pre}</div>`;
+      tip.style.display = 'block';
+      const wr = wrap.getBoundingClientRect();
+      let lx = ev.clientX - wr.left + 14;
+      if (lx + tip.offsetWidth > wr.width - 8) lx = ev.clientX - wr.left - tip.offsetWidth - 14;
+      tip.style.left = lx + 'px';
+      tip.style.top = (ev.clientY - wr.top + 12) + 'px';
+    });
+    hit.addEventListener('pointerleave', () => tip.style.display = 'none');
+  });
+
+  dag.appendChild(svg);
+
+  /* headline */
+  const so = STATS.orbit;
+  document.getElementById('bigYear').textContent = so ? Math.round(so.med) : 'never';
+  document.getElementById('bigYear').style.color = so ? css('--accent') : css('--scB');
+  document.getElementById('bigBand').textContent =
+    so ? `(10–90%: ${Math.round(so.lo)}–${Math.round(so.hi)})` : 'under these settings';
+}
+
+function refresh(){ STATS = runAll(); drawDag(); }
+
+document.querySelectorAll('#lab .presets button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#lab .presets button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    scenario = b.dataset.s;
+    const scn = TL.scenarios[scenario];
+    const trig = scn.rules.filter(r => typeof r.trigger === 'number').map(r => r.trigger);
+    visYear.value = trig.length ? Math.min(...trig) : 1250;
+    visYear.disabled = !trig.length;
+    strength.value = 100;
+    tSteam.checked = scenario === 'D';
+    updateReadouts(); refresh();
+  });
+});
+function updateReadouts(){
+  document.getElementById('visYearV').textContent = visYear.disabled ? '—' : visYear.value;
+  document.getElementById('strengthV').textContent =
+    (strength.value / 100).toFixed(2).replace(/0$/, '') + '×';
+}
+[visYear, strength].forEach(s => s.addEventListener('input', () => { updateReadouts(); refresh(); }));
+[tSteam, tEssonne, tOptical].forEach(s => s.addEventListener('change', refresh));
+visYear.disabled = true;
+updateReadouts();
+
+applyTheme(startDark);
+
+/* ---------- TOC scrollspy ---------- */
+const tocLinks = [...document.querySelectorAll('#toc a')];
+const tocTargets = tocLinks.map(a => document.querySelector(a.getAttribute('href')));
+function spyToc(){
+  const probe = innerHeight * 0.35;
+  let act = 0;
+  tocTargets.forEach((el, i) => {
+    if (el && el.getBoundingClientRect().top <= probe) act = i;
+  });
+  if (innerHeight + scrollY >= document.body.scrollHeight - 8) act = tocLinks.length - 1;
+  tocLinks.forEach((a, i) => a.classList.toggle('active', i === act));
+}
+addEventListener('scroll', spyToc, {passive: true});
+spyToc();
+
+/* file:// can't resolve directory URLs — point them at index.html locally,
+   preserving any #fragment */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>

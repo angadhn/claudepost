@@ -278,6 +278,65 @@
     <p class="back"><a href="../rockets-1/#ref-ex-3-4" data-dir>&#8617; back to chapter 3</a></p>
   </section>
 
+  <h2 id="ch4"><span class="ch">Chapter 4</span>Replaying the Tape</h2>
+  <p class="chnote"><a href="../timelines-1/" data-dir>Read the chapter</a></p>
+
+  <section class="ex" id="ex-4-1">
+    <span class="no">Ex 4.1 · AND of ORs (the gate)</span>
+    <p>Eq.&nbsp;<a href="../timelines-1/#eq-4-1" data-dir>(4.1)</a> makes a technology
+    buildable when <i>every</i> prerequisite group has <i>some</i> arrived member.
+    Bessemer steel needs [coke iron] AND [Watt engine OR waterpower] — the converter
+    must be blown, but anything that blows will do:</p>
+    <div class="work">
+      coke iron 1709; Watt 1776; waterpower ~1000<br>
+      gate = max( 1709, min(1776, 1000) ) = max(1709, 1000) = <b>1709</b>
+    </div>
+    <p>Delete Watt and the gate is unchanged — waterpower carries the group. That is
+    why "delete the steam engines" costs so little in Figure&nbsp;2's world: most of
+    steam's edges sit inside OR-groups. The min picks the earliest substitute; the max
+    insists on every group. Go
+    <a href="https://en.wikipedia.org/wiki/And%E2%80%93or_tree">here for more</a>.</p>
+    <p class="back"><a href="../timelines-1/#ref-ex-4-1" data-dir>&#8617; back to chapter 4</a></p>
+  </section>
+
+  <section class="ex" id="ex-4-2">
+    <span class="no">Ex 4.2 · Lags, jitter, and motive forces</span>
+    <p>Eq.&nbsp;<a href="../timelines-1/#eq-4-2" data-dir>(4.2)</a> turns "possible"
+    into "done." Rocket candy's ingredients were all in place by ~1000&nbsp;CE and it
+    was first mixed in 1943, so its calibrated lag is roughly 940 years — the lag
+    <i>is</i> the vision desert. Scenario C's program multiplies vision × customer =
+    6 × 3 = 18 from 1250:</p>
+    <div class="work">
+      arrival ≈ 1250 + 940&#8202;/&#8202;18 ≈ 1250 + 52 ≈ <b>~1300</b>
+      (the engine says median 1288, because the e<sup>σZ</sup> jitter and the
+      pre-1250 unmultiplied years shift it slightly)
+    </div>
+    <p>The jitter e<sup>σZ</sup> with σ = 0.14 means a typical rollout's lag varies by
+    ~±15%; multiplied down a 43-node chain this is where the wide orbit bands come
+    from. Go <a href="https://en.wikipedia.org/wiki/Log-normal_distribution">here for
+    more</a>.</p>
+    <p class="back"><a href="../timelines-1/#ref-ex-4-2" data-dir>&#8617; back to chapter 4</a></p>
+  </section>
+
+  <section class="ex" id="ex-4-3">
+    <span class="no">Ex 4.3 · Ablation (delete a node and re-run)</span>
+    <p>Eq.&nbsp;<a href="../timelines-1/#eq-4-4" data-dir>(4.4)</a> measures a
+    technology's importance by its absence, the same trick neuroscience and machine
+    learning use (lesion studies). Delete "steam engines (all)" from scenario A and
+    the de Laval nozzle loses its historical parent; its OR-group falls back to the
+    next member, castable composites (1942):</p>
+    <div class="work">
+      nozzle gate: 1804 (steam) → ~1942 (composite fallback)<br>
+      orbit: 1957 → ~2028 in the median rollout ⇒ Δ ≈ <b>+71 years</b>
+    </div>
+    <p>A node with no OR-siblings anywhere on the path (radio, printing) returns
+    "never" — which means "no path in this graph," a statement about the model as
+    much as the world. Go
+    <a href="https://en.wikipedia.org/wiki/Ablation_(artificial_intelligence)">here
+    for more</a>.</p>
+    <p class="back"><a href="../timelines-1/#ref-ex-4-3" data-dir>&#8617; back to chapter 4</a></p>
+  </section>
+
 </main>
 
 <footer class="prose">

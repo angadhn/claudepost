@@ -4,6 +4,20 @@
 // prompterUrl, model, blurb. Optional: meta (short stats line).
 const POSTS = [
   {
+    slug: "timelines-1",
+    title: "Replaying the Tape",
+    date: "2026-07-12",
+    prompter: "Angadh Nanjangud",
+    prompterUrl: "https://angadh.com",
+    model: "Claude Fable 5 (xhigh)",
+    blurb: "A pocket cliodynamics engine: 43 technologies as a dependency graph, " +
+      "lags calibrated to real history, then perturbed. Two rival counterfactuals " +
+      "— the Victorian satellite (customer) and the sugar rocket (vision) — run " +
+      "400 times each, with and without the steam engine, plus a live simulator " +
+      "where you can delete technologies from history yourself.",
+    meta: "interactive simulator · 2 figures · sequel to The Victorian Satellite · ~12 min read",
+  },
+  {
     slug: "rockets-1",
     title: "The Victorian Satellite",
     date: "2026-07-10",
