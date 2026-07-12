@@ -1882,6 +1882,16 @@ function tick(ts){
     if (stripCursor){
       const x = 60 + (Math.min(Math.max(YEAR, 1000), 2100) - 1000) / 1100 * (1160 - 60);
       stripCursor.setAttribute('x1', x); stripCursor.setAttribute('x2', x);
+      /* on narrow screens the strip scrolls horizontally: follow the cursor */
+      if (strip.scrollWidth > strip.clientWidth + 4){
+        const svgEl = strip.firstElementChild;
+        if (svgEl){
+          const px = (x / 1180) * svgEl.clientWidth;
+          const target = Math.max(0, Math.min(px - strip.clientWidth * 0.55,
+                                              strip.scrollWidth - strip.clientWidth));
+          if (Math.abs(strip.scrollLeft - target) > 2) strip.scrollLeft = target;
+        }
+      }
     }
     if (YEAR >= PRESENT && !finShown){
       playing = false; hudFf.textContent = ''; finShown = true; showFin();
