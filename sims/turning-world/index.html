@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Turning World — Claudepost</title>
+<meta name="description" content="A spinning globe of alternate history: watch technologies ignite across the map, then zoom into isometric provinces as they build toward the sky.">
+<script>
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+    --gold:#b3873e; --green:#2d7d52; --blue:#2f629c; --red:#9c453a;
+    --sea:#dfe3e6; --land:#cec7b4; --landEdge:#b5ad99;
+    --terraG:#c3c8a6; --terraA:#dccfae; --terraW:#ccd6da; --terraF:#a8b58d;
+    --terraD:#d2c9a0; --isoT:#d8d1bf; --isoL:#c2bba8; --isoR:#a89f8a;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+    --gold:#b98a2c; --green:#3ba26b; --blue:#5b8ed8; --red:#c25a3c;
+    --sea:#2a2d33; --land:#45413a; --landEdge:#57524a;
+    --terraG:#3c4234; --terraA:#4a4436; --terraW:#2e3339; --terraF:#333b2d;
+    --terraD:#453f30; --isoT:#565045; --isoL:#48433a; --isoR:#3a362f;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.02rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:62rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:3.4rem 0 .5rem}
+  h1{font-size:2.1rem; line-height:1.15; font-weight:600; margin:0 0 .45rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.02rem; margin:0 0 .8rem; max-width:47rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.3rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  .promptbox{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:.7rem 1rem; margin:.2rem 0 1rem; font-size:.88rem; max-width:47rem;
+  }
+  .promptbox summary{
+    cursor:pointer; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.72rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent);
+  }
+  .promptbox p{margin:.7rem 0 0; color:var(--fg)}
+  .promptbox .src{font-size:.78rem; color:var(--faint);
+    font-family:ui-sans-serif,-apple-system,sans-serif}
+
+  #panel{
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem;
+    margin:.4rem 0 .8rem;
+  }
+  #panel .chips{display:flex; flex-wrap:wrap; gap:.4rem}
+  #panel .chips button{
+    font:inherit; font-size:.8rem; padding:.3rem .8rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--card); color:var(--fg);
+  }
+  #panel .chips button:hover{border-color:var(--accent); color:var(--accent)}
+  #panel .chips button.on{border-color:var(--accent); color:var(--accent); font-weight:600}
+  #panel #run{
+    font:inherit; font-size:.9rem; font-weight:700; padding:.45rem 1.2rem; cursor:pointer;
+    color:#fff; background:var(--accent); border:none; border-radius:8px;
+  }
+  #panel #run:hover{filter:brightness(1.07)}
+
+  #stage{position:relative; border:1px solid var(--rule); border-radius:10px;
+    overflow:hidden; background:var(--card); min-height:340px}
+  #globeWrap{transition:transform .9s cubic-bezier(.5,0,.6,1), opacity .9s; transform-origin:center}
+  #globeWrap.zoomed{pointer-events:none}
+  #globe{width:100%; height:auto; display:block; cursor:grab}
+  #globe:active{cursor:grabbing}
+  #iso{position:absolute; inset:0; opacity:0; pointer-events:none;
+    transition:opacity .7s .25s}
+  #iso.show{opacity:1; pointer-events:auto}
+  #iso svg{width:100%; height:100%; display:block}
+  #hud{
+    position:absolute; top:.65rem; left:.9rem; right:.9rem; display:flex;
+    align-items:baseline; gap:1rem; flex-wrap:wrap; pointer-events:none;
+    font-family:ui-sans-serif,-apple-system,sans-serif; z-index:5;
+  }
+  #hudYear{font-size:1.9rem; font-weight:700; font-variant-numeric:tabular-nums}
+  #hudEra{font-style:italic; color:var(--grey);
+    font-family:"Iowan Old Style",Palatino,Georgia,serif}
+  #hudFf{color:var(--faint); font-size:.85rem}
+  #hudBtns{margin-left:auto; pointer-events:auto; display:flex; gap:.4rem}
+  #hudBtns button{
+    font:inherit; font-size:.75rem; padding:.22rem .65rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  #hudBtns button:hover{border-color:var(--accent); color:var(--accent)}
+  #regionName{
+    position:absolute; top:3.1rem; left:.95rem; z-index:5; pointer-events:none;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem;
+    color:var(--grey); opacity:0; transition:opacity .5s;
+  }
+  #regionName.show{opacity:1}
+  #caption{
+    position:absolute; left:0; right:0; bottom:.6rem; text-align:center;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.9rem;
+    color:var(--fg); pointer-events:none; padding:0 1rem; z-index:5;
+    text-shadow:0 1px 0 var(--card);
+    opacity:0; transition:opacity .4s;
+  }
+  #caption.show{opacity:1}
+  #caption .yr{font-weight:700; color:var(--accent); margin-right:.5rem;
+    font-variant-numeric:tabular-nums}
+  #hint{
+    position:absolute; left:0; right:0; bottom:2.1rem; text-align:center;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
+    color:var(--faint); pointer-events:none; z-index:5;
+  }
+  #fin{
+    position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+    display:none; text-align:center; background:var(--bg); z-index:8;
+    border:1px solid var(--accent); border-radius:10px; padding:1.1rem 1.6rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif; max-width:26rem;
+    box-shadow:0 4px 24px rgba(0,0,0,.15);
+  }
+  #fin h2{margin:0 0 .3rem; font-size:1.35rem;
+    font-family:"Iowan Old Style",Palatino,Georgia,serif}
+  #fin p{margin:0 0 .8rem; font-size:.88rem; color:var(--grey)}
+  #fin .btns{display:flex; gap:.45rem; justify-content:center; flex-wrap:wrap}
+  #fin button{
+    font:inherit; font-size:.8rem; padding:.35rem .8rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  #fin button:hover{border-color:var(--accent); color:var(--accent)}
+  #fin button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+
+  .foot{padding:1.6rem 0 3rem; color:var(--grey); font-size:.86rem; max-width:47rem}
+  details#how{margin-top:.6rem; font-family:ui-sans-serif,-apple-system,sans-serif}
+  details#how summary{cursor:pointer; font-size:.8rem; font-weight:600; color:var(--accent)}
+  details#how p{font-size:.84rem; color:var(--grey); margin:.5rem 0 0}
+  @media (max-width:640px){
+    header{padding-top:3.1rem}
+    h1{font-size:1.6rem}
+    .prose{padding:0 1rem}
+    #hudYear{font-size:1.3rem}
+    #themeBtn{top:.7rem; right:.7rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<header class="prose">
+  <p class="backlink"><a href="../../index.html#sims">&#8592; All sims</a> ·
+    <a href="../skyline/" data-dir>the Skyline</a> ·
+    <a href="../tape-machine/" data-dir>the Tape Machine</a> ·
+    <a href="../../timelines-1/" data-dir>how the engine works</a></p>
+  <h1>The Turning World</h1>
+  <p class="subtitle">The whole planet, one alternate history at a time. Spin the
+  globe and watch technologies ignite where they were born — fire arrows over
+  Kaifeng, engines at Woolwich, iron rockets at Srirangapatna. Click any beacon to
+  zoom into that province as an isometric diorama and watch it build. In
+  sugar-rocket worlds, the road to orbit runs through Damascus.</p>
+
+  <details class="promptbox">
+    <summary>The prompt — verbatim, typos and all</summary>
+    <p>“Okay, this looks quite cool. Can you make one more that looks like Age of
+    Empires or whatever? I want to see really nice visuals with like an isomorphic
+    view of a world and I don't know maybe you can make it look like a globe that we
+    zoom into different parts of so you can add geography and other things also into
+    it. So that's a new post that I want you to make. I don't know if the resources
+    are enough to do this on an internet browser, but you're allowed to take as much
+    time as you want to do this because I have a ton of tokens to be used up before I
+    lose access to Fable tomorrow.”</p>
+    <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
+    The browser is plenty: the globe is an orthographic projection drawn on a canvas,
+    the provinces are hand-built isometric SVG, and no library, tile-set, or network
+    call is involved. “Isomorphic” faithfully preserved above; isometric faithfully
+    delivered below.</p>
+  </details>
+</header>
+
+<main class="prose">
+  <div id="panel">
+    <div class="chips" id="worlds">
+      <button data-w="our" class="on">our world</button>
+      <button data-w="sugar">the sugar rocket (1250)</button>
+      <button data-w="nosteam">steam never invented</button>
+      <button data-w="sugarnosteam">sugar rocket, no steam</button>
+      <button data-w="chaos">chaotic history</button>
+    </div>
+    <button id="run">▶ Run</button>
+  </div>
+
+  <div id="stage">
+    <div id="globeWrap"><canvas id="globe"></canvas></div>
+    <div id="iso"></div>
+    <div id="hud">
+      <span id="hudYear">1000</span>
+      <span id="hudEra">The Age of Wind and Muscle</span>
+      <span id="hudFf"></span>
+      <div id="hudBtns">
+        <button id="btnBack" style="display:none">← globe</button>
+        <button id="btnPause" style="display:none">pause</button>
+        <button id="btnSkip" style="display:none">skip</button>
+      </div>
+    </div>
+    <div id="regionName"></div>
+    <div id="hint">drag to spin · click a beacon to visit a province</div>
+    <div id="caption"></div>
+    <div id="fin">
+      <h2 id="finT"></h2>
+      <p id="finP"></p>
+      <div class="btns">
+        <button class="primary" id="btnAgain">↻ new dice</button>
+        <button id="btnClose">keep watching</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    Third in the family after the <a href="../tape-machine/" data-dir>Tape
+    Machine</a> (worlds as text) and the <a href="../skyline/" data-dir>Skyline</a>
+    (one town, drawn) — this one adds the geography.
+    <details id="how">
+      <summary>How does this run? (no AI is queried)</summary>
+      <p>Each run is one seeded Monte-Carlo rollout of the 43-technology dependency
+      graph from <a href="../../timelines-1/" data-dir>chapter 4</a>, computed in
+      plain JavaScript — no network calls, no language model, no game engine. The
+      globe is an orthographic projection of hand-encoded low-poly coastlines onto a
+      canvas; the provinces are isometric SVG drawn from small terrain maps; every
+      technology carries a home latitude and longitude, so events ping where they
+      historically happened — and relocate when your counterfactual moves them.
+      Longer explanation in the <a href="../tape-machine/" data-dir>Tape
+      Machine’s</a> “how does this run?” panel; the graph is
+      <a href="timelines_data.js">timelines_data.js</a>.</p>
+    </details>
+  </footer>
+</main>
+
+<script src="timelines_data.js"></script>
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+applyTheme(urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+document.getElementById('themeBtn').addEventListener('click',
+  ()=>applyTheme(!root.classList.contains('dark')));
+const css = v => getComputedStyle(root).getPropertyValue(v).trim();
+
+/* ---------- engine (same semantics as chapter 4) ---------- */
+const NODE = {}; TL.nodes.forEach(n => NODE[n.id] = n);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rand){ let u=0,v=0;
+  while(!u) u=rand(); while(!v) v=rand();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function arrivalTime(n, gate, work, active){
+  const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
+  const rate = tt => { let v = 1;
+    for (const [s, r] of active) if (s <= tt && hits(r)) v *= r.V * r.C;
+    return v; };
+  const starts = active.filter(([s, r]) => s > gate && hits(r))
+                       .map(([s]) => s).sort((a, b) => a - b);
+  let t = gate, rem = work;
+  for (const s of starts){
+    const seg = (s - t) * rate(t);
+    if (seg >= rem) return t + rem / rate(t);
+    rem -= seg; t = s;
+  }
+  return t + rem / rate(t);
+}
+function simulate(cfg, rand){
+  const t = {}, rem = new Set();
+  for (const n of TL.nodes){
+    if (cfg.block.has(n.id)) continue;
+    if (n.start) t[n.id] = n.real; else rem.add(n.id);
+  }
+  const z = {}; rem.forEach(id => z[id] = gauss(rand));
+  const active = cfg.rules.filter(r => typeof r.trigger === 'number')
+                          .map(r => [r.trigger, r]);
+  const fired = new Set();
+  while (true){
+    let bid = null, barr = Infinity;
+    for (const id of rem){
+      const n = NODE[id];
+      let gate = TL.T0, ok = true;
+      for (const g of n.groups){
+        let m = Infinity;
+        for (const p of g) if (t[p] !== undefined && t[p] < m) m = t[p];
+        if (m === Infinity){ ok = false; break; }
+        if (m > gate) gate = m;
+      }
+      if (!ok) continue;
+      const work = n.L0 * Math.exp(cfg.sigma * z[id]);
+      const arr = arrivalTime(n, gate, work, active);
+      if (arr < barr){ barr = arr; bid = id; }
+    }
+    if (bid === null) break;
+    t[bid] = barr; rem.delete(bid);
+    if (!fired.has(bid)){
+      for (const r of cfg.rules) if (r.trigger === bid) active.push([barr, r]);
+      fired.add(bid);
+    }
+  }
+  for (const id of rem) t[id] = TL.NEVER;
+  return t;
+}
+const VISION_RULES = Y => [
+  {trigger: Y, targets: ["rocket_candy"], V: 6, C: 3},
+  {trigger: "rocket_candy", targets: ["R"], V: 3, C: 2},
+  {trigger: "sounding", targets: ["C"], V: 1.5, C: 2},
+  {trigger: "sounding", targets: ["F"], V: 1, C: 1.5},
+  {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
+];
+const WORLDS = {
+  our:          () => ({rules: [], block: new Set(), sigma: 0.14, vision: false}),
+  sugar:        () => ({rules: VISION_RULES(1250), block: new Set(), sigma: 0.14, vision: true}),
+  nosteam:      () => ({rules: [], block: new Set(TL.steam), sigma: 0.14, vision: false}),
+  sugarnosteam: () => ({rules: VISION_RULES(1250), block: new Set(TL.steam), sigma: 0.14, vision: true}),
+  chaos:        () => ({rules: [], block: new Set(), sigma: 0.25, vision: false}),
+};
+
+/* ---------- geography ---------- */
+/* hand-encoded low-poly coastlines, [lon,lat] — stylised, not surveyed */
+const LAND = [
+ /* North America */
+ [[-168,66],[-140,70],[-125,71],[-110,72],[-95,72],[-80,73],[-70,62],[-55,52],
+  [-65,45],[-70,42],[-75,38],[-80,32],[-81,25],[-90,29],[-97,26],[-97,20],
+  [-105,20],[-110,23],[-115,30],[-124,40],[-125,49],[-140,60],[-155,58],[-168,66]],
+ /* South America */
+ [[-77,8],[-60,10],[-52,4],[-45,-2],[-35,-8],[-39,-18],[-48,-28],[-55,-35],
+  [-62,-40],[-65,-47],[-68,-55],[-72,-50],[-75,-40],[-78,-30],[-81,-15],[-79,-5],[-77,8]],
+ /* Africa */
+ [[-17,15],[-10,30],[0,36],[10,37],[20,32],[32,31],[35,25],[43,11],[51,10],
+  [48,2],[40,-5],[40,-15],[35,-22],[30,-30],[20,-35],[15,-28],[12,-18],[9,-5],
+  [0,5],[-10,5],[-17,15]],
+ /* Eurasia (Europe, Arabia, India, SE Asia, Siberia) */
+ [[-10,37],[0,44],[-2,48],[8,54],[8,57],[18,56],[22,60],[28,60],[30,70],[45,68],
+  [60,70],[75,73],[95,77],[115,74],[130,72],[150,70],[170,67],[179,65],[170,60],
+  [158,61],[156,52],[141,53],[135,44],[126,39],[122,31],[115,23],[108,12],[104,2],
+  [99,7],[94,16],[90,22],[85,20],[80,13],[77,7],[73,18],[68,24],[60,25],[57,20],
+  [52,14],[45,13],[43,17],[39,20],[35,29],[27,37],[23,36],[15,38],[5,38],[-10,37]],
+ /* Britain */
+ [[-5,50],[-6,53],[-4,58],[-1,57],[1,52],[-5,50]],
+ /* Japan */
+ [[130,31],[133,34],[137,35],[141,39],[142,43],[139,41],[135,35],[131,32],[130,31]],
+ /* Maritime SE Asia (one blob) */
+ [[95,5],[105,0],[115,-3],[118,2],[110,5],[100,6],[95,5]],
+ /* Australia */
+ [[114,-22],[122,-18],[132,-12],[142,-11],[147,-19],[153,-27],[150,-37],[140,-38],
+  [131,-32],[122,-34],[114,-33],[113,-26],[114,-22]],
+ /* Greenland */
+ [[-45,60],[-52,65],[-55,70],[-40,77],[-25,73],[-33,67],[-45,60]],
+];
+
+const REGIONS = {
+  china:  {name:"Kaifeng — Song China",        lat:34.8, lon:114.3},
+  levant: {name:"Damascus — the Levant",       lat:33.5, lon:36.3},
+  mysore: {name:"Srirangapatna — Mysore",      lat:12.4, lon:76.7},
+  britain:{name:"Woolwich — Britain",          lat:51.5, lon:0.1},
+  europe: {name:"Paris — Continental Europe",  lat:48.6, lon:2.4},
+  america:{name:"New England — America",       lat:42.2, lon:-71.8},
+  steppe: {name:"Baikonur — the Steppe",       lat:45.9, lon:63.3},
+};
+const HOME = {
+  fire_arrows:'china', black_powder:'china', saltpetre:'china', sugar:'levant',
+  waterpower:'europe', clocks:'europe', acids:'levant', blast_furnace:'europe',
+  printing:'europe', telescope:'europe', barometer:'europe', sci_method:'britain',
+  glauber_acid:'europe', clockwork:'europe', calculus:'britain', coke_iron:'britain',
+  newcomen:'britain', crucible:'britain', lead_chamber:'britain', watt:'britain',
+  chlorine:'europe', mil_rockets:'mysore', machine_tools:'britain',
+  hp_steam:'britain', rocket_eq:'britain', perchlorate:'europe',
+  interchange:'america', telegraph:'america', spin:'britain', nitrocell:'europe',
+  gauges:'britain', thermo:'europe', gyroscope:'europe', bessemer:'britain',
+  electricity:'britain', ice:'europe', smokeless:'europe', delaval:'europe',
+  gyro_auto:'europe', liquefaction:'europe', radio:'britain',
+  liquid_eng:'america', sounding:'america', composite:'america',
+  rocket_candy:'america', orbit:'steppe',
+};
+/* in vision worlds, rocketry that arrives far ahead of its time is Levantine */
+const RELOCATABLE = new Set(['rocket_candy','spin','delaval','sounding',
+                             'smokeless','rocket_eq','gyro_auto','orbit']);
+function homeOf(id, arrival, cfg){
+  if (cfg.vision && RELOCATABLE.has(id) && arrival <= NODE[id].real - 80)
+    return 'levant';
+  return HOME[id];
+}
+
+/* ---------- captions ---------- */
+const CAP = {
+  clocks:"Cathedral clocks strike the hours", acids:"Alchemists distil the mineral acids",
+  blast_furnace:"Blast furnaces roar; iron flows", printing:"Movable type — ideas replicate",
+  telescope:"A spyglass turns skyward", barometer:"Air has weight: the barometer",
+  sci_method:"Societies and journals: knowledge compounds",
+  glauber_acid:"Glauber bottles fuming nitric acid", clockwork:"The pendulum makes time precise",
+  calculus:"Calculus — change becomes computable", coke_iron:"Coke-smelted iron",
+  newcomen:"An engine breathes fire and pumps water", crucible:"Crucible steel pours",
+  lead_chamber:"Acid by the tonne", watt:"Watt’s condenser tames the engine",
+  chlorine:"A yellow-green gas is bottled", mil_rockets:"Iron-cased war rockets over Mysore",
+  machine_tools:"Machines begin making machines", hp_steam:"High-pressure steam",
+  rocket_eq:"The rocket equation, written at Woolwich",
+  perchlorate:"Perchlorates isolated — and shelved", interchange:"Parts become interchangeable",
+  telegraph:"Lightning learns the alphabet", spin:"Rockets learn to spin true",
+  nitrocell:"Guncotton: cellulose with ambitions", gauges:"The micrometer arrives",
+  thermo:"Heat becomes a science", gyroscope:"Foucault’s wheel remembers",
+  bessemer:"Steel becomes cheap", electricity:"Generators hum",
+  ice:"The internal-combustion engine barks", smokeless:"Smokeless powder — exhaust velocity triples",
+  delaval:"The bell nozzle: thrust learns geometry", gyro_auto:"A gyroscope steers by itself",
+  liquefaction:"Air itself is bottled", radio:"A signal crosses space without wires",
+  liquid_eng:"A liquid-fuelled rocket coughs, then flies",
+  sounding:"Rockets touch the edge of space", composite:"Castable propellant",
+  rocket_candy:"Sugar meets saltpetre: the candy motor",
+  orbit:"A beacon circles the world — orbit",
+};
+function eraOf(un, steamBlocked){
+  if (un.has('orbit'))        return "The Space Age";
+  if (un.has('sounding'))     return "The Rocket Age";
+  if (un.has('radio') || un.has('electricity')) return "The Electric Age";
+  if (un.has('machine_tools') || un.has('hp_steam'))
+    return steamBlocked ? "The Steamless Industrial Age" : "The Industrial Age";
+  if (un.has('sci_method'))   return "The Scientific Revolution";
+  if (un.has('rocket_candy')) return "The Motor Middle Ages";
+  if (un.has('printing'))     return "The Print Era";
+  return "The Age of Wind and Muscle";
+}
+
+/* ---------- the globe (canvas, orthographic) ---------- */
+const canvas = document.getElementById('globe');
+const globeWrap = document.getElementById('globeWrap');
+const stageEl = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+let CW = 1180, CHh = 560, DPR = 1, RGL = 232, GCX = 590, GCY = 292;
+let lam0 = 20, phi0 = 24;          /* view centre (deg) */
+let targetLam = null, targetPhi = null;
+let dragging = false, dragX = 0, dragY = 0, autoSpin = true;
+const D2R = Math.PI / 180;
+
+function sizeCanvas(){
+  const w = stageEl.clientWidth;
+  CW = w; CHh = Math.max(340, Math.round(w * 0.48));
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = CW * DPR; canvas.height = CHh * DPR;
+  canvas.style.height = CHh + 'px';
+  RGL = Math.min(CW * 0.21, CHh * 0.42);
+  GCX = CW / 2; GCY = CHh * 0.52;
+}
+addEventListener('resize', () => { sizeCanvas(); });
+
+function project(lon, lat){
+  const l = (lon - lam0) * D2R, p = lat * D2R, p0 = phi0 * D2R;
+  const cosc = Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(l);
+  return {
+    x: GCX + RGL * Math.cos(p) * Math.sin(l),
+    y: GCY - RGL * (Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l)),
+    vis: cosc > 0, cosc,
+  };
+}
+
+let pings = [];       /* {lon,lat,age,col} */
+let satT = -1;        /* satellite orbit phase, -1 = off */
+
+function drawGlobe(now){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, CW, CHh);
+  /* sphere */
+  ctx.beginPath(); ctx.arc(GCX, GCY, RGL, 0, 7);
+  ctx.fillStyle = css('--sea'); ctx.fill();
+  ctx.strokeStyle = css('--landEdge'); ctx.lineWidth = 1; ctx.stroke();
+  /* graticule */
+  ctx.strokeStyle = css('--rule'); ctx.lineWidth = 0.6;
+  for (let lat = -60; lat <= 60; lat += 30){
+    ctx.beginPath(); let started = false;
+    for (let lon = -180; lon <= 180; lon += 5){
+      const q = project(lon, lat);
+      if (q.vis){ started ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); started = true; }
+      else started = false;
+    }
+    ctx.stroke();
+  }
+  for (let lon = -180; lon < 180; lon += 30){
+    ctx.beginPath(); let started = false;
+    for (let lat = -85; lat <= 85; lat += 5){
+      const q = project(lon, lat);
+      if (q.vis){ started ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); started = true; }
+      else started = false;
+    }
+    ctx.stroke();
+  }
+  /* land */
+  ctx.fillStyle = css('--land');
+  ctx.strokeStyle = css('--landEdge'); ctx.lineWidth = 1;
+  for (const poly of LAND){
+    ctx.beginPath(); let any = false;
+    for (const [lon, lat] of poly){
+      const q = project(lon, lat);
+      const x = q.vis ? q.x : GCX + (q.x - GCX) * (RGL / Math.hypot(q.x - GCX, q.y - GCY) || 1),
+            y = q.vis ? q.y : GCY + (q.y - GCY) * (RGL / Math.hypot(q.x - GCX, q.y - GCY) || 1);
+      if (q.vis) any = true;
+      ctx.lineTo(x, y);
+    }
+    if (any){ ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  }
+  /* terminator shading (simple limb darkening) */
+  const grad = ctx.createRadialGradient(GCX - RGL * .35, GCY - RGL * .35, RGL * .2,
+                                        GCX, GCY, RGL);
+  grad.addColorStop(0, 'rgba(255,255,255,0)');
+  grad.addColorStop(1, root.classList.contains('dark')
+    ? 'rgba(0,0,0,.36)' : 'rgba(90,80,60,.16)');
+  ctx.beginPath(); ctx.arc(GCX, GCY, RGL, 0, 7); ctx.fillStyle = grad; ctx.fill();
+  /* region beacons */
+  for (const key in REGIONS){
+    const r = REGIONS[key], q = project(r.lon, r.lat);
+    if (!q.vis) continue;
+    const pulse = 2.6 + Math.sin(now / 420 + r.lon) * 0.9;
+    ctx.beginPath(); ctx.arc(q.x, q.y, pulse, 0, 7);
+    ctx.fillStyle = css('--accent'); ctx.fill();
+    ctx.beginPath(); ctx.arc(q.x, q.y, pulse + 3.4, 0, 7);
+    ctx.strokeStyle = css('--accent'); ctx.lineWidth = 1; ctx.globalAlpha = .5;
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  /* event pings */
+  pings.forEach(p => { p.age += 0.016; });
+  pings = pings.filter(p => p.age < 2.4);
+  for (const p of pings){
+    const q = project(p.lon, p.lat);
+    if (!q.vis) continue;
+    ctx.beginPath(); ctx.arc(q.x, q.y, 3 + p.age * 16, 0, 7);
+    ctx.strokeStyle = p.col; ctx.lineWidth = 2;
+    ctx.globalAlpha = Math.max(0, .85 - p.age * .38);
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  /* satellite */
+  if (satT >= 0){
+    satT += 0.010;
+    const a = satT * 2 * Math.PI;
+    const sx = GCX + RGL * 1.22 * Math.cos(a);
+    const sy = GCY + RGL * 0.42 * Math.sin(a);
+    const front = Math.sin(a) > -0.15;
+    if (front){
+      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, 7);
+      ctx.fillStyle = css('--accent'); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx, sy, 6 + (satT * 40 % 5), 0, 7);
+      ctx.strokeStyle = css('--accent'); ctx.globalAlpha = .4; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+/* drag + click */
+canvas.addEventListener('pointerdown', e => {
+  dragging = true; autoSpin = false; dragX = e.clientX; dragY = e.clientY;
+});
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  lam0 -= (e.clientX - dragX) * 0.35;
+  phi0 = Math.max(-75, Math.min(75, phi0 + (e.clientY - dragY) * 0.25));
+  dragX = e.clientX; dragY = e.clientY;
+});
+addEventListener('pointerup', e => {
+  if (!dragging) return;
+  dragging = false;
+  /* click (small movement) → maybe a beacon */
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  for (const key in REGIONS){
+    const r = REGIONS[key], q = project(r.lon, r.lat);
+    if (q.vis && Math.hypot(mx - q.x, my - q.y) < 16){ openRegion(key); return; }
+  }
+});
+
+/* ---------- isometric provinces (SVG) ---------- */
+const isoDiv = document.getElementById('iso');
+const TW = 32, TH = 16;          /* half-width / half-height of a tile */
+let isoCX = 590, isoTop = 120;
+const tileXY = (tx, ty) => [isoCX + (tx - ty) * TW, isoTop + (tx + ty) * TH];
+
+function diamond(tx, ty, fill, dy = 0, extra = ''){
+  const [x, y] = tileXY(tx, ty);
+  return `<polygon points="${x},${y - TH + dy} ${x + TW},${y + dy} ${x},${y + TH + dy} ${x - TW},${y + dy}" style="fill:${fill}" ${extra}/>`;
+}
+function isoBox(tx, ty, w, d, h, top, left, right){
+  const c = (a, b) => tileXY(a, b);
+  const A = c(tx, ty), Bp = c(tx + w, ty), Cp = c(tx + w, ty + d), Dp = c(tx, ty + d);
+  const up = p => `${p[0]},${p[1] - h}`;
+  return `<polygon points="${up(A)} ${up(Bp)} ${up(Cp)} ${up(Dp)}" style="fill:${top}"/>` +
+    `<polygon points="${up(Dp)} ${up(Cp)} ${Cp[0]},${Cp[1]} ${Dp[0]},${Dp[1]}" style="fill:${left}"/>` +
+    `<polygon points="${up(Cp)} ${up(Bp)} ${Bp[0]},${Bp[1]} ${Cp[0]},${Cp[1]}" style="fill:${right}"/>`;
+}
+const IT = 'var(--isoT)', IL = 'var(--isoL)', IR = 'var(--isoR)',
+      RD = 'var(--red)', GD2 = 'var(--gold)', GY2 = 'var(--grey)', AC2 = 'var(--accent)';
+function roof(tx, ty, w, d, h, hr, fill){   /* pitched roof over a box */
+  const c = (a, b) => tileXY(a, b);
+  const A = c(tx, ty), Bp = c(tx + w, ty), Cp = c(tx + w, ty + d), Dp = c(tx, ty + d);
+  const M1 = c(tx + w / 2, ty), M2 = c(tx + w / 2, ty + d);
+  return `<polygon points="${M1[0]},${M1[1] - h - hr} ${M2[0]},${M2[1] - h - hr} ${Dp[0]},${Dp[1] - h} ${A[0]},${A[1] - h}" style="fill:${fill}"/>` +
+    `<polygon points="${M1[0]},${M1[1] - h - hr} ${M2[0]},${M2[1] - h - hr} ${Cp[0]},${Cp[1] - h} ${Bp[0]},${Bp[1] - h}" style="fill:${fill};filter:brightness(.82)"/>`;
+}
+function tree(tx, ty){
+  const [x, y] = tileXY(tx, ty);
+  return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 10}" style="stroke:${GY2};stroke-width:2"/>` +
+    `<polygon points="${x},${y - 26} ${x + 7},${y - 10} ${x - 7},${y - 10}" style="fill:var(--terraF)"/>`;
+}
+
+/* sprites: id -> function(tx,ty) returning svg */
+const SPRITES = {
+  hut: (tx, ty) => isoBox(tx, ty, .8, .8, 12, IT, IL, IR) + roof(tx, ty, .8, .8, 12, 8, GY2),
+  pagoda: (tx, ty) => isoBox(tx + .15, ty + .15, .7, .7, 16, IT, IL, IR) +
+    roof(tx, ty, 1, 1, 16, 7, RD) +
+    isoBox(tx + .28, ty + .28, .44, .44, 30, IT, IL, IR).replace(/polygon/g, 'polygon') +
+    roof(tx + .13, ty + .13, .74, .74, 30, 6, RD) +
+    roof(tx + .3, ty + .3, .4, .4, 42, 7, RD),
+  mill: (tx, ty) => isoBox(tx, ty, .9, .9, 22, IT, IL, IR) + roof(tx, ty, .9, .9, 22, 8, GD2) +
+    (() => { const [x, y] = tileXY(tx + .45, ty + .45);
+      return `<g style="stroke:${GY2};stroke-width:2">
+        <line x1="${x - 10}" y1="${y - 40}" x2="${x + 10}" y2="${y - 20}"/>
+        <line x1="${x + 10}" y1="${y - 40}" x2="${x - 10}" y2="${y - 20}"/></g>`; })(),
+  alchemy: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .45, ty + .45);
+      return `<circle cx="${x}" cy="${y - 20}" r="9" style="fill:${GD2}"/>`; })(),
+  candyshop: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) + roof(tx, ty, .9, .9, 14, 6, GD2) +
+    (() => { const [x, y] = tileXY(tx + .8, ty + .2);
+      return [0, 1, 2].map(i => `<rect x="${x - 3}" y="${y - 34 + i * 7}" width="6" height="3.5" style="fill:${RD}"/>`).join('') +
+        `<polygon points="${x},${y - 40} ${x - 3.5},${y - 34} ${x + 3.5},${y - 34}" style="fill:${RD}"/>` +
+        `<rect x="${x - 3}" y="${y - 34}" width="6" height="21" style="fill:#fff;opacity:.55"/>`; })(),
+  gantry: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
+    return `<g style="stroke:${GY2};stroke-width:2.5">
+      <line x1="${x - 8}" y1="${y}" x2="${x - 8}" y2="${y - 52}"/>
+      <line x1="${x - 8}" y1="${y - 16}" x2="${x + 4}" y2="${y - 16}"/>
+      <line x1="${x - 8}" y1="${y - 34}" x2="${x + 4}" y2="${y - 34}"/>
+      <line x1="${x - 8}" y1="${y - 50}" x2="${x + 4}" y2="${y - 50}"/></g>`; })(),
+  pad: (tx, ty) => diamond(tx + .5, ty + .5, IR) +
+    (() => { const [x, y] = tileXY(tx + .5, ty + .5);
+      return `<line x1="${x + 12}" y1="${y - 2}" x2="${x + 12}" y2="${y - 58}" style="stroke:${GY2};stroke-width:3"/>` +
+        `<line x1="${x + 12}" y1="${y - 22}" x2="${x - 2}" y2="${y - 22}" style="stroke:${GY2};stroke-width:2"/>` +
+        `<line x1="${x + 12}" y1="${y - 44}" x2="${x - 2}" y2="${y - 44}" style="stroke:${GY2};stroke-width:2"/>`; })(),
+  forge: (tx, ty) => isoBox(tx, ty, 1, 1, 16, IT, IL, IR) +
+    isoBox(tx + .6, ty + .1, .25, .25, 34, IL, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .35, ty + .75);
+      return `<rect class="glow" x="${x - 5}" y="${y - 12}" width="10" height="8" style="fill:${AC2}"/>`; })(),
+  hall: (tx, ty) => isoBox(tx, ty, 1.3, .9, 20, IT, IL, IR) + roof(tx, ty, 1.3, .9, 20, 9, GY2) +
+    (() => { const [x, y] = tileXY(tx + .1, ty + .9);
+      return [0, 1, 2, 3].map(i =>
+        `<line x1="${x + 8 + i * 9}" y1="${y - 1 + i * 4.5}" x2="${x + 8 + i * 9}" y2="${y - 19 + i * 4.5}" style="stroke:${IT};stroke-width:3"/>`).join(''); })(),
+  engine: (tx, ty) => isoBox(tx, ty, 1, .9, 18, IT, IL, IR) + roof(tx, ty, 1, .9, 18, 7, RD) +
+    isoBox(tx + .72, ty + .08, .2, .2, 44, IL, IL, IR),
+  works: (tx, ty) => isoBox(tx, ty, 1.3, 1, 16, IT, IL, IR) +
+    roof(tx, ty, .62, 1, 16, 7, IL) + roof(tx + .65, ty, .62, 1, 16, 7, IL),
+  arsenal: (tx, ty) => isoBox(tx, ty, 1.5, .7, 14, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx, ty);
+      return `<line x1="${x}" y1="${y - 14}" x2="${x}" y2="${y - 38}" style="stroke:${GY2};stroke-width:2"/>` +
+        `<polygon points="${x},${y - 38} ${x + 12},${y - 34} ${x},${y - 30}" style="fill:${RD}"/>`; })(),
+  converter: (tx, ty) => isoBox(tx, ty, .9, .9, 10, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .45, ty + .45);
+      return `<ellipse cx="${x}" cy="${y - 22}" rx="10" ry="12" style="fill:${IR}"/>` +
+        `<ellipse class="glow" cx="${x}" cy="${y - 31}" rx="6" ry="3" style="fill:${AC2}"/>`; })(),
+  mast: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
+    return `<g style="stroke:${GY2};stroke-width:2">
+      <line x1="${x - 6}" y1="${y}" x2="${x}" y2="${y - 60}"/>
+      <line x1="${x + 6}" y1="${y}" x2="${x}" y2="${y - 60}"/>
+      <line x1="${x - 4}" y1="${y - 20}" x2="${x + 4}" y2="${y - 20}"/>
+      <line x1="${x - 2.5}" y1="${y - 40}" x2="${x + 2.5}" y2="${y - 40}"/></g>
+      <circle cx="${x}" cy="${y - 62}" r="2.5" style="fill:${AC2}"/>`; })(),
+  clock: (tx, ty) => isoBox(tx + .2, ty + .2, .6, .6, 46, IT, IL, IR) +
+    roof(tx + .12, ty + .12, .76, .76, 46, 10, RD) +
+    (() => { const [x, y] = tileXY(tx + .5, ty + .8);
+      return `<circle cx="${x}" cy="${y - 34}" r="6" style="fill:var(--bg)"/>` +
+        `<line class="clockhand" x1="${x}" y1="${y - 34}" x2="${x}" y2="${y - 39}" style="stroke:${GY2};stroke-width:1.6" data-cx="${x}" data-cy="${y - 34}"/>`; })(),
+  print: (tx, ty) => isoBox(tx, ty, .9, .9, 14, IT, IL, IR) + roof(tx, ty, .9, .9, 14, 6, GY2),
+  obs: (tx, ty) => isoBox(tx, ty, .8, .8, 14, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .4, ty + .4);
+      return `<circle cx="${x}" cy="${y - 18}" r="9" style="fill:${IL}"/>` +
+        `<line x1="${x + 2}" y1="${y - 24}" x2="${x + 10}" y2="${y - 34}" style="stroke:${GY2};stroke-width:2.5"/>`; })(),
+  powder: (tx, ty) => isoBox(tx, ty, 1, .8, 12, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .2, ty + .95);
+      return [0, 1].map(i => `<ellipse cx="${x + i * 12}" cy="${y - 4 + i * 5}" rx="5" ry="6" style="fill:${GD2}"/>`).join(''); })(),
+  turbine: (tx, ty) => isoBox(tx, ty, 1, .8, 16, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .5, ty + .4);
+      return `<polygon points="${x},${y - 42} ${x + 7},${y - 26} ${x - 7},${y - 26}" style="fill:${GY2}"/>`; })(),
+  lique: (tx, ty) => isoBox(tx, ty, .9, .7, 10, IT, IL, IR) +
+    (() => { const [x, y] = tileXY(tx + .3, ty + .55);
+      return [0, 1].map(i =>
+        `<rect x="${x - 5 + i * 14}" y="${y - 34 + i * 6}" width="10" height="22" rx="5" style="fill:${IL}"/>`).join(''); })(),
+  armory: (tx, ty) => isoBox(tx, ty, 1.1, .8, 14, IT, IL, IR) + roof(tx, ty, 1.1, .8, 14, 6, GY2),
+  tele: (tx, ty) => (() => { const [x, y] = tileXY(tx + .3, ty + .3);
+    const [x2, y2] = tileXY(tx + 1.3, ty + 1.05);
+    return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 28}" style="stroke:${GY2};stroke-width:2"/>
+      <line x1="${x - 6}" y1="${y - 25}" x2="${x + 6}" y2="${y - 25}" style="stroke:${GY2};stroke-width:1.6"/>
+      <line x1="${x2}" y1="${y2}" x2="${x2}" y2="${y2 - 28}" style="stroke:${GY2};stroke-width:2"/>
+      <line x1="${x2 - 6}" y1="${y2 - 25}" x2="${x2 + 6}" y2="${y2 - 25}" style="stroke:${GY2};stroke-width:1.6"/>
+      <path d="M${x},${y - 25} Q${(x + x2) / 2},${(y + y2) / 2 - 18} ${x2},${y2 - 25}" style="fill:none;stroke:${GY2};stroke-width:1.2"/>`; })(),
+  tower: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
+    return `<g style="stroke:${GY2};stroke-width:2">
+      <line x1="${x - 7}" y1="${y}" x2="${x - 2}" y2="${y - 46}"/>
+      <line x1="${x + 7}" y1="${y}" x2="${x + 2}" y2="${y - 46}"/>
+      <line x1="${x - 5}" y1="${y - 16}" x2="${x + 5}" y2="${y - 16}"/>
+      <line x1="${x - 3.5}" y1="${y - 32}" x2="${x + 3.5}" y2="${y - 32}"/></g>
+      <circle cx="${x}" cy="${y - 49}" r="3.5" style="fill:${RD}"/>`; })(),
+};
+
+/* terrain maps: 12x12 chars — g grass, a arid, w water, f forest, d fields, s steppe */
+const TERRA = {
+  britain: ["wwwwwwwwwwww","wwggfggwwwww","wgggggggwwww","wggfggggdgww",
+            "wggggdggggww","wwgggggggdww","wwgdggggggww","wwwggggdggww",
+            "wwgggwwggggw","wwggwwwwggww","wwwwwwwwwwww","wwwwwwwwwwww"],
+  levant:  ["aaaaaaaaadaa","aadaaaaaaaaa","aaaaadaaaaaa","waaaaaaaadaa",
+            "wwaaadgggaaa","wwaaaggdgaaa","waaaadggaaaa","waaaaaaaaaaa",
+            "wwaaaaadaaaa","waaadaaaaaaa","waaaaaaaadaa","aaaaaaaaaaaa"],
+  china:   ["ggggffgggggg","ggdggggdgggg","ggggdwwggggg","gdggwwwdgggg",
+            "ggdwwgggdggg","ggwwdgggggfg","gwwggdgdgggg","gwgdgggggdgg",
+            "wwgggdgggggg","wggdggggdggg","ggggggdggggg","gggdgggggggg"],
+  mysore:  ["gggffggggggg","ggffgggdgggg","gffggdgggggg","ggggggggdggg",
+            "ggdggfggggg" + "g","gggggffgdggg","gdgggffggggg","ggggggggggfg",
+            "ggdggggdgggg","gggggdgggggg","ggfgggggdggg","gggggggggggg"],
+  europe:  ["ggggffffgggg","ggdggffggggg","gggggggggdgg","gdgggdgggggg",
+            "ggggggggdggg","ggdgdggggggg","gggggggdgggg","ggfggggggggd",
+            "gfgggdgggggg","ggggggggdggg","gdggggdggggg","gggggggggggg"],
+  america: ["ffffffgggggw","fffggggdggww","ffgggggggwww","fgdgggdggggw",
+            "ggggggggggww","gfgggdgggwww","ggggggggggww","gdggggdggggw",
+            "gggfgggggwww","ggggggggwwww","gfggdggggwww","ggggggggggww"],
+  steppe:  ["ssssssssssss","ssssssssssss","ssdsssssssss","ssssssssssss",
+            "sssssssdssss","ssssssssssss","ssssssssssss","sdssssssssss",
+            "ssssssssssss","ssssssssdsss","ssssssssssss","ssssssssssss"],
+};
+const TCOL = {g:'var(--terraG)', a:'var(--terraA)', w:'var(--terraW)',
+              f:'var(--terraG)', d:'var(--terraD)', s:'var(--terraA)'};
+
+/* building slots: region -> list of {node|nodeAny|always, sprite, tx, ty} */
+const SLOTS = {
+  china:  [{always:1, sprite:'pagoda', tx:5, ty:4}, {always:1, sprite:'hut', tx:3.4, ty:6},
+           {always:1, sprite:'hut', tx:7, ty:5.4},
+           {node:'rocket_candy', sprite:'candyshop', tx:6.5, ty:7},
+           {node:'sounding', sprite:'gantry', tx:8.2, ty:3.4},
+           {node:'orbit', sprite:'pad', tx:9, ty:6}],
+  levant: [{always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
+           {node:'acids', sprite:'alchemy', tx:5, ty:6},
+           {node:'rocket_candy', sprite:'candyshop', tx:6.6, ty:5},
+           {node:'sounding', sprite:'gantry', tx:8.2, ty:3.6},
+           {node:'orbit', sprite:'pad', tx:8.6, ty:6.4}],
+  mysore: [{always:1, sprite:'hut', tx:4, ty:4}, {always:1, sprite:'hut', tx:6.4, ty:3.4},
+           {node:'mil_rockets', sprite:'arsenal', tx:5, ty:6},
+           {node:'rocket_candy', sprite:'candyshop', tx:7, ty:5.6},
+           {node:'sounding', sprite:'gantry', tx:8.4, ty:4}],
+  britain:[{always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'hall', tx:4.6, ty:3},
+           {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
+           {node:'machine_tools', sprite:'works', tx:4, ty:6.4},
+           {node:'rocket_eq', sprite:'arsenal', tx:7, ty:6},
+           {node:'bessemer', sprite:'converter', tx:5.6, ty:8},
+           {node:'radio', sprite:'mast', tx:8.6, ty:3.2},
+           {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
+           {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
+  europe: [{always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
+           {node:'printing', sprite:'print', tx:6.2, ty:3},
+           {node:'telescope', sprite:'obs', tx:7.8, ty:3.6},
+           {node:'smokeless', sprite:'powder', tx:4.4, ty:7},
+           {node:'delaval', sprite:'turbine', tx:6.4, ty:6.2},
+           {node:'liquefaction', sprite:'lique', tx:8, ty:7.2},
+           {node:'sounding', sprite:'gantry', tx:9.2, ty:5}],
+  america:[{always:1, sprite:'hut', tx:3.6, ty:4.4},
+           {node:'interchange', sprite:'armory', tx:4.6, ty:3.2},
+           {node:'telegraph', sprite:'tele', tx:6, ty:3},
+           {node:'liquid_eng', sprite:'tower', tx:7.6, ty:4.6},
+           {node:'rocket_candy', sprite:'candyshop', tx:4, ty:6.6},
+           {node:'sounding', sprite:'gantry', tx:6, ty:7},
+           {node:'orbit', sprite:'pad', tx:8.4, ty:7}],
+  steppe: [{always:1, sprite:'hut', tx:4, ty:4.6},
+           {node:'sounding', sprite:'gantry', tx:6, ty:5},
+           {node:'orbit', sprite:'pad', tx:7.4, ty:6.4}],
+};
+
+let curRegion = null, isoSmoke = [], isoSources = [], isoRockets = [],
+    villagers = [], isoFx = null, isoSvg = null;
+
+function buildRegion(key){
+  curRegion = key;
+  const map = TERRA[key];
+  isoCX = CW / 2; isoTop = Math.max(90, CHh * 0.2);
+  let tiles = '', deco = '';
+  for (let ty = 0; ty < 12; ty++)
+    for (let tx = 0; tx < 12; tx++){
+      const ch = map[ty][tx] || 'g';
+      tiles += diamond(tx, ty, TCOL[ch]);
+      if (ch === 'w') tiles += diamond(tx, ty, '#ffffff', -1.5,
+        `class="shimmer" data-ph="${(tx * 7 + ty * 13) % 20}" opacity=".12"`);
+      if (ch === 'f') deco += tree(tx + .5, ty + .5) +
+        (((tx + ty) % 2) ? tree(tx + .2, ty + .8) : '');
+      if (ch === 'd') tiles += diamond(tx, ty, 'var(--gold)', 0, 'opacity=".18"');
+    }
+  let blds = '';
+  SLOTS[key].forEach((s, i) => {
+    blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">${SPRITES[s.sprite](s.tx, s.ty)}</g>`;
+  });
+  isoDiv.innerHTML = `<svg viewBox="0 0 ${CW} ${CHh}">
+    <g id="terra">${tiles}</g><g id="deco">${deco}</g>
+    <g id="blds">${blds}</g><g id="isofx"></g></svg>`;
+  isoSvg = isoDiv.querySelector('svg');
+  isoFx = isoSvg.querySelector('#isofx');
+  isoSources = []; isoSmoke = []; isoRockets = [];
+  villagers = [0, 1, 2].map(i => ({x: 5 + i, y: 5, tx: 3 + Math.random() * 6,
+                                   ty: 3 + Math.random() * 6, sp: .25 + Math.random() * .2}));
+  /* reveal already-unlocked slots + register their effects */
+  SLOTS[key].forEach((s, i) => {
+    const hit = s.always ||
+      (s.node && unlockedHere(s.node, key)) ||
+      (s.nodeAny && s.nodeAny.some(id => unlockedHere(id, key)));
+    if (hit) revealSlot(key, i);
+  });
+}
+function unlockedHere(id, region){
+  return unlocked.has(id) && homeOf(id, RUNT[id], CFG) === region;
+}
+function revealSlot(key, i){
+  const s = SLOTS[key][i];
+  const g = isoSvg && isoSvg.querySelector(`#slot_${key}_${i}`);
+  if (!g) return;
+  g.style.opacity = 1;
+  if (s.smoke){ const [x, y] = tileXY(s.tx + .82, s.ty + .18);
+    isoSources.push({x, y: y - 44, t: Math.random()}); }
+  if (s.sprite === 'forge' || s.sprite === 'converter') {/* glow pulses via CSS-less JS below */}
+}
+
+/* ---------- view state ---------- */
+let view = 'globe';
+const btnBack = document.getElementById('btnBack');
+const regionNameEl = document.getElementById('regionName');
+function openRegion(key){
+  if (view !== 'globe') return;
+  view = 'region';
+  const q = project(REGIONS[key].lon, REGIONS[key].lat);
+  globeWrap.style.transformOrigin = `${q.x}px ${q.y}px`;
+  globeWrap.style.transform = 'scale(3.2)';
+  globeWrap.style.opacity = '0';
+  globeWrap.classList.add('zoomed');
+  buildRegion(key);
+  document.getElementById('iso').classList.add('show');
+  btnBack.style.display = '';
+  regionNameEl.textContent = REGIONS[key].name;
+  regionNameEl.classList.add('show');
+  document.getElementById('hint').style.display = 'none';
+}
+function backToGlobe(){
+  if (view !== 'region') return;
+  view = 'globe';
+  globeWrap.style.transform = '';
+  globeWrap.style.opacity = '1';
+  globeWrap.classList.remove('zoomed');
+  document.getElementById('iso').classList.remove('show');
+  btnBack.style.display = 'none';
+  regionNameEl.classList.remove('show');
+  document.getElementById('hint').style.display = '';
+}
+btnBack.addEventListener('click', backToGlobe);
+
+/* ---------- playback ---------- */
+const hudYear = document.getElementById('hudYear');
+const hudEra = document.getElementById('hudEra');
+const hudFf = document.getElementById('hudFf');
+const capEl = document.getElementById('caption');
+const fin = document.getElementById('fin');
+let CFG = null, RUNT = null, EVENTS = [], EIDX = 0, YEAR = 1000,
+    playing = false, started = false, unlocked = new Set(), lastTs = null,
+    capTimer = null, worldKey = 'our', finShown = false;
+const BASE_SPEED = 26, END_YEAR = 2200;
+
+document.querySelectorAll('#worlds button').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); worldKey = b.dataset.w;
+  }));
+
+function startWorld(){
+  CFG = WORLDS[worldKey]();
+  RUNT = simulate(CFG, mulberry32((Date.now() ^ (Math.random() * 1e9)) >>> 0));
+  EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER)
+    .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
+  EIDX = 0; YEAR = 1000; unlocked = new Set(); pings = []; satT = -1;
+  finShown = false; fin.style.display = 'none';
+  hudEra.textContent = 'The Age of Wind and Muscle';
+  document.getElementById('btnPause').style.display = '';
+  document.getElementById('btnSkip').style.display = '';
+  document.getElementById('btnPause').textContent = 'pause';
+  if (view === 'region'){ buildRegion(curRegion); }
+  playing = true; started = true; lastTs = null;
+}
+
+function caption(y, txt){
+  capEl.innerHTML = `<span class="yr">${Math.round(y)}</span>${txt}`;
+  capEl.classList.add('show');
+  clearTimeout(capTimer);
+  capTimer = setTimeout(() => capEl.classList.remove('show'), 3200);
+}
+
+function onEvent(ev){
+  const id = ev.n.id;
+  unlocked.add(id);
+  const home = homeOf(id, ev.y, CFG);
+  const r = REGIONS[home];
+  pings.push({lon: r.lon, lat: r.lat, age: 0,
+              col: id === 'orbit' ? css('--accent') : css('--grey')});
+  if (CAP[id]) caption(ev.y, CAP[id] + ` <span style="color:var(--faint)">· ${r.name.split(' — ')[0]}</span>`);
+  hudEra.textContent = eraOf(unlocked, CFG.block.size > 0);
+  if (view === 'region'){
+    SLOTS[curRegion].forEach((s, i) => {
+      if ((s.node === id || (s.nodeAny && s.nodeAny.includes(id))) &&
+          unlockedHere(s.node || id, curRegion)) revealSlot(curRegion, i);
+    });
+  }
+  if (id === 'orbit'){
+    backToGlobe();
+    setTimeout(() => { satT = 0; if (!finShown){ finShown = true; showFin(); } }, 1400);
+    playing = false; hudFf.textContent = '';
+  }
+}
+
+function showFin(){
+  const oy = RUNT.orbit;
+  const t = document.getElementById('finT'), p = document.getElementById('finP');
+  if (oy < TL.NEVER && oy <= END_YEAR){
+    const d = Math.round(1957 - oy);
+    const from = REGIONS[homeOf('orbit', oy, CFG)].name.split(' — ')[0];
+    t.textContent = `Orbit, ${Math.round(oy)} — from ${from}.`;
+    p.textContent = (d >= 0 ? `${d} years before our world. ` : `${-d} years after our world. `) +
+      (CFG.block.size ? 'No steam engine ever existed here. ' : '') +
+      'The satellite now circles the globe; the beacons keep living.';
+  } else {
+    t.textContent = 'The tape ran out.';
+    p.textContent = `No satellite by ${END_YEAR} under these assumptions.`;
+  }
+  fin.style.display = 'block';
+}
+
+/* ---------- fx + main loop ---------- */
+function isoTick(dt, now){
+  if (!isoSvg) return;
+  for (const s of isoSources){
+    s.t -= dt;
+    if (s.t <= 0){ s.t = .32 + Math.random() * .2;
+      isoSmoke.push({x: s.x + (Math.random() - .5) * 3, y: s.y, age: 0}); }
+  }
+  isoSmoke.forEach(p => { p.age += dt; p.y -= 16 * dt; p.x += 5 * dt; });
+  isoSmoke = isoSmoke.filter(p => p.age < 2);
+  /* ambient gantry launches */
+  if (unlocked.has('sounding') && Math.random() < dt / 7){
+    const slot = SLOTS[curRegion].find(s =>
+      s.node === 'sounding' && unlockedHere('sounding', curRegion));
+    if (slot){ const [x, y] = tileXY(slot.tx + .5, slot.ty + .5);
+      isoRockets.push({x, y0: y - 6, t: 0}); }
+  }
+  let out = '';
+  for (const p of isoSmoke)
+    out += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(2 + p.age * 4).toFixed(1)}" style="fill:var(--grey);opacity:${(0.34 - p.age * .17).toFixed(2)}"/>`;
+  for (const rk of isoRockets){
+    rk.t += dt;
+    const y = rk.y0 - rk.t * rk.t * 95;
+    if (y > -30) out += `<g transform="translate(${rk.x},${y.toFixed(1)})">
+      <path d="M0,-10 l3,6 v8 h-6 v-8 Z" style="fill:var(--red)"/>
+      <path d="M0,6 l2.5,5 h-5 Z" style="fill:var(--gold)"/></g>`;
+  }
+  isoRockets = isoRockets.filter(rk => rk.t < 2.6);
+  /* villagers */
+  for (const v of villagers){
+    const dx = v.tx - v.x, dy = v.ty - v.y, dist = Math.hypot(dx, dy);
+    if (dist < .05){ v.tx = 2.5 + Math.random() * 7; v.ty = 2.5 + Math.random() * 7; }
+    else { v.x += dx / dist * v.sp * dt; v.y += dy / dist * v.sp * dt; }
+    const [x, y] = tileXY(v.x, v.y);
+    out += `<circle cx="${x.toFixed(1)}" cy="${(y - 3).toFixed(1)}" r="2.4" style="fill:var(--fg);opacity:.7"/>`;
+  }
+  isoFx.innerHTML = out;
+  /* shimmer + clock + glow */
+  isoSvg.querySelectorAll('.shimmer').forEach(el => {
+    el.setAttribute('opacity', (0.08 + 0.07 * Math.sin(now / 600 + (+el.dataset.ph))).toFixed(3));
+  });
+  const hand = isoSvg.querySelector('.clockhand');
+  if (hand) hand.setAttribute('transform',
+    `rotate(${(now / 25) % 360} ${hand.dataset.cx} ${hand.dataset.cy})`);
+  isoSvg.querySelectorAll('.glow').forEach(el =>
+    el.style.opacity = .55 + Math.sin(now / 320) * .35);
+}
+
+function tick(ts){
+  if (lastTs == null) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / 1000, 0.1); lastTs = ts;
+  if (playing){
+    const nextY = EIDX < EVENTS.length ? EVENTS[EIDX].y : END_YEAR;
+    const gap = nextY - YEAR;
+    const mult = gap > 60 ? 9 : gap > 18 ? 4 : 1;
+    hudFf.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
+    YEAR += dt * BASE_SPEED * mult;
+    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR){
+      onEvent(EVENTS[EIDX]); EIDX++;
+    }
+    hudYear.textContent = Math.round(Math.min(YEAR, END_YEAR));
+    if (YEAR >= END_YEAR && !finShown){
+      playing = false; hudFf.textContent = ''; finShown = true; showFin();
+    }
+  }
+  if (view === 'globe' || view === 'region'){
+    if (autoSpin && !dragging && view === 'globe') lam0 += dt * 4.2;
+    drawGlobe(ts);
+  }
+  if (view === 'region') isoTick(dt, ts);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('run').addEventListener('click', startWorld);
+document.getElementById('btnAgain').addEventListener('click', () => {
+  fin.style.display = 'none'; startWorld();
+});
+document.getElementById('btnClose').addEventListener('click', () => fin.style.display = 'none');
+document.getElementById('btnPause').addEventListener('click', e => {
+  playing = !playing;
+  e.target.textContent = playing ? 'pause' : 'resume';
+});
+document.getElementById('btnSkip').addEventListener('click', () => {
+  while (EIDX < EVENTS.length){
+    const ev = EVENTS[EIDX]; EIDX++;
+    unlocked.add(ev.n.id);
+    if (ev.n.id === 'orbit'){ satT = 0; }
+  }
+  hudEra.textContent = eraOf(unlocked, CFG.block.size > 0);
+  if (view === 'region') buildRegion(curRegion);
+  YEAR = Math.min(RUNT.orbit < TL.NEVER ? RUNT.orbit : END_YEAR, END_YEAR);
+  hudYear.textContent = Math.round(YEAR);
+  playing = false; hudFf.textContent = '';
+  if (!finShown){ finShown = true; showFin(); }
+});
+
+sizeCanvas();
+requestAnimationFrame(tick);
+
+/* file:// can't resolve directory URLs — point them at index.html locally */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>
