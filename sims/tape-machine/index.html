@@ -103,7 +103,8 @@
   #meters{display:flex; gap:.9rem; flex-wrap:wrap; margin-top:.55rem}
   .meter{flex:1 1 7rem; min-width:6.5rem}
   .meter .lbl{font-size:.62rem; letter-spacing:.06em; text-transform:uppercase;
-    color:var(--faint); margin-bottom:.15rem; white-space:nowrap}
+    color:var(--faint); margin-bottom:.15rem; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis}
   .meter .bar{height:5px; border-radius:3px; background:var(--rule); overflow:hidden}
   .meter .fill{height:100%; width:0%; background:var(--accent); border-radius:3px;
     transition:width .5s}
@@ -148,6 +149,29 @@
   #finaleBtns button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
   #finaleBtns button.primary:hover{color:#fff; filter:brightness(1.07)}
 
+  .promptbox{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:.7rem 1rem; margin:1rem 0 0; font-size:.88rem;
+  }
+  .promptbox summary{
+    cursor:pointer; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.72rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent);
+  }
+  .promptbox p{margin:.7rem 0 0; color:var(--fg)}
+  .promptbox .src{font-size:.78rem; color:var(--faint);
+    font-family:ui-sans-serif,-apple-system,sans-serif}
+
+  #how{margin-top:1rem; border-top:1px solid var(--rule); padding-top:.8rem}
+  #how summary{
+    cursor:pointer; font-size:.8rem; font-weight:600; color:var(--accent);
+    list-style-position:inside;
+  }
+  #how .howBody{font-size:.85rem; color:var(--grey); line-height:1.55; margin-top:.6rem}
+  #how .howBody p{margin:0 0 .6rem}
+  #how .howBody b{color:var(--fg)}
+
   .foot{padding:2rem 0 3.5rem; color:var(--grey); font-size:.88rem}
   @media (max-width:640px){
     header{padding-top:3.2rem}
@@ -170,6 +194,26 @@
   on the same calibrated engine as
   <a href="../../timelines-1/" data-dir>Replaying the Tape</a>. No two worlds
   are alike.</p>
+
+  <details class="promptbox">
+    <summary>The prompts — verbatim, typos and all</summary>
+    <p>“cool; and I thouoght we might also get something for people to rapidly run a
+    sims-like view simulator or something. I dunno hwo that works but you gt ideas?
+    That can go in this site as a separate tab maybe ojn home page (posts and sims or
+    something?). But I'dlike people to quickly play a long drawn out future by
+    setting some initial assumpton s (start date. tpyical timeline, or rocket before
+    steam,etc) feel free to be creative”</p>
+    <p>“can you give a hover text/tooltop somewhere in the post that explains how
+    this simualtion is run? Or once a simulation has run maube the text tells us how
+    this is running; does it use AI? Claude? Codex? somethin else? Or some other kind
+    of simulator? I am unsure. If algoryjimg then diret people to the key ones.”</p>
+    <p>“also all the text is not visible in the rocket vision even item; might be
+    wort checking all that too. I see ellipsis in the current siualtor post”</p>
+    <p class="src">This sim emerged mid-conversation from a heavily branched chat
+    (by Angadh Nanjangud, prompter &amp; Claude Fable&nbsp;5, AI). The messages above
+    are the ones that shaped this page, letter-for-letter; purely conversational
+    messages are omitted.</p>
+  </details>
 </header>
 
 <main class="prose">
@@ -179,11 +223,11 @@
       <span class="q">Rocket vision event</span>
       <div class="chips" id="cVision">
         <button data-v="none" class="on">none (our world)</button>
-        <button data-v="on">someone dreams of the sky…</button>
+        <button data-v="on">someone dreams of the sky</button>
       </div>
     </div>
-    <div class="assump" id="visionYearRow" style="visibility:hidden">
-      <span class="q">…in the year</span>
+    <div class="assump" id="visionYearRow" style="display:none">
+      <span class="q">the vision strikes in</span>
       <div id="visionRow">
         <input type="range" id="visionYear" min="1100" max="1900" step="10" value="1250">
         <span class="yr" id="visionYearV">1250</span>
@@ -218,7 +262,40 @@
         <button data-v="0.25">chaotic</button>
       </div>
     </div>
-    <button id="go">▶&nbsp; Run this world</button>
+    <button id="go" title="Runs a seeded Monte-Carlo rollout of a 43-technology dependency graph — pure arithmetic in your browser; no AI is queried.">▶&nbsp; Run this world</button>
+
+    <details id="how">
+      <summary>How does this run? (no, it isn’t asking an AI)</summary>
+      <div class="howBody">
+        <p><b>Nothing intelligent runs while you play.</b> No Claude, no Codex, no
+        model of any kind is queried — there are no network calls at all. Each run
+        is one <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method">Monte-Carlo
+        rollout</a> of a 43-technology
+        <a href="https://en.wikipedia.org/wiki/And%E2%80%93or_tree">dependency
+        graph</a>, executed as a few hundred lines of ordinary JavaScript in your
+        browser (view-source to see all of it).</p>
+        <p><b>The algorithm, in one breath:</b> every technology has prerequisite
+        groups (all groups must be met; any member satisfies a group — that is how
+        substitutes like “steam <i>or</i> waterpower” work). Once its prerequisites
+        exist, a technology arrives after a lag calibrated so that the no-assumptions
+        world reproduces real history, jittered by a
+        <a href="https://en.wikipedia.org/wiki/Log-normal_distribution">log-normal</a>
+        draw (your “turbulence” dial is its σ), and shortened by any programs your
+        assumptions create. Randomness comes from a seeded generator (mulberry32 +
+        the <a href="https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform">Box–Muller
+        transform</a>), so the seed on the end card reproduces a world exactly. The
+        chronicle sentences are pre-written templates keyed to each technology — not
+        generated text.</p>
+        <p><b>Where AI does enter:</b> the model itself — the node list, the edges,
+        the calibration procedure, this page — was written by Claude (Fable&nbsp;5)
+        working with the prompter, and the full model with equations, calibration
+        details, and honest caveats is documented in
+        <a href="../../timelines-1/" data-dir>chapter 4, <i>Replaying the
+        Tape</i></a> (the graph itself: <a href="timelines_data.js">timelines_data.js</a>).
+        The genre is <a href="https://en.wikipedia.org/wiki/Cliodynamics">cliodynamics</a> —
+        history treated as a dynamical system — at deliberately toy scale.</p>
+      </div>
+    </details>
   </section>
 
   <section id="tape" aria-live="polite">
@@ -420,8 +497,8 @@ const pick = (id, cb) => {
 };
 const val = id => document.querySelector('#' + id + ' button.on').dataset.v;
 pick('cVision', v => {
-  document.getElementById('visionYearRow').style.visibility =
-    v === 'on' ? 'visible' : 'hidden';
+  document.getElementById('visionYearRow').style.display =
+    v === 'on' ? '' : 'none';
 });
 pick('cSteam'); pick('cEssonne'); pick('cProof'); pick('cSigma');
 const vy = document.getElementById('visionYear');
@@ -462,12 +539,14 @@ let CFG = null, RUN = null, EVENTS = [], EIDX = 0, YEAR = 1000,
 const BASE_SPEED = 22;         /* years per second */
 const END_YEAR = 2200;
 
+const BR_SHORT = { K:"knowledge", P:"power", M:"materials", C:"chemistry",
+                   F:"precision", I:"signals", R:"rockets" };
 function metersInit(){
   const m = document.getElementById('meters');
   m.innerHTML = '';
   for (const br in TL.branches){
     m.insertAdjacentHTML('beforeend',
-      `<div class="meter"><div class="lbl">${TL.branches[br]}</div>
+      `<div class="meter"><div class="lbl" title="${TL.branches[br]}">${BR_SHORT[br]}</div>
        <div class="bar"><div class="fill" id="fill_${br}"></div></div></div>`);
   }
 }
@@ -585,8 +664,18 @@ function showFinale(){
     .filter(o => o.d >= 60);
   anach.forEach(o => bits.push(
     `${o.n.label}: ${Math.round(t[o.n.id])}, ${Math.round(o.d)} years early.`));
-  bits.push(`World seed ${RUN.seed} · same engine and caveats as chapter 4.`);
+  bits.push(`No AI computed this world: it was one seeded Monte-Carlo rollout of
+    the chapter-4 dependency graph, run entirely in your browser
+    (<a href="#" id="howLink">how it works</a>). World seed ${RUN.seed} —
+    the same seed and assumptions replay it exactly.`);
   bits.forEach(b => notes.insertAdjacentHTML('beforeend', `<li>${b}</li>`));
+  document.getElementById('howLink').addEventListener('click', ev => {
+    ev.preventDefault();
+    backToSetup();
+    const how = document.getElementById('how');
+    how.open = true;
+    setTimeout(() => how.scrollIntoView({behavior: 'smooth', block: 'center'}), 150);
+  });
   finale.style.display = 'block';
   finale.scrollIntoView({behavior: 'smooth', block: 'center'});
 }

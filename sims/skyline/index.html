@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Thousand-Year Skyline — Claudepost</title>
+<meta name="description" content="Watch a town live through an alternate history of technology: buildings rise, chimneys smoke (or never do), rockets fly.">
+<script>
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+    --gold:#b3873e; --green:#2d7d52; --blue:#2f629c; --red:#9c453a;
+    --sky:#eceae2; --skyind:#e6e0d2; --skyele:#e4e8ee; --skyspc:#dde3ef;
+    --ground:#ddd6c6; --bld:#c9c2b1; --bld2:#b5ad99; --smoke:#8a857c;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+    --gold:#b98a2c; --green:#3ba26b; --blue:#5b8ed8; --red:#c25a3c;
+    --sky:#2c2c31; --skyind:#312e29; --skyele:#2b3038; --skyspc:#282c3a;
+    --ground:#38352e; --bld:#4a463d; --bld2:#57524699; --smoke:#a09a8e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.02rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:62rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:3.4rem 0 .5rem}
+  h1{font-size:2.1rem; line-height:1.15; font-weight:600; margin:0 0 .45rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.02rem; margin:0 0 .8rem; max-width:46rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.3rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  #panel{
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem;
+    margin:.4rem 0 .8rem;
+  }
+  #panel .chips{display:flex; flex-wrap:wrap; gap:.4rem}
+  #panel .chips button{
+    font:inherit; font-size:.8rem; padding:.3rem .8rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--card); color:var(--fg);
+  }
+  #panel .chips button:hover{border-color:var(--accent); color:var(--accent)}
+  #panel .chips button.on{border-color:var(--accent); color:var(--accent); font-weight:600}
+  #panel #run{
+    font:inherit; font-size:.9rem; font-weight:700; padding:.45rem 1.2rem; cursor:pointer;
+    color:#fff; background:var(--accent); border:none; border-radius:8px;
+  }
+  #panel #run:hover{filter:brightness(1.07)}
+
+  #stage{position:relative; border:1px solid var(--rule); border-radius:10px;
+    overflow:hidden; background:var(--card)}
+  #scene svg{width:100%; height:auto; display:block}
+  #hud{
+    position:absolute; top:.65rem; left:.9rem; right:.9rem; display:flex;
+    align-items:baseline; gap:1rem; flex-wrap:wrap; pointer-events:none;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #hudYear{font-size:1.9rem; font-weight:700; font-variant-numeric:tabular-nums}
+  #hudEra{font-style:italic; color:var(--grey);
+    font-family:"Iowan Old Style",Palatino,Georgia,serif}
+  #hudFf{color:var(--faint); font-size:.85rem}
+  #hudBtns{margin-left:auto; pointer-events:auto; display:flex; gap:.4rem}
+  #hudBtns button{
+    font:inherit; font-size:.75rem; padding:.22rem .65rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  #hudBtns button:hover{border-color:var(--accent); color:var(--accent)}
+  #caption{
+    position:absolute; left:0; right:0; bottom:.6rem; text-align:center;
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.9rem;
+    color:var(--fg); pointer-events:none; padding:0 1rem;
+    text-shadow:0 1px 0 var(--card);
+    opacity:0; transition:opacity .4s;
+  }
+  #caption.show{opacity:1}
+  #caption .yr{font-weight:700; color:var(--accent); margin-right:.5rem;
+    font-variant-numeric:tabular-nums}
+
+  #fin{
+    position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+    display:none; text-align:center; background:var(--bg);
+    border:1px solid var(--accent); border-radius:10px; padding:1.1rem 1.6rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif; max-width:26rem;
+    box-shadow:0 4px 24px rgba(0,0,0,.15);
+  }
+  #fin h2{margin:0 0 .3rem; font-size:1.35rem;
+    font-family:"Iowan Old Style",Palatino,Georgia,serif}
+  #fin p{margin:0 0 .8rem; font-size:.88rem; color:var(--grey)}
+  #fin .btns{display:flex; gap:.45rem; justify-content:center; flex-wrap:wrap}
+  #fin button{
+    font:inherit; font-size:.8rem; padding:.35rem .8rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  #fin button:hover{border-color:var(--accent); color:var(--accent)}
+  #fin button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+
+  /* era skies */
+  #skyRect{fill:var(--sky); transition:fill 1.2s}
+  #stage[data-era="ind"] #skyRect{fill:var(--skyind)}
+  #stage[data-era="ele"] #skyRect{fill:var(--skyele)}
+  #stage[data-era="spc"] #skyRect{fill:var(--skyspc)}
+  .bld{opacity:0; transform:translateY(14px); transition:opacity .8s, transform .8s}
+  .bld.up{opacity:1; transform:none}
+
+  .promptbox{
+    background:var(--card); border:1px solid var(--rule);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:.7rem 1rem; margin:.2rem 0 1rem; font-size:.88rem; max-width:46rem;
+  }
+  .promptbox summary{
+    cursor:pointer; font-family:ui-sans-serif,-apple-system,sans-serif;
+    font-size:.72rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent);
+  }
+  .promptbox p{margin:.7rem 0 0; color:var(--fg)}
+  .promptbox .src{font-size:.78rem; color:var(--faint);
+    font-family:ui-sans-serif,-apple-system,sans-serif}
+
+  .foot{padding:1.6rem 0 3rem; color:var(--grey); font-size:.86rem;
+    max-width:46rem}
+  details#how{margin-top:.6rem; font-family:ui-sans-serif,-apple-system,sans-serif}
+  details#how summary{cursor:pointer; font-size:.8rem; font-weight:600; color:var(--accent)}
+  details#how p{font-size:.84rem; color:var(--grey); margin:.5rem 0 0}
+  @media (max-width:640px){
+    header{padding-top:3.1rem}
+    h1{font-size:1.6rem}
+    .prose{padding:0 1rem}
+    #hudYear{font-size:1.3rem}
+    #themeBtn{top:.7rem; right:.7rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<header class="prose">
+  <p class="backlink"><a href="../../index.html#sims">&#8592; All sims</a> ·
+    <a href="../tape-machine/" data-dir>the Tape Machine</a> (same worlds, as text) ·
+    <a href="../../timelines-1/" data-dir>how the engine works</a></p>
+  <h1>The Thousand-Year Skyline</h1>
+  <p class="subtitle">One town lives through an alternate history. Pick a world and
+  watch it build: clocks start turning, furnaces glow, chimneys smoke — or never
+  exist — telegraph wires string up, and if the lattice closes, a rocket leaves the
+  gantry and a satellite crosses the sky. Same engine as
+  <a href="../../timelines-1/" data-dir>Replaying the Tape</a>; new dice every run.</p>
+
+  <details class="promptbox">
+    <summary>The prompts — verbatim, typos and all</summary>
+    <p>“would be cool to have one more with sim like animations and visuals y'know?
+    Like a Caesar 3 or somethin. Is there a reason to not do that?”</p>
+    <p>“oh and don't forget the prompts where relvant for the new post!” — “the sim
+    one” — “but also the game” — “dunno how we can incoproate that as this is a
+    quite heavily branchedd chat”</p>
+    <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI),
+    mid-conversation. The only reason not to build a Caesar&nbsp;3 was licensing
+    (no borrowed sprites — everything here is hand-drawn SVG) and scope (a playable
+    city-builder economy is a different project); a diorama <em>driven</em> by the
+    simulation is the honest version. Letter-for-letter prompts above; conversational
+    messages omitted.</p>
+  </details>
+</header>
+
+<main class="prose">
+  <div id="panel">
+    <div class="chips" id="worlds">
+      <button data-w="our" class="on">our world</button>
+      <button data-w="sugar">the sugar rocket (1250)</button>
+      <button data-w="nosteam">steam never invented</button>
+      <button data-w="sugarnosteam">sugar rocket, no steam</button>
+      <button data-w="chaos">chaotic history</button>
+    </div>
+    <button id="run">▶ Run</button>
+  </div>
+
+  <div id="stage">
+    <div id="scene"></div>
+    <div id="hud">
+      <span id="hudYear">1000</span>
+      <span id="hudEra">The Age of Wind and Muscle</span>
+      <span id="hudFf"></span>
+      <div id="hudBtns">
+        <button id="btnPause" style="display:none">pause</button>
+        <button id="btnSkip" style="display:none">skip</button>
+      </div>
+    </div>
+    <div id="caption"></div>
+    <div id="fin">
+      <h2 id="finT"></h2>
+      <p id="finP"></p>
+      <div class="btns">
+        <button class="primary" id="btnAgain">↻ new dice</button>
+        <button id="btnClose">keep watching</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    A companion diorama to the <a href="../tape-machine/" data-dir>Tape
+    Machine</a> — the same one-rollout simulation, drawn instead of narrated.
+    <details id="how">
+      <summary>How does this run? (no AI is queried)</summary>
+      <p>Each run is a seeded Monte-Carlo rollout of the 43-technology dependency
+      graph from <a href="../../timelines-1/" data-dir>chapter 4</a>, computed in
+      plain JavaScript in your browser — no network calls, no language model. The
+      buildings, smoke, and rockets are hand-drawn SVG keyed to which technologies
+      have arrived. Longer explanation (algorithms, calibration, caveats) in the
+      <a href="../tape-machine/" data-dir>Tape Machine’s</a> “how does this run?”
+      panel and in chapter 4 itself; the graph is
+      <a href="timelines_data.js">timelines_data.js</a>.</p>
+    </details>
+  </footer>
+</main>
+
+<script src="timelines_data.js"></script>
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+applyTheme(urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+document.getElementById('themeBtn').addEventListener('click',
+  ()=>applyTheme(!root.classList.contains('dark')));
+
+/* ---------- engine (same semantics as chapter 4) ---------- */
+const NODE = {}; TL.nodes.forEach(n => NODE[n.id] = n);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rand){ let u=0,v=0;
+  while(!u) u=rand(); while(!v) v=rand();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function arrivalTime(n, gate, work, active){
+  const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
+  const rate = tt => { let v = 1;
+    for (const [s, r] of active) if (s <= tt && hits(r)) v *= r.V * r.C;
+    return v; };
+  const starts = active.filter(([s, r]) => s > gate && hits(r))
+                       .map(([s]) => s).sort((a, b) => a - b);
+  let t = gate, rem = work;
+  for (const s of starts){
+    const seg = (s - t) * rate(t);
+    if (seg >= rem) return t + rem / rate(t);
+    rem -= seg; t = s;
+  }
+  return t + rem / rate(t);
+}
+function simulate(cfg, rand){
+  const t = {}, rem = new Set();
+  for (const n of TL.nodes){
+    if (cfg.block.has(n.id)) continue;
+    if (n.start) t[n.id] = n.real; else rem.add(n.id);
+  }
+  const z = {}; rem.forEach(id => z[id] = gauss(rand));
+  const active = cfg.rules.filter(r => typeof r.trigger === 'number')
+                          .map(r => [r.trigger, r]);
+  const fired = new Set();
+  while (true){
+    let bid = null, barr = Infinity;
+    for (const id of rem){
+      const n = NODE[id];
+      let gate = TL.T0, ok = true;
+      for (const g of n.groups){
+        let m = Infinity;
+        for (const p of g) if (t[p] !== undefined && t[p] < m) m = t[p];
+        if (m === Infinity){ ok = false; break; }
+        if (m > gate) gate = m;
+      }
+      if (!ok) continue;
+      const work = n.L0 * Math.exp(cfg.sigma * z[id]);
+      const arr = arrivalTime(n, gate, work, active);
+      if (arr < barr){ barr = arr; bid = id; }
+    }
+    if (bid === null) break;
+    t[bid] = barr; rem.delete(bid);
+    if (!fired.has(bid)){
+      for (const r of cfg.rules) if (r.trigger === bid) active.push([barr, r]);
+      fired.add(bid);
+    }
+  }
+  for (const id of rem) t[id] = TL.NEVER;
+  return t;
+}
+const VISION_RULES = Y => [
+  {trigger: Y, targets: ["rocket_candy"], V: 6, C: 3},
+  {trigger: "rocket_candy", targets: ["R"], V: 3, C: 2},
+  {trigger: "sounding", targets: ["C"], V: 1.5, C: 2},
+  {trigger: "sounding", targets: ["F"], V: 1, C: 1.5},
+  {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
+];
+const WORLDS = {
+  our:          () => ({rules: [], block: new Set(), sigma: 0.14}),
+  sugar:        () => ({rules: VISION_RULES(1250), block: new Set(), sigma: 0.14}),
+  nosteam:      () => ({rules: [], block: new Set(TL.steam), sigma: 0.14}),
+  sugarnosteam: () => ({rules: VISION_RULES(1250), block: new Set(TL.steam), sigma: 0.14}),
+  chaos:        () => ({rules: [], block: new Set(), sigma: 0.25}),
+};
+
+/* ---------- captions ---------- */
+const CAP = {
+  clocks:"Cathedral clocks begin to strike the hours",
+  acids:"Alchemists distil the mineral acids",
+  blast_furnace:"Blast furnaces roar; iron flows",
+  printing:"Movable type — ideas learn to replicate",
+  telescope:"A spyglass turns skyward",
+  barometer:"Air has weight: the barometer",
+  sci_method:"Societies and journals: knowledge compounds",
+  glauber_acid:"Glauber bottles fuming nitric acid",
+  clockwork:"The pendulum makes time precise",
+  calculus:"Calculus — change becomes computable",
+  coke_iron:"Coke-smelted iron, no forests required",
+  newcomen:"An engine breathes fire and pumps water",
+  crucible:"Crucible steel pours",
+  lead_chamber:"Acid by the tonne — chemistry industrialises",
+  watt:"Watt’s condenser tames the engine",
+  chlorine:"A yellow-green gas is bottled",
+  mil_rockets:"Iron-cased war rockets shriek over battlefields",
+  machine_tools:"Machines begin making machines",
+  hp_steam:"High-pressure steam — power goes mobile",
+  rocket_eq:"A mathematician writes the rocket equation",
+  perchlorate:"Perchlorates isolated — and shelved",
+  interchange:"Parts become interchangeable",
+  telegraph:"Lightning learns the alphabet",
+  spin:"Rockets learn to spin true",
+  nitrocell:"Guncotton: cellulose with ambitions",
+  gauges:"The micrometer arrives; error shrinks",
+  thermo:"Heat becomes a science",
+  gyroscope:"Foucault’s wheel remembers where it points",
+  bessemer:"Steel becomes cheap",
+  electricity:"Generators hum; power becomes current",
+  ice:"The internal-combustion engine barks to life",
+  smokeless:"Smokeless powder — exhaust velocity triples",
+  delaval:"The bell nozzle: thrust learns geometry",
+  gyro_auto:"A gyroscope steers a machine by itself",
+  liquefaction:"Air itself is bottled as liquid",
+  radio:"A signal crosses space without wires",
+  liquid_eng:"A liquid-fuelled rocket coughs, then flies",
+  sounding:"Rockets touch the edge of space",
+  composite:"Castable propellant — the solid motor grows up",
+  rocket_candy:"Sugar meets saltpetre: the candy motor",
+  orbit:"A beacon circles the world — orbit",
+};
+function eraOf(un, steamBlocked){
+  if (un.has('orbit'))        return ["The Space Age","spc"];
+  if (un.has('sounding'))     return ["The Rocket Age","spc"];
+  if (un.has('radio') || un.has('electricity')) return ["The Electric Age","ele"];
+  if (un.has('machine_tools') || un.has('hp_steam'))
+    return [steamBlocked ? "The Steamless Industrial Age" : "The Industrial Age","ind"];
+  if (un.has('sci_method'))   return ["The Scientific Revolution",""];
+  if (un.has('rocket_candy')) return ["The Motor Middle Ages",""];
+  if (un.has('printing'))     return ["The Print Era",""];
+  return ["The Age of Wind and Muscle",""];
+}
+
+/* ---------- the scene ---------- */
+const W = 1180, H = 520, G = 468;
+const scene = document.getElementById('scene');
+const stage = document.getElementById('stage');
+let svg = null, fxG = null, smoke = [], sources = [], rings = [], anims = {};
+
+/* small helpers to build svg strings */
+const R = (x,y,w,h,f,rx=0) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${f}"/>`;
+const P = (d,f) => `<path d="${d}" style="fill:${f}"/>`;
+const L = (x1,y1,x2,y2,s,w=2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:${s};stroke-width:${w}"/>`;
+const C = (cx,cy,r,f) => `<circle cx="${cx}" cy="${cy}" r="${r}" style="fill:${f}"/>`;
+const B = 'var(--bld)', B2 = 'var(--bld2)', RF = 'var(--red)', GY = 'var(--grey)',
+      GD = 'var(--gold)', AC = 'var(--accent)';
+
+/* buildings: id -> {x, draw(x), trigger(unlocked Set)->bool, smoke:[dx,dy,tint]} */
+const BUILDINGS = [
+ {id:'huts', x:56, always:true, draw:x=>
+   [0,26,52].map(dx=>P(`M${x-30+dx},${G} v-20 h24 v20 Z M${x-33+dx},${G-20} l15,-13 15,13 Z`,dx===26?B2:B)).join('')},
+ {id:'pagoda', x:128, node:'fire_arrows', always:true, draw:x=>
+   R(x-13,G-52,26,52,B) + P(`M${x-22},${G-52} h44 l-9,-12 h-26 Z`,RF) +
+   P(`M${x-17},${G-76} h34 l-7,-10 h-20 Z`,RF) + P(`M${x-12},${G-96} h24 l-12,-14 Z`,RF)},
+ {id:'clocktower', x:198, node:'clocks', draw:x=>
+   R(x-15,G-108,30,108,B) + P(`M${x-19},${G-108} h38 l-19,-18 Z`,RF) +
+   C(x,G-84,11,'var(--bg)') + `<line id="clockhand" x1="${x}" y1="${G-84}" x2="${x}" y2="${G-93}" style="stroke:${GY};stroke-width:2"/>` +
+   C(x,G-84,1.8,GY)},
+ {id:'alchemist', x:265, node:'acids', smoke:[8,-38,'var(--gold)'], draw:x=>
+   R(x-20,G-30,40,30,B) + P(`M${x-24},${G-30} l24,-16 24,16 Z`,B2) +
+   C(x+8,G-36,5,GD) + R(x+6,G-34,4,6,GD)},
+ {id:'furnace', x:332, node:'blast_furnace', smoke:[0,-64,'#5a554c'], draw:x=>
+   P(`M${x-22},${G} l6,-46 h32 l6,46 Z`,B2) + R(x-6,G-60,12,18,B2) +
+   `<rect id="furnGlow" x="${x-9}" y="${G-16}" width="18" height="14" rx="2" style="fill:${AC}"/>`},
+ {id:'printshop', x:400, node:'printing', draw:x=>
+   R(x-24,G-34,48,34,B) + P(`M${x-27},${G-34} h54 l-8,-12 h-38 Z`,GY) +
+   R(x-16,G-26,10,12,'var(--bg)') + R(x+6,G-26,10,12,'var(--bg)')},
+ {id:'observatory', x:468, node:'telescope', draw:x=>
+   R(x-18,G-36,36,36,B) +
+   P(`M${x-18},${G-36} a18,18 0 0 1 36,0 Z`,B2) +
+   L(x+2,G-48,x+13,G-62,GY,3)},
+ {id:'academy', x:540, node:'sci_method', draw:x=>
+   R(x-30,G-8,60,8,B2) + P(`M${x-34},${G-42} h68 l-34,-16 Z`,B2) +
+   [-22,-8,6,20].map(dx=>R(x+dx,G-40,6,32,B)).join('')},
+ {id:'acidworks', x:610, node:'lead_chamber', smoke:[-10,-42,'#b9b4a8'], draw:x=>
+   R(x-26,G-26,52,26,B) +
+   P(`M${x-18},${G-26} a10,10 0 0 1 20,0 Z`,GY) + P(`M${x+2},${G-26} a10,10 0 0 1 20,0 Z`,GY) +
+   R(x-14,G-40,4,16,B2)},
+ {id:'enginehouse', x:680, nodeAny:['newcomen','watt','hp_steam'],
+  smoke:[16,-78,'var(--smoke)'], draw:x=>
+   R(x-26,G-40,52,40,B) + P(`M${x-30},${G-40} h60 l-10,-14 h-40 Z`,RF) +
+   R(x+11,G-84,10,44,B2) +
+   `<line id="beamArm" x1="${x-18}" y1="${G-48}" x2="${x+8}" y2="${G-48}" style="stroke:${GY};stroke-width:4"/>`},
+ {id:'machineworks', x:750, node:'machine_tools', draw:x=>
+   R(x-30,G-30,60,30,B) +
+   P(`M${x-30},${G-30} l15,-12 v12 l15,-12 v12 l15,-12 v12 l15,-12 v12 Z`,B2)},
+ {id:'candyshop', x:818, node:'rocket_candy', draw:x=>
+   R(x-20,G-28,40,28,B) + P(`M${x-23},${G-28} h46 l-6,-10 h-34 Z`,GD) +
+   P(`M${x+13},${G-38} q5,-16 0,-30 q-5,14 0,30`, 'var(--bg)') +
+   [0,1,2].map(i=>R(x+9.5,G-62+i*8,7,4,RF)).join('') +
+   P(`M${x+13},${G-70} l-4,8 h8 Z`,RF)},
+ {id:'telegraph', x:872, node:'telegraph', draw:x=>
+   [0,36,72].map(dx=>L(x-18+dx,G,x-18+dx,G-44,GY,2.5) +
+                     L(x-27+dx,G-40,x-9+dx,G-40,GY,2)).join('') +
+   `<path d="M${x-18},${G-38} q18,7 36,0 q18,7 36,0" style="fill:none;stroke:${GY};stroke-width:1.4"/>`},
+ {id:'powerstation', x:962, node:'electricity', smoke:[-14,-58,'#b9b4a8'], draw:x=>
+   R(x-26,G-36,52,36,B2) + R(x-18,G-58,8,22,B) + R(x+10,G-52,8,16,B) +
+   P(`M${x+2},${G-30} l-7,12 h6 l-4,10 11,-14 h-6 l5,-8 Z`,GD)},
+ {id:'radiomast', x:1030, node:'radio', draw:x=>
+   L(x-9,G,x,G-92,GY,2.5) + L(x+9,G,x,G-92,GY,2.5) +
+   L(x-6,G-30,x+6,G-30,GY,1.5) + L(x-4,G-58,x+4,G-58,GY,1.5) +
+   C(x,G-94,3,AC)},
+ {id:'gantry', x:1094, node:'sounding', draw:x=>
+   L(x-12,G,x-12,G-70,GY,3) + L(x-12,G-20,x+4,G-20,GY,2) +
+   L(x-12,G-44,x+4,G-44,GY,2) + L(x-12,G-68,x+4,G-68,GY,2)},
+ {id:'pad', x:1148, node:'orbit', draw:x=>
+   R(x-22,G-6,44,6,B2) + L(x+14,G-6,x+14,G-80,GY,3) +
+   L(x+14,G-30,x-2,G-30,GY,2) + L(x+14,G-56,x-2,G-56,GY,2) + L(x+14,G-78,x-2,G-78,GY,2)},
+];
+
+function drawScene(){
+  scene.innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-label="An animated town evolving through history">
+    <rect id="skyRect" x="0" y="0" width="${W}" height="${H}"/>
+    <rect x="0" y="${G}" width="${W}" height="${H-G}" style="fill:var(--ground)"/>
+    <g id="blds">${BUILDINGS.map(b =>
+      `<g id="bld_${b.id}" class="bld">${b.draw(b.x)}</g>`).join('')}</g>
+    <g id="fx"></g>
+  </svg>`;
+  svg = scene.querySelector('svg');
+  fxG = svg.querySelector('#fx');
+}
+
+/* ---------- one world, played ---------- */
+const hudYear = document.getElementById('hudYear');
+const hudEra = document.getElementById('hudEra');
+const hudFf = document.getElementById('hudFf');
+const capEl = document.getElementById('caption');
+const fin = document.getElementById('fin');
+let CFG = null, RUNT = null, EVENTS = [], EIDX = 0, YEAR = 1000,
+    playing = false, unlocked = new Set(), lastTs = null, capTimer = null,
+    launchTimer = 0, satOn = false, bigLaunched = false, worldKey = 'our';
+const BASE_SPEED = 26, END_YEAR = 2200;
+
+function pickWorld(){
+  document.querySelectorAll('#worlds button').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on'); worldKey = b.dataset.w;
+    }));
+}
+pickWorld();
+
+function startWorld(){
+  CFG = WORLDS[worldKey]();
+  const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+  RUNT = simulate(CFG, mulberry32(seed));
+  EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER)
+    .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
+  EIDX = 0; YEAR = 1000; unlocked = new Set();
+  smoke = []; sources = []; rings = []; anims = {}; satOn = false;
+  bigLaunched = false; launchTimer = 3;
+  drawScene();
+  BUILDINGS.filter(b => b.always).forEach(b => reveal(b));
+  fin.style.display = 'none';
+  stage.dataset.era = '';
+  hudEra.textContent = 'The Age of Wind and Muscle';
+  document.getElementById('btnPause').style.display = '';
+  document.getElementById('btnSkip').style.display = '';
+  document.getElementById('btnPause').textContent = 'pause';
+  playing = true; lastTs = null;
+  requestAnimationFrame(tick);
+}
+
+function reveal(b){
+  const g = svg.querySelector('#bld_' + b.id);
+  if (!g || g.classList.contains('up')) return;
+  requestAnimationFrame(() => g.classList.add('up'));
+  if (b.smoke) sources.push({x: b.x + b.smoke[0], y: G + b.smoke[1],
+                             tint: b.smoke[2], t: Math.random()});
+  if (b.id === 'clocktower') anims.clock = true;
+  if (b.id === 'enginehouse') anims.beam = true;
+  if (b.id === 'furnace') anims.glow = true;
+  if (b.id === 'radiomast') anims.radio = {t: 0, x: b.x, y: G - 94};
+}
+
+function caption(y, txt){
+  capEl.innerHTML = `<span class="yr">${Math.round(y)}</span>${txt}`;
+  capEl.classList.add('show');
+  clearTimeout(capTimer);
+  capTimer = setTimeout(() => capEl.classList.remove('show'), 3400);
+}
+
+function onEvent(ev){
+  const id = ev.n.id;
+  unlocked.add(id);
+  BUILDINGS.forEach(b => {
+    if (b.node === id || (b.nodeAny && b.nodeAny.includes(id))) reveal(b);
+  });
+  if (CAP[id]) caption(ev.y, CAP[id]);
+  const [era, sky] = eraOf(unlocked, CFG.block.size > 0);
+  hudEra.textContent = era;
+  stage.dataset.era = sky;
+  if (id === 'orbit'){ bigLaunched = false; }  /* the pad launch fires in fx loop */
+}
+
+/* ---------- fx & main loop ---------- */
+let rockets = [];   /* {x0, t, big} */
+function spawnSmoke(dt){
+  for (const s of sources){
+    s.t -= dt;
+    if (s.t <= 0){
+      s.t = 0.30 + Math.random() * 0.2;
+      smoke.push({x: s.x + (Math.random() - .5) * 4, y: s.y, age: 0,
+                  vx: 6 + Math.random() * 6, vy: -(14 + Math.random() * 8),
+                  tint: s.tint});
+    }
+  }
+  smoke.forEach(p => { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; });
+  smoke = smoke.filter(p => p.age < 2.4);
+}
+function fxRender(now){
+  let out = '';
+  for (const p of smoke){
+    const r = 2.5 + p.age * 4, o = Math.max(0, .38 - p.age * .16);
+    out += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" style="fill:${p.tint};opacity:${o.toFixed(2)}"/>`;
+  }
+  if (anims.radio){
+    anims.radio.t += 0.016;
+    const ph = anims.radio.t % 2.4;
+    const r = ph * 34, o = Math.max(0, .5 - ph * .22);
+    out += `<circle cx="${anims.radio.x}" cy="${anims.radio.y}" r="${r.toFixed(1)}" style="fill:none;stroke:var(--accent);stroke-width:1.4;opacity:${o.toFixed(2)}"/>`;
+  }
+  for (const rk of rockets){
+    rk.t += 0.016;
+    const h = rk.t * rk.t * (rk.big ? 130 : 90);
+    const y = (G - 12) - h, x = rk.x0 + (rk.big ? 0 : rk.t * 7);
+    if (y > -30)
+      out += `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+        <path d="M0,-14 l4,8 v10 h-8 v-10 Z" style="fill:${rk.big ? 'var(--accent)' : 'var(--red)'}"/>
+        <path d="M0,${0 + 4} l3,7 h-6 Z" style="fill:var(--gold)"/></g>`;
+    if (rk.t > 0.25 && Math.random() < .5)
+      smoke.push({x: x + (Math.random() - .5) * 3, y: y + 6, age: .5,
+                  vx: (Math.random() - .5) * 10, vy: 8, tint: 'var(--smoke)'});
+  }
+  rockets = rockets.filter(rk => rk.t < 3.4);
+  if (satOn){
+    const T = (now / 9000) % 1.15;
+    const sx = -30 + T * (W + 60), sy = 54 + Math.sin(T * 9) * 6;
+    if (sx < W + 20)
+      out += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="3.2" style="fill:var(--accent)"/>
+        <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${(4 + (now / 300 % 4)).toFixed(1)}" style="fill:none;stroke:var(--accent);stroke-width:.8;opacity:${(0.5 - (now / 300 % 4) * .11).toFixed(2)}"/>`;
+  }
+  fxG.innerHTML = out;
+  /* clock hand + beam + glow */
+  if (anims.clock){
+    const hand = svg.querySelector('#clockhand');
+    if (hand) hand.setAttribute('transform',
+      `rotate(${(now / 30) % 360} 198 ${G - 84})`);
+  }
+  if (anims.beam){
+    const arm = svg.querySelector('#beamArm');
+    if (arm) arm.setAttribute('transform',
+      `rotate(${Math.sin(now / 400) * 9} 675 ${G - 48})`);
+  }
+  if (anims.glow){
+    const gl = svg.querySelector('#furnGlow');
+    if (gl) gl.style.opacity = .55 + Math.sin(now / 350) * .35;
+  }
+}
+
+function tick(ts){
+  if (lastTs == null) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / 1000, 0.1); lastTs = ts;
+  if (playing){
+    const nextY = EIDX < EVENTS.length ? EVENTS[EIDX].y : END_YEAR;
+    const gap = nextY - YEAR;
+    const mult = gap > 60 ? 9 : gap > 18 ? 4 : 1;
+    hudFf.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
+    YEAR += dt * BASE_SPEED * mult;
+    while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR){
+      onEvent(EVENTS[EIDX]); EIDX++;
+    }
+    hudYear.textContent = Math.round(Math.min(YEAR, END_YEAR));
+    if (unlocked.has('orbit') && !bigLaunched){
+      bigLaunched = true;
+      rockets.push({x0: 1148, t: 0, big: true});
+      setTimeout(() => { satOn = true; showFin(); }, 2600);
+      playing = false; hudFf.textContent = '';
+    } else if (YEAR >= END_YEAR){
+      playing = false; hudFf.textContent = '';
+      showFin();
+    }
+  }
+  /* ambient launches from the sounding gantry */
+  if (unlocked.has('sounding')){
+    launchTimer -= dt;
+    if (launchTimer <= 0){ launchTimer = 6 + Math.random() * 4;
+      rockets.push({x0: 1094 - 4, t: 0, big: false}); }
+  }
+  spawnSmoke(dt);
+  fxRender(ts);
+  requestAnimationFrame(tick);
+}
+
+function showFin(){
+  const oy = RUNT.orbit;
+  const t = document.getElementById('finT'), p = document.getElementById('finP');
+  if (oy < TL.NEVER && oy <= END_YEAR){
+    const d = Math.round(1957 - oy);
+    t.textContent = `Orbit, ${Math.round(oy)}.`;
+    p.textContent = (d >= 0 ? `${d} years before ours` : `${-d} years after ours`) +
+      (CFG.block.size ? ' — and this town never built a steam engine.' : '.') +
+      ' The town keeps living below; the satellite keeps passing.';
+  } else {
+    t.textContent = 'The tape ran out.';
+    p.textContent = `No satellite by ${END_YEAR} under these assumptions — ` +
+      'the town keeps its sky empty.';
+  }
+  fin.style.display = 'block';
+}
+
+document.getElementById('run').addEventListener('click', startWorld);
+document.getElementById('btnAgain').addEventListener('click', startWorld);
+document.getElementById('btnClose').addEventListener('click', () => fin.style.display = 'none');
+document.getElementById('btnPause').addEventListener('click', e => {
+  playing = !playing;
+  e.target.textContent = playing ? 'pause' : 'resume';
+});
+document.getElementById('btnSkip').addEventListener('click', () => {
+  while (EIDX < EVENTS.length){ onEvent(EVENTS[EIDX]); EIDX++; }
+  YEAR = Math.min(RUNT.orbit < TL.NEVER ? RUNT.orbit : END_YEAR, END_YEAR);
+  hudYear.textContent = Math.round(YEAR);
+  if (unlocked.has('orbit') && !bigLaunched){
+    bigLaunched = true; rockets.push({x0: 1148, t: 0, big: true});
+    setTimeout(() => { satOn = true; }, 2400);
+  }
+  playing = false; hudFf.textContent = '';
+  showFin();
+});
+
+/* initial idle scene */
+drawScene();
+BUILDINGS.filter(b => b.always).forEach(b =>
+  svg.querySelector('#bld_' + b.id).classList.add('up'));
+requestAnimationFrame(tick);
+
+/* file:// can't resolve directory URLs — point them at index.html locally */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>
