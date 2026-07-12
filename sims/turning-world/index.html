@@ -255,13 +255,6 @@
   2026</em>. In the good timelines, humanity is multi-planet a century before our
   present.</p>
 
-  <figure style="margin:1.1rem 0 .4rem">
-    <img src="assets/hero_globe.png" alt="A 3D-rendered globe with raised parchment continents, the Moon, and a satellite on an orange orbit ring"
-         style="width:100%; max-height:330px; object-fit:contain; display:block">
-    <figcaption style="font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem; color:var(--faint); text-align:right; margin-top:.15rem">
-      rendered with the Blender Python API — <a href="make_blender_assets.py">make_blender_assets.py</a></figcaption>
-  </figure>
-
   <details class="promptbox">
     <summary>The prompts — verbatim, typos and all</summary>
     <p>“Okay, this looks quite cool. Can you make one more that looks like Age of
@@ -334,6 +327,14 @@
     to silence the arts, whether to fund rockets, whether sugar rockets happen, and
     so on. Right? … It's possible tomorrow. I'll change my mind again because I
     don't know what the right way is, but maybe we keep it simple.”</p>
+    <p>“I wonder if you could get like an STL or some kind of like special scan of
+    those buildings and integrate them into these kinds of visuals because I can
+    see, of course, that people like Apple and Google and all these guys have these
+    little landmarks of the big cities. Right? Like, you'd get a Notre Dame asset.
+    You'd get a Westminster asset. You could use... I don't know what the Ajamahal
+    asset for India. There's so many, like, specific things you could use for each
+    country. Even though we know that the Taj Mahal is not in Mysore or Westminster
+    Abbey is not in Cambridge or wherever things are being found.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -352,7 +353,13 @@
     real 3D renders made headlessly with the Blender Python API
     (<a href="make_blender_assets.py">make_blender_assets.py</a>, committed for
     reproducibility). The outputs are plain PNGs — the page still executes no
-    external code.</p>
+    external code. On the STL hunt: Apple’s and Google’s landmark models are
+    proprietary, and the open scan libraries hide behind account walls (Wikimedia
+    Commons, searched by mime type, offered Roman funerary stones but no Taj) — so
+    the landmarks standing in the provinces (the Taj Mahal in “Mysore”, with the
+    prompter’s geographic blessing; Big Ben; Notre-Dame; the Umayyad minaret; an
+    iron pagoda; a small verdigris Liberty; the yurts) are modelled from primitives
+    in the same Blender script and baked into the plates with their shadows.</p>
   </details>
 </header>
 
@@ -808,11 +815,19 @@ function project(lon, lat){
 let pings = [], satT = -1, moonAng = 0;
 
 function drawGlobe(now){
+  const darkG = root.classList.contains('dark');
+  const seaC = darkG ? '#3b4a56' : css('--sea');
+  const landC = darkG ? '#9a8d72' : css('--land');
+  const edgeC = darkG ? '#6e6250' : css('--landEdge');
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.clearRect(0, 0, CW, CHh);
+  /* soft ground shadow, like the render */
+  ctx.beginPath();
+  ctx.ellipse(GCX, GCY + RGL * 1.06, RGL * .72, RGL * .13, 0, 0, 7);
+  ctx.fillStyle = darkG ? 'rgba(0,0,0,.35)' : 'rgba(90,80,60,.14)'; ctx.fill();
   ctx.beginPath(); ctx.arc(GCX, GCY, RGL, 0, 7);
-  ctx.fillStyle = css('--sea'); ctx.fill();
-  ctx.strokeStyle = css('--landEdge'); ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = seaC; ctx.fill();
+  ctx.strokeStyle = edgeC; ctx.lineWidth = 1; ctx.stroke();
   ctx.strokeStyle = css('--rule'); ctx.lineWidth = 0.6;
   for (let lat = -60; lat <= 60; lat += 30){
     ctx.beginPath(); let st = false;
@@ -832,25 +847,28 @@ function drawGlobe(now){
     }
     ctx.stroke();
   }
-  ctx.fillStyle = css('--land');
-  ctx.strokeStyle = css('--landEdge'); ctx.lineWidth = 1;
-  for (const poly of LAND){
-    ctx.beginPath(); let any = false;
-    for (const [lon, lat] of poly){
-      const q = project(lon, lat);
-      let x = q.x, y = q.y;
-      if (!q.vis){ const h = Math.hypot(x - GCX, y - GCY) || 1;
-        x = GCX + (x - GCX) * RGL / h; y = GCY + (y - GCY) * RGL / h; }
-      else any = true;
-      ctx.lineTo(x, y);
+  /* continents with a raised-relief pass, echoing the 3D render */
+  for (const pass of [0, 1]){
+    ctx.fillStyle = pass ? landC : edgeC;
+    ctx.strokeStyle = edgeC; ctx.lineWidth = 1;
+    const ox = pass ? 0 : 1.4, oy = pass ? 0 : 2.2;
+    for (const poly of LAND){
+      ctx.beginPath(); let any = false;
+      for (const [lon, lat] of poly){
+        const q = project(lon, lat);
+        let x = q.x, y = q.y;
+        if (!q.vis){ const h = Math.hypot(x - GCX, y - GCY) || 1;
+          x = GCX + (x - GCX) * RGL / h; y = GCY + (y - GCY) * RGL / h; }
+        else any = true;
+        ctx.lineTo(x + ox, y + oy);
+      }
+      if (any){ ctx.closePath(); ctx.fill(); if (pass) ctx.stroke(); }
     }
-    if (any){ ctx.closePath(); ctx.fill(); ctx.stroke(); }
   }
   const grad = ctx.createRadialGradient(GCX - RGL * .35, GCY - RGL * .35, RGL * .2,
                                         GCX, GCY, RGL);
   grad.addColorStop(0, 'rgba(255,255,255,0)');
-  grad.addColorStop(1, root.classList.contains('dark')
-    ? 'rgba(0,0,0,.36)' : 'rgba(90,80,60,.16)');
+  grad.addColorStop(1, darkG ? 'rgba(0,0,0,.30)' : 'rgba(90,80,60,.16)');
   ctx.beginPath(); ctx.arc(GCX, GCY, RGL, 0, 7); ctx.fillStyle = grad; ctx.fill();
   for (const key in REGIONS){
     const r = REGIONS[key], q = project(r.lon, r.lat);
@@ -970,6 +988,7 @@ function tree(tx, ty){
     `<polygon points="${x},${y - 26} ${x + 7},${y - 10} ${x - 7},${y - 10}" style="fill:var(--terraF)"/>`;
 }
 const SPRITES = {
+  plaque: () => '',
   hut: (tx, ty) => isoBox(tx, ty, .8, .8, 12, IT, IL, IR) + roof(tx, ty, .8, .8, 12, 8, GY2) +
     (() => { const [x, y] = tileXY(tx + .55, ty + .78);
       return '<rect x="' + (x - 2.5) + '" y="' + (y - 9) + '" width="5" height="8" style="fill:' + IR + '"/>'; })(),
@@ -1192,24 +1211,24 @@ const TERRA = {
 const TCOL = {g:'var(--terraG)', a:'var(--terraA)', w:'var(--terraW)',
               f:'var(--terraG)', d:'var(--terraD)', s:'var(--terraA)'};
 const SLOTS = {
-  china:  [{always:1, sprite:'gate', tx:2.4, ty:7.2, label:'Kaifeng Gate'},
+  china:  [{always:1, sprite:'plaque', tx:2.4, ty:7.2, label:'Iron Pagoda'},
            {always:1, sprite:'pagoda', tx:5, ty:4}, {always:1, sprite:'hut', tx:3.4, ty:6},
            {always:1, sprite:'hut', tx:7, ty:5.4},
            {node:'rocket_candy', sprite:'candyshop', tx:6.5, ty:7},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.4},
            {node:'orbit', sprite:'pad', tx:9, ty:6}],
-  levant: [{always:1, sprite:'mosque', tx:3.2, ty:7.3, label:'Umayyad Mosque'},
+  levant: [{always:1, sprite:'plaque', tx:3.2, ty:7.3, label:'Umayyad Mosque'},
            {always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
            {node:'acids', sprite:'alchemy', tx:5, ty:6, smoke:{dx:.62, dy:.45, off:32, tint:'var(--gold)'}},
            {node:'rocket_candy', sprite:'candyshop', tx:6.6, ty:5},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.6},
            {node:'orbit', sprite:'pad', tx:8.6, ty:6.4}],
-  mysore: [{always:1, sprite:'gopuram', tx:3, ty:7.2, label:'Ranganathaswamy'},
+  mysore: [{always:1, sprite:'plaque', tx:3, ty:7.2, label:'Taj Mahal'},
            {always:1, sprite:'hut', tx:4, ty:4}, {always:1, sprite:'hut', tx:6.4, ty:3.4},
            {node:'mil_rockets', sprite:'arsenal', tx:5, ty:6},
            {node:'rocket_candy', sprite:'candyshop', tx:7, ty:5.6},
            {node:'sounding', sprite:'gantry', tx:8.4, ty:4}],
-  britain:[{always:1, sprite:'abbey', tx:2.3, ty:4.7, label:'Westminster Abbey'},
+  britain:[{always:1, sprite:'plaque', tx:2.3, ty:4.7, label:'Big Ben'},
            {always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'university', tx:4.6, ty:3},
            {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
            {node:'machine_tools', sprite:'factory', tx:4, ty:6.4},
@@ -1218,7 +1237,7 @@ const SLOTS = {
            {node:'radio', sprite:'mast', tx:8.6, ty:3.2, rings:[.5,.5,62]},
            {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
            {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
-  europe: [{always:1, sprite:'cathedral', tx:2.4, ty:5.6, label:'Notre-Dame'},
+  europe: [{always:1, sprite:'plaque', tx:2.4, ty:5.6, label:'Notre-Dame'},
            {always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
            {node:'printing', sprite:'print', tx:6.2, ty:3},
            {node:'telescope', sprite:'obs', tx:7.8, ty:3.6},
@@ -1227,7 +1246,7 @@ const SLOTS = {
            {node:'delaval', sprite:'turbine', tx:6.4, ty:6.2},
            {node:'liquefaction', sprite:'lique', tx:8, ty:7.2},
            {node:'sounding', sprite:'gantry', tx:9.2, ty:5}],
-  america:[{always:1, sprite:'steeple', tx:7.4, ty:2.4, label:'Meeting House'},
+  america:[{always:1, sprite:'plaque', tx:7.4, ty:2.4, label:'Liberty'},
            {always:1, sprite:'hut', tx:3.6, ty:4.4},
            {node:'interchange', sprite:'armory', tx:4.6, ty:3.2},
            {node:'telegraph', sprite:'tele', tx:6, ty:3},
@@ -1235,7 +1254,7 @@ const SLOTS = {
            {node:'rocket_candy', sprite:'candyshop', tx:4, ty:6.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:7},
            {node:'orbit', sprite:'pad', tx:8.4, ty:7}],
-  steppe: [{always:1, sprite:'yurts', tx:3.2, ty:6.3, label:'Yurt Camp'},
+  steppe: [{always:1, sprite:'plaque', tx:3.2, ty:6.3, label:'Yurt Camp'},
            {always:1, sprite:'hut', tx:4, ty:4.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:5},
            {node:'orbit', sprite:'pad', tx:7.4, ty:6.4}],
@@ -1266,7 +1285,8 @@ function buildRegion(key){
   SLOTS[key].forEach((s, i) => {
     const [sx, sy] = tileXY(s.tx + .55, s.ty + .55);
     blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">` +
-      `<ellipse cx="${sx}" cy="${sy + 2}" rx="${TW * .95}" ry="${TH * .8}" style="fill:#000;opacity:.09"/>` +
+      (s.sprite === 'plaque' ? '' :
+        `<ellipse cx="${sx}" cy="${sy + 2}" rx="${TW * .95}" ry="${TH * .8}" style="fill:#000;opacity:.09"/>`) +
       SPRITES[s.sprite](s.tx, s.ty) +
       (s.label ? `<text x="${sx}" y="${sy + TH + 11}" text-anchor="middle" font-size="9.5" style="fill:var(--fg);opacity:.75">${s.label}</text>` : '') +
       `</g>`;

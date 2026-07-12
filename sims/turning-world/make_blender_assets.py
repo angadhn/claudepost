@@ -165,6 +165,135 @@ def iso_camera(grid=12):
     bpy.context.scene.camera = cam
 
 
+
+# ---------------- landmark modelling helpers (all primitives) ----------------
+def _box(x, y, z, sx, sy, sz, m):
+    bpy.ops.mesh.primitive_cube_add(location=(x, y, z))
+    ob = bpy.context.object
+    ob.scale = (sx, sy, sz)
+    ob.data.materials.append(m)
+    return ob
+
+def _cyl(x, y, z, r, depth, m, rt=None, vertices=24):
+    if rt is None:
+        bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=depth,
+                                            location=(x, y, z), vertices=vertices)
+    else:
+        bpy.ops.mesh.primitive_cone_add(radius1=r, radius2=rt, depth=depth,
+                                        location=(x, y, z), vertices=vertices)
+    ob = bpy.context.object
+    ob.data.materials.append(m)
+    return ob
+
+def _dome(x, y, z, r, m, squash=1.0):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=(x, y, z),
+                                         segments=24, ring_count=16)
+    ob = bpy.context.object
+    ob.scale = (1, 1, squash)
+    bpy.ops.object.shade_smooth()
+    ob.data.materials.append(m)
+    return ob
+
+def _cone(x, y, z, r, depth, m, vertices=24):
+    bpy.ops.mesh.primitive_cone_add(radius1=r, depth=depth, location=(x, y, z),
+                                    vertices=vertices)
+    ob = bpy.context.object
+    ob.data.materials.append(m)
+    return ob
+
+WHITE = (0.93, 0.90, 0.84)
+STONE = (0.78, 0.72, 0.60)
+GREYST = (0.62, 0.60, 0.55)
+BRONZE = (0.55, 0.30, 0.20)
+VERDI = (0.35, 0.58, 0.50)
+DOMET = (0.55, 0.68, 0.62)
+
+def lm_taj(cx, cy):
+    m = mat('lm_white', WHITE, rough=.6)
+    _box(cx, cy, 0.14, 0.75, 0.75, 0.06, m)                        # plinth
+    _box(cx, cy, 0.42, 0.42, 0.42, 0.26, m)                        # hall
+    _dome(cx, cy, 0.86, 0.30, m, squash=1.15)                      # onion dome
+    _cone(cx, cy, 1.24, 0.045, 0.16, mat('lm_gold', (0.8, 0.62, 0.25), rough=.4))
+    for dx, dy in ((-.34, -.34), (-.34, .34), (.34, -.34), (.34, .34)):
+        _cyl(cx + dx, cy + dy, 0.32, 0.045, 0.28, m)               # chhatri posts
+        _dome(cx + dx, cy + dy, 0.50, 0.09, m)
+    for dx, dy in ((-.72, -.72), (-.72, .72), (.72, -.72), (.72, .72)):
+        _cyl(cx + dx, cy + dy, 0.28, 0.05, 0.55, m, rt=0.035)      # minarets
+        _dome(cx + dx, cy + dy, 0.585, 0.065, m)
+
+def lm_bigben(cx, cy):
+    m = mat('lm_stone', STONE, rough=.8)
+    _box(cx, cy, 0.55, 0.14, 0.14, 0.55, m)                        # shaft
+    _box(cx, cy, 1.18, 0.17, 0.17, 0.10, m)                        # clock stage
+    f = mat('lm_face', (0.95, 0.94, 0.88), rough=.4)
+    for dx, dy, rx, ry in ((0.171, 0, 0.01, 0.09), (-0.171, 0, 0.01, 0.09),
+                           (0, 0.171, 0.09, 0.01), (0, -0.171, 0.09, 0.01)):
+        _box(cx + dx, cy + dy, 1.18, rx, ry, 0.09, f)              # clock faces
+    _cone(cx, cy, 1.42, 0.13, 0.28, m)                             # spire
+    _cone(cx, cy, 1.60, 0.02, 0.10, mat('lm_gold', (0.8, 0.62, 0.25), rough=.4))
+
+def lm_notredame(cx, cy):
+    m = mat('lm_grey', GREYST, rough=.85)
+    _box(cx - 0.22, cy - 0.28, 0.42, 0.14, 0.14, 0.42, m)          # west towers
+    _box(cx - 0.22, cy + 0.28, 0.42, 0.14, 0.14, 0.42, m)
+    _box(cx + 0.12, cy, 0.26, 0.42, 0.20, 0.26, m)                 # nave
+    bpy.ops.mesh.primitive_cube_add(location=(cx + 0.12, cy, 0.60))
+    roofob = bpy.context.object
+    roofob.scale = (0.42, 0.14, 0.10)
+    roofob.rotation_euler = (math.radians(45), 0, 0)
+    roofob.data.materials.append(m)
+    _cone(cx + 0.05, cy, 0.86, 0.035, 0.34, m)                     # fleche
+    _cyl(cx - 0.365, cy, 0.42, 0.055, 0.012, mat('lm_gold', (0.8, 0.62, 0.25), rough=.4),
+         vertices=20)                                              # rose window
+
+def lm_mosque(cx, cy):
+    m = mat('lm_ivory', (0.88, 0.83, 0.70), rough=.7)
+    _box(cx, cy, 0.16, 0.55, 0.4, 0.16, m)                         # prayer hall
+    _dome(cx, cy, 0.40, 0.22, mat('lm_dome', DOMET, rough=.5), squash=1.0)
+    _cyl(cx + 0.62, cy - 0.25, 0.5, 0.045, 1.0, m)                 # minaret
+    _dome(cx + 0.62, cy - 0.25, 1.03, 0.07, mat('lm_dome', DOMET, rough=.5))
+
+def lm_pagoda(cx, cy):
+    m = mat('lm_bronze', BRONZE, rough=.75)
+    z = 0.0
+    for i, (r, h) in enumerate([(0.30, 0.18), (0.26, 0.16), (0.22, 0.15),
+                                (0.18, 0.14), (0.14, 0.13)]):
+        _cyl(cx, cy, z + h / 2, r * 0.72, h, m, vertices=8)
+        _cone(cx, cy, z + h + 0.025, r, 0.09, m, vertices=8)
+        z += h + 0.05
+    _cone(cx, cy, z + 0.10, 0.02, 0.22, mat('lm_gold', (0.8, 0.62, 0.25), rough=.4))
+
+def lm_liberty(cx, cy):
+    p = mat('lm_ped', STONE, rough=.85)
+    v = mat('lm_verdi', VERDI, rough=.7)
+    _box(cx, cy, 0.22, 0.22, 0.22, 0.22, p)                        # pedestal
+    _cyl(cx, cy, 0.72, 0.13, 0.56, v, rt=0.07)                     # robe
+    _dome(cx, cy, 1.04, 0.07, v)                                   # head
+    for k in range(5):
+        a = math.radians(-60 + k * 30)
+        _cone(cx + 0.09 * math.cos(a), cy, 1.13 + 0.05 * math.sin(a) * 0,
+              0.012, 0.09, v, vertices=6)                          # crown
+    arm = _cyl(cx + 0.10, cy + 0.08, 1.22, 0.025, 0.42, v)
+    arm.rotation_euler = (math.radians(18), math.radians(-12), 0)
+    _cone(cx + 0.16, cy + 0.13, 1.47, 0.05, 0.10,
+          mat('lm_flame', (0.85, 0.55, 0.20), rough=.4))           # torch
+
+def lm_yurts(cx, cy):
+    m = mat('lm_felt', (0.85, 0.80, 0.70), rough=.9)
+    for dx, dy, r in ((0, 0, 0.28), (0.75, 0.55, 0.20)):
+        _cyl(cx + dx, cy + dy, 0.10, r, 0.20, m)
+        _dome(cx + dx, cy + dy, 0.20, r, m, squash=0.62)
+
+LANDMARKS = {
+  'britain': (lm_bigben,   2.85, 5.25),
+  'europe':  (lm_notredame,2.95, 6.15),
+  'china':   (lm_pagoda,   2.95, 7.75),
+  'levant':  (lm_mosque,   3.75, 7.85),
+  'mysore':  (lm_taj,      3.55, 7.75),
+  'america': (lm_liberty,  7.95, 2.95),
+  'steppe':  (lm_yurts,    3.75, 6.85),
+}
+
 def render_region(key, rows, colors=COLORS, tree=TREE_GREEN, trunk=TRUNK, suffix=''):
     sc = reset_scene()
     sc.render.resolution_x = 1536
@@ -192,6 +321,9 @@ def render_region(key, rows, colors=COLORS, tree=TREE_GREEN, trunk=TRUNK, suffix
                         location=(tx + dx, -ty + dy, 0.17 + 0.17 * s))
                     co = bpy.context.object
                     co.data.materials.append(m_tree)
+    if key in LANDMARKS:
+        fn, lx, ly = LANDMARKS[key]
+        fn(lx, -ly)
     sc.render.filepath = os.path.join(OUT, f'terra_{key}{suffix}.png')
     bpy.ops.render.render(write_still=True)
     print('rendered', key)
