@@ -71,10 +71,34 @@
 
   #panel{
     font-family:ui-sans-serif,-apple-system,sans-serif;
-    display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem;
-    margin:.4rem 0 .8rem;
+    margin:.4rem 0 .5rem;
+  }
+  #panel .prow{display:flex; align-items:center; gap:.7rem; flex-wrap:wrap;
+    margin-bottom:.4rem}
+  #panel .plab{
+    font-size:.66rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--faint); min-width:6.6rem;
+    text-align:right;
+  }
+  #panel .plab em{display:block; font-style:italic; font-weight:400;
+    letter-spacing:.02em; text-transform:none; font-size:.62rem}
+  #elements button[data-e]::before{content:'+ '; color:var(--faint)}
+  #elements button[data-e].on::before{content:'✓ '; color:var(--accent)}
+  @media (max-width:640px){
+    #panel .plab{min-width:100%; text-align:left; margin-bottom:-.15rem}
   }
   #panel .chips{display:flex; flex-wrap:wrap; gap:.4rem}
+  #panel .chips button.ghost{border-style:dashed; color:var(--grey)}
+  #worldSummary{
+    font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.82rem;
+    color:var(--grey); line-height:1.55; margin:.4rem 0 .3rem;
+    border-left:3px solid var(--accent); padding-left:.7rem;
+  }
+  #worldSummary b{color:var(--fg)}
+  #legend{margin:.2rem 0 1rem; font-family:ui-sans-serif,-apple-system,sans-serif}
+  #legend summary{cursor:pointer; font-size:.78rem; font-weight:600; color:var(--accent)}
+  #legend .lg{font-size:.82rem; color:var(--grey); margin:.5rem 0 0; line-height:1.55}
+  #legend .lg b{color:var(--fg)}
   #panel .chips button{
     font:inherit; font-size:.8rem; padding:.3rem .8rem; cursor:pointer;
     border:1px solid var(--rule); border-radius:99px; background:var(--card); color:var(--fg);
@@ -259,41 +283,59 @@
     (M. de Bergerac forgives the spelling), Verne and Wells — and a 1645 decision
     card where the censors can silence it. The scholarly term the prompt is reaching
     for is Jasanoff’s “sociotechnical imaginaries”; Stephenson calls the SF kind
-    “hieroglyphs.” The fourth prompt is why the presets are now shortcuts over
-    composable element toggles (tap-chips, not drag-and-drop — which iOS Safari
-    fights): silence the arts, delete steam, plant the vision, tame the chlorates —
-    in any combination. “Isomorphic” faithfully preserved; isometric faithfully
+    “hieroglyphs.” The fourth prompt is why the controls are composable
+    element toggles (tap-chips, not drag-and-drop — which iOS Safari fights):
+    silence the arts, delete steam, plant the vision, tame the chlorates — in any
+    combination, with a live summary of the world you have built. “Isomorphic” faithfully preserved; isometric faithfully
     delivered.</p>
   </details>
 </header>
 
 <main class="prose">
   <div id="panel">
-    <div class="chips" id="worlds" title="Quick starts — each just sets the toggles below">
-      <button data-w="our" class="on">our world</button>
-      <button data-w="exact">our world, exactly</button>
-      <button data-w="sugar">the sugar rocket (1250)</button>
-      <button data-w="nosteam">steam never invented</button>
-      <button data-w="silenced">the silenced world</button>
-      <button data-w="chaos">chaotic history</button>
+    <div class="prow"><span class="plab">world elements<em>combine any</em></span>
+      <div class="chips" id="elements">
+        <button data-e="arts">silence the arts</button>
+        <button data-e="steam">delete steam</button>
+        <button data-e="vision">sugar vision, 1250</button>
+        <button data-e="luck">Essonne luck</button>
+        <button id="reset" class="ghost">↺ our world</button>
+      </div>
     </div>
-    <div class="chips" id="elements" title="Compose your own world — each element toggles independently">
-      <button data-e="arts">silence the arts</button>
-      <button data-e="steam">delete steam</button>
-      <button data-e="vision">sugar vision, 1250</button>
-      <button data-e="luck">Essonne luck</button>
+    <div class="prow"><span class="plab">the dice<em>pick one</em></span>
+      <div class="chips" id="cSigma">
+        <button data-v="exact">exact replay</button>
+        <button data-v="hist" class="on">historical</button>
+        <button data-v="chaos">chaotic</button>
+      </div>
     </div>
-    <div class="chips" id="cSigma">
-      <button data-v="exact">exact replay dice</button>
-      <button data-v="hist" class="on">historical dice</button>
-      <button data-v="chaos">chaotic dice</button>
+    <div class="prow"><span class="plab">decisions<em>pick one</em></span>
+      <div class="chips" id="cMode">
+        <button data-v="ask" class="on">ask me</button>
+        <button data-v="auto">auto-play (the world decides)</button>
+      </div>
+      <button id="run">▶ Run</button>
     </div>
-    <div class="chips" id="cMode">
-      <button data-v="ask" class="on">decisions: ask me</button>
-      <button data-v="auto">auto-play (the world decides)</button>
-    </div>
-    <button id="run">▶ Run</button>
   </div>
+  <p id="worldSummary"></p>
+  <details id="legend">
+    <summary>What do these rows mean?</summary>
+    <p class="lg"><b>World elements</b> are independent counterfactual switches, off
+    = as our history. Silence the arts and no one ever writes the sky as a
+    destination (no Somnium, no Cyrano, no Verne — belief-fed steps run at a third
+    of their pace). Delete steam and the engines never exist. Plant the 1250
+    sky-vision and Damascus funds a motor programme. Essonne luck tames the
+    chlorates a century early. Every combination is a valid world — all sixteen
+    permutations run, including “vision without arts or steam” (a funded programme
+    substitutes for the missing literature). ↺ resets everything to our world.</p>
+    <p class="lg"><b>The dice exist because history’s timings were not fated.</b>
+    Every technology arrives after a lag, and the dice set how much each lag can
+    wobble per run: <b>exact replay</b> — no wobble, every technology lands on its
+    true date (orbit 1957, every time); <b>historical</b> — each run re-rolls
+    history’s luck and the satellite wanders by decades; <b>chaotic</b> — the same
+    luck, roughly doubled. <b>Decisions</b>: at the crossroads the run either
+    pauses and asks you, or a coin answers and the tape keeps rolling.</p>
+  </details>
 
   <div id="stage">
     <div id="globeWrap"><canvas id="globe"></canvas></div>
@@ -494,16 +536,8 @@ const VISION_RULES = Y => [
   {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
 ];
 const FICTION = ['somnium', 'moon_voyage', 'space_sf'];
-/* composable world elements; presets are shortcuts that set these toggles */
+/* composable world elements; all off + historical dice = our world */
 const TOGGLES = { arts: false, steam: false, vision: false, luck: false, dice: 'hist' };
-const PRESETS = {
-  our:      { arts: false, steam: false, vision: false, luck: false, dice: 'hist' },
-  exact:    { arts: false, steam: false, vision: false, luck: false, dice: 'exact' },
-  sugar:    { arts: false, steam: false, vision: true,  luck: false, dice: 'hist' },
-  nosteam:  { arts: false, steam: true,  vision: false, luck: false, dice: 'hist' },
-  silenced: { arts: true,  steam: false, vision: false, luck: false, dice: 'hist' },
-  chaos:    { arts: false, steam: false, vision: false, luck: false, dice: 'chaos' },
-};
 function cfgFromToggles(){
   const block = new Set();
   if (TOGGLES.steam) TL.steam.forEach(id => block.add(id));
@@ -1226,33 +1260,48 @@ let CFG = null, RUNT = null, Z = null, EVENTS = [], EIDX = 0, YEAR = 1000,
     worldKey = 'our', finShown = false, capQueue = [];
 const BASE_SPEED = 26, PRESENT = 2026;
 
+let decideMode = 'ask';
 function syncToggleUI(){
-  document.querySelectorAll('#elements button').forEach(b =>
+  document.querySelectorAll('#elements button[data-e]').forEach(b =>
     b.classList.toggle('on', !!TOGGLES[b.dataset.e]));
   document.querySelectorAll('#cSigma button').forEach(b =>
     b.classList.toggle('on', b.dataset.v === TOGGLES.dice));
+  const el = [
+    TOGGLES.arts ? 'the arts are silenced' : 'the arts flourish',
+    TOGGLES.steam ? 'steam is never invented' : 'steam exists',
+    TOGGLES.vision ? 'a sky-vision takes hold in 1250' : 'no early sky-vision',
+    TOGGLES.luck ? 'chlorates are tamed early' : 'chlorate history as ours',
+  ];
+  const dice = {
+    exact: 'exact replay — no luck; every technology on its true date',
+    hist: 'historical — each run re-rolls history’s luck (the satellite wanders by decades)',
+    chaos: 'chaotic — the luck swings are doubled',
+  }[TOGGLES.dice];
+  const isOur = !TOGGLES.arts && !TOGGLES.steam && !TOGGLES.vision && !TOGGLES.luck;
+  document.getElementById('worldSummary').innerHTML =
+    `<b>This world:</b> ${el.join(' · ')}${isOur ? ' — our world' : ''}.<br>` +
+    `<b>Dice:</b> ${dice}. <b>Decisions:</b> ${decideMode === 'ask'
+      ? 'the run pauses and asks you at each crossroads'
+      : 'a coin answers each crossroads and the tape keeps rolling'}.`;
 }
-document.querySelectorAll('#worlds button').forEach(b =>
-  b.addEventListener('click', () => {
-    document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    Object.assign(TOGGLES, PRESETS[b.dataset.w]);
-    syncToggleUI();
-  }));
-document.querySelectorAll('#elements button').forEach(b =>
+document.querySelectorAll('#elements button[data-e]').forEach(b =>
   b.addEventListener('click', () => {
     TOGGLES[b.dataset.e] = !TOGGLES[b.dataset.e];
-    document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
     syncToggleUI();
   }));
+document.getElementById('reset').addEventListener('click', () => {
+  Object.assign(TOGGLES, {arts: false, steam: false, vision: false, luck: false, dice: 'hist'});
+  syncToggleUI();
+});
 document.querySelectorAll('#cSigma button').forEach(b =>
   b.addEventListener('click', () => { TOGGLES.dice = b.dataset.v; syncToggleUI(); }));
-let decideMode = 'ask';
 document.querySelectorAll('#cMode button').forEach(b =>
   b.addEventListener('click', () => {
     document.querySelectorAll('#cMode button').forEach(x => x.classList.remove('on'));
     b.classList.add('on'); decideMode = b.dataset.v;
+    syncToggleUI();
   }));
+syncToggleUI();
 
 function startWorld(){
   CFG = cfgFromToggles();
