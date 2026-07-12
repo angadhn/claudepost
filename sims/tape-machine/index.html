@@ -209,6 +209,12 @@
     of simulator? I am unsure. If algoryjimg then diret people to the key ones.”</p>
     <p>“also all the text is not visible in the rocket vision even item; might be
     wort checking all that too. I see ellipsis in the current siualtor post”</p>
+    <p>“Is there an option to also study what happens when the fiction elements are
+    removed? I suppose this is introducing a lot more variables into the thing, so
+    maybe we want to have removal as a separate option. And I don't know whatever
+    else is, like, keeping things as an option, if you get what I mean. Or maybe
+    it's a drag and drop interface, but I don't know if we can drag and drop on a
+    mobile screen in the same way.”</p>
     <p class="src">This sim emerged mid-conversation from a heavily branched chat
     (by Angadh Nanjangud, prompter &amp; Claude Fable&nbsp;5, AI). The messages above
     are the ones that shaped this page, letter-for-letter; purely conversational
@@ -231,6 +237,13 @@
       <div id="visionRow">
         <input type="range" id="visionYear" min="1100" max="1900" step="10" value="1250">
         <span class="yr" id="visionYearV">1250</span>
+      </div>
+    </div>
+    <div class="assump">
+      <span class="q">The arts (Somnium, Cyrano, Verne)</span>
+      <div class="chips" id="cArts">
+        <button data-v="alive" class="on">flourish (our world)</button>
+        <button data-v="silenced">silenced — no one writes the sky</button>
       </div>
     </div>
     <div class="assump">
@@ -391,6 +404,7 @@ function gauss(rand){ let u=0,v=0;
 
 /* uncalibrated lag: real year minus the year the last prerequisite fell in
    real history — a deterministic pass with these reproduces history exactly */
+const ARTS_FED = new Set(['rocket_candy','sounding','liquid_eng','orbit']);
 function rawLag(n){
   let gate = TL.T0;
   for (const g of n.groups){
@@ -442,6 +456,7 @@ function simulate(cfg, rand){
       }
       if (!ok) continue;
       let work = cfg.exact ? rawLag(n) : n.L0 * Math.exp(cfg.sigma * z[id]);
+      if (cfg.artsBlocked && ARTS_FED.has(id)) work *= 3;
       if (id === 'composite' && cfg.essonne && lucky) work /= 3;
       const arr = arrivalTime(n, gate, work, active);
       if (arr < barr){ barr = arr; bid = id; }
@@ -542,7 +557,7 @@ pick('cVision', v => {
   document.getElementById('visionYearRow').style.display =
     v === 'on' ? '' : 'none';
 });
-pick('cSteam'); pick('cEssonne'); pick('cProof'); pick('cSigma');
+pick('cSteam'); pick('cEssonne'); pick('cProof'); pick('cSigma'); pick('cArts');
 const vy = document.getElementById('visionYear');
 vy.addEventListener('input', () =>
   document.getElementById('visionYearV').textContent = vy.value);
@@ -558,9 +573,12 @@ function buildCfg(){
     {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
   ] : [];
   const block = new Set(val('cSteam') === 'no' ? TL.steam : []);
+  const artsOff = val('cArts') === 'silenced';
+  if (artsOff) ['somnium','moon_voyage','space_sf'].forEach(id => block.add(id));
   const sig = val('cSigma');
   return {
     rules, block,
+    artsBlocked: artsOff,
     essonne: val('cEssonne') === 'dice',
     sigma: sig === 'exact' ? 0 : +sig,
     exact: sig === 'exact',

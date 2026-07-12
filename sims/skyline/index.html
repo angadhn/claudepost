@@ -182,6 +182,12 @@
     <p>“oh and don't forget the prompts where relvant for the new post!” — “the sim
     one” — “but also the game” — “dunno how we can incoproate that as this is a
     quite heavily branchedd chat”</p>
+    <p>“Is there an option to also study what happens when the fiction elements are
+    removed? I suppose this is introducing a lot more variables into the thing, so
+    maybe we want to have removal as a separate option. And I don't know whatever
+    else is, like, keeping things as an option, if you get what I mean. Or maybe
+    it's a drag and drop interface, but I don't know if we can drag and drop on a
+    mobile screen in the same way.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI),
     mid-conversation. The only reason not to build a Caesar&nbsp;3 was licensing
     (no borrowed sprites — everything here is hand-drawn SVG) and scope (a playable
@@ -199,6 +205,7 @@
       <button data-w="sugar">the sugar rocket (1250)</button>
       <button data-w="nosteam">steam never invented</button>
       <button data-w="sugarnosteam">sugar rocket, no steam</button>
+      <button data-w="silenced">fiction silenced</button>
       <button data-w="chaos">chaotic history</button>
     </div>
     <button id="run">▶ Run</button>
@@ -289,6 +296,7 @@ function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
 function gauss(rand){ let u=0,v=0;
   while(!u) u=rand(); while(!v) v=rand();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+const ARTS_FED = new Set(['rocket_candy','sounding','liquid_eng','orbit']);
 function rawLag(n){          /* uncalibrated lag: deterministic pass replays history */
   let gate = TL.T0;
   for (const g of n.groups){
@@ -335,7 +343,8 @@ function simulate(cfg, rand){
         if (m > gate) gate = m;
       }
       if (!ok) continue;
-      const work = cfg.exact ? rawLag(n) : n.L0 * Math.exp(cfg.sigma * z[id]);
+      let work = cfg.exact ? rawLag(n) : n.L0 * Math.exp(cfg.sigma * z[id]);
+      if (cfg.artsBlocked && ARTS_FED.has(id)) work *= 3;
       const arr = arrivalTime(n, gate, work, active);
       if (arr < barr){ barr = arr; bid = id; }
     }
@@ -362,6 +371,8 @@ const WORLDS = {
   sugar:        () => ({rules: VISION_RULES(1250), block: new Set(), sigma: 0.14}),
   nosteam:      () => ({rules: [], block: new Set(TL.steam), sigma: 0.14}),
   sugarnosteam: () => ({rules: VISION_RULES(1250), block: new Set(TL.steam), sigma: 0.14}),
+  silenced:     () => ({rules: [], sigma: 0.14, artsBlocked: true,
+                        block: new Set(['somnium','moon_voyage','space_sf'])}),
   chaos:        () => ({rules: [], block: new Set(), sigma: 0.25}),
 };
 

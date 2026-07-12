@@ -244,6 +244,12 @@
     automatically experience some kind of Vision fiction, if you get what I mean.
     And, uh, yeah, I think that should be in there. I don't know if vision fiction or
     vision creep is the right phrase. You can tell me about that. But, uh, yeah.”</p>
+    <p>“Is there an option to also study what happens when the fiction elements are
+    removed? I suppose this is introducing a lot more variables into the thing, so
+    maybe we want to have removal as a separate option. And I don't know whatever
+    else is, like, keeping things as an option, if you get what I mean. Or maybe
+    it's a drag and drop interface, but I don't know if we can drag and drop on a
+    mobile screen in the same way.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -253,20 +259,34 @@
     (M. de Bergerac forgives the spelling), Verne and Wells — and a 1645 decision
     card where the censors can silence it. The scholarly term the prompt is reaching
     for is Jasanoff’s “sociotechnical imaginaries”; Stephenson calls the SF kind
-    “hieroglyphs.” “Isomorphic” faithfully preserved; isometric faithfully
+    “hieroglyphs.” The fourth prompt is why the presets are now shortcuts over
+    composable element toggles (tap-chips, not drag-and-drop — which iOS Safari
+    fights): silence the arts, delete steam, plant the vision, tame the chlorates —
+    in any combination. “Isomorphic” faithfully preserved; isometric faithfully
     delivered.</p>
   </details>
 </header>
 
 <main class="prose">
   <div id="panel">
-    <div class="chips" id="worlds">
+    <div class="chips" id="worlds" title="Quick starts — each just sets the toggles below">
       <button data-w="our" class="on">our world</button>
       <button data-w="exact">our world, exactly</button>
       <button data-w="sugar">the sugar rocket (1250)</button>
       <button data-w="nosteam">steam never invented</button>
-      <button data-w="sugarnosteam">sugar rocket, no steam</button>
+      <button data-w="silenced">the silenced world</button>
       <button data-w="chaos">chaotic history</button>
+    </div>
+    <div class="chips" id="elements" title="Compose your own world — each element toggles independently">
+      <button data-e="arts">silence the arts</button>
+      <button data-e="steam">delete steam</button>
+      <button data-e="vision">sugar vision, 1250</button>
+      <button data-e="luck">Essonne luck</button>
+    </div>
+    <div class="chips" id="cSigma">
+      <button data-v="exact">exact replay dice</button>
+      <button data-v="hist" class="on">historical dice</button>
+      <button data-v="chaos">chaotic dice</button>
     </div>
     <div class="chips" id="cMode">
       <button data-v="ask" class="on">decisions: ask me</button>
@@ -473,14 +493,31 @@ const VISION_RULES = Y => [
   {trigger: "sounding", targets: ["F"], V: 1, C: 1.5},
   {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
 ];
-const WORLDS = {
-  exact:        () => ({rules: [], block: new Set(), sigma: 0, exact: true, vision: false}),
-  our:          () => ({rules: [], block: new Set(), sigma: 0.14, vision: false}),
-  sugar:        () => ({rules: VISION_RULES(1250), block: new Set(), sigma: 0.14, vision: true}),
-  nosteam:      () => ({rules: [], block: new Set(TL.steam), sigma: 0.14, vision: false}),
-  sugarnosteam: () => ({rules: VISION_RULES(1250), block: new Set(TL.steam), sigma: 0.14, vision: true}),
-  chaos:        () => ({rules: [], block: new Set(), sigma: 0.25, vision: false}),
+const FICTION = ['somnium', 'moon_voyage', 'space_sf'];
+/* composable world elements; presets are shortcuts that set these toggles */
+const TOGGLES = { arts: false, steam: false, vision: false, luck: false, dice: 'hist' };
+const PRESETS = {
+  our:      { arts: false, steam: false, vision: false, luck: false, dice: 'hist' },
+  exact:    { arts: false, steam: false, vision: false, luck: false, dice: 'exact' },
+  sugar:    { arts: false, steam: false, vision: true,  luck: false, dice: 'hist' },
+  nosteam:  { arts: false, steam: true,  vision: false, luck: false, dice: 'hist' },
+  silenced: { arts: true,  steam: false, vision: false, luck: false, dice: 'hist' },
+  chaos:    { arts: false, steam: false, vision: false, luck: false, dice: 'chaos' },
 };
+function cfgFromToggles(){
+  const block = new Set();
+  if (TOGGLES.steam) TL.steam.forEach(id => block.add(id));
+  if (TOGGLES.arts) FICTION.forEach(id => block.add(id));
+  return {
+    rules: TOGGLES.vision ? VISION_RULES(1250) : [],
+    block,
+    sigma: {exact: 0, hist: 0.14, chaos: 0.25}[TOGGLES.dice],
+    exact: TOGGLES.dice === 'exact',
+    vision: TOGGLES.vision,
+    essonneBoost: TOGGLES.luck,
+    artsBlocked: TOGGLES.arts,
+  };
+}
 
 /* ---------- geography ---------- */
 const LAND = [
@@ -1096,7 +1133,7 @@ const DECISIONS = [
       apply(cfg){ TL.steam.forEach(id => cfg.block.add(id)); }},
    ]},
   {id:'essonne', year: () => 1786,
-   when: () => !unlocked.has('composite'),
+   when: () => !unlocked.has('composite') && !CFG.essonneBoost,
    title: 'Essonne, 1786 — Berthollet proposes chlorate powders at scale',
    body: 'In our world the mill exploded, people died, and the compound class was shelved for a century.',
    options: [
@@ -1189,11 +1226,27 @@ let CFG = null, RUNT = null, Z = null, EVENTS = [], EIDX = 0, YEAR = 1000,
     worldKey = 'our', finShown = false, capQueue = [];
 const BASE_SPEED = 26, PRESENT = 2026;
 
+function syncToggleUI(){
+  document.querySelectorAll('#elements button').forEach(b =>
+    b.classList.toggle('on', !!TOGGLES[b.dataset.e]));
+  document.querySelectorAll('#cSigma button').forEach(b =>
+    b.classList.toggle('on', b.dataset.v === TOGGLES.dice));
+}
 document.querySelectorAll('#worlds button').forEach(b =>
   b.addEventListener('click', () => {
     document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); worldKey = b.dataset.w;
+    b.classList.add('on');
+    Object.assign(TOGGLES, PRESETS[b.dataset.w]);
+    syncToggleUI();
   }));
+document.querySelectorAll('#elements button').forEach(b =>
+  b.addEventListener('click', () => {
+    TOGGLES[b.dataset.e] = !TOGGLES[b.dataset.e];
+    document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
+    syncToggleUI();
+  }));
+document.querySelectorAll('#cSigma button').forEach(b =>
+  b.addEventListener('click', () => { TOGGLES.dice = b.dataset.v; syncToggleUI(); }));
 let decideMode = 'ask';
 document.querySelectorAll('#cMode button').forEach(b =>
   b.addEventListener('click', () => {
@@ -1202,7 +1255,7 @@ document.querySelectorAll('#cMode button').forEach(b =>
   }));
 
 function startWorld(){
-  CFG = WORLDS[worldKey]();
+  CFG = cfgFromToggles();
   const res = simulate(CFG, mulberry32((Date.now() ^ (Math.random() * 1e9)) >>> 0));
   RUNT = res.t; Z = res.z;
   EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER)
@@ -1302,8 +1355,8 @@ function showFin(){
   }
   if (CFG.artsBlocked)
     L.insertAdjacentHTML('beforeend',
-      `<li>The arts were silenced in 1645 — with no one writing the sky as a
-       destination, every belief-fed step limped at a third of its pace.</li>`);
+      `<li>The arts were silenced in this world — with no one writing the sky as
+       a destination, every belief-fed step limped at a third of its pace.</li>`);
   L.insertAdjacentHTML('beforeend', devs
     ? `<li>You left history’s path at ${devs} decision${devs > 1 ? 's' : ''} (⑂ on the strip below).</li>`
     : `<li>You made every choice history made — this is reality’s corridor, re-rolled.</li>`);
