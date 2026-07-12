@@ -199,9 +199,10 @@
     color:var(--faint); margin:.2rem 0 0; text-align:right}
 
   .foot{padding:1.6rem 0 3rem; color:var(--grey); font-size:.86rem; max-width:47rem}
-  details#how{margin-top:.6rem; font-family:ui-sans-serif,-apple-system,sans-serif}
-  details#how summary{cursor:pointer; font-size:.8rem; font-weight:600; color:var(--accent)}
-  details#how p{font-size:.84rem; color:var(--grey); margin:.5rem 0 0}
+  .foot details{margin-top:.6rem; font-family:ui-sans-serif,-apple-system,sans-serif}
+  .foot details summary{cursor:pointer; font-size:.8rem; font-weight:600; color:var(--accent)}
+  .foot details p{font-size:.84rem; color:var(--grey); margin:.5rem 0 0}
+  .foot details p b{color:var(--fg)}
   @media (max-width:640px){
     header{padding-top:3.1rem}
     h1{font-size:1.6rem}
@@ -274,6 +275,14 @@
     else is, like, keeping things as an option, if you get what I mean. Or maybe
     it's a drag and drop interface, but I don't know if we can drag and drop on a
     mobile screen in the same way.”</p>
+    <p>“really be worth adding an explainer about how these worlds are being
+    propagated, because it looks like there are at least some kind of weird links
+    between history and math. So maybe some kind of primer on Cleodynamics at the
+    bottom. So that might be one question about what this is doing at, like, a
+    theoretical level. And then you can have another question with a drop down slash
+    toggle of some kind that explains how this is relevant to what we're doing here
+    specifically. Because I suspect Cleodynamics is a generic tool, not something
+    specific to just this kind of study that we're doing here.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -398,6 +407,47 @@
       isometric SVG. Full model, calibration, and caveats in
       <a href="../../timelines-1/" data-dir>chapter 4</a>; the graph is
       <a href="timelines_data.js">timelines_data.js</a>.</p>
+    </details>
+    <details id="clio1">
+      <summary>What is cliodynamics? (the theory under all of this)</summary>
+      <p><b>Cliodynamics</b> — Clio, the muse of history, plus dynamics — is Peter
+      Turchin’s name for treating history as a <b>dynamical system</b>: instead of
+      narrating events, you pick state variables (population, elite numbers, state
+      capacity, war intensity), write down how they push on each other, and let the
+      equations run. Its classic results are about cycles — why agrarian empires
+      boom and bust on ~two-century “secular cycles,” why elite overproduction
+      precedes instability — tested against databases of many societies (the Seshat
+      databank) rather than one anecdote. The founding objection is also the honest
+      one: history gives us a sample size of one, and historians rightly bristle at
+      “laws.” The cliodynamic reply is that patterns recurring across dozens of
+      polities are evidence of mechanism, and that a mechanism, once written down,
+      can be <b>perturbed</b> — which is exactly what Stephen Jay Gould asked for
+      with “replaying life’s tape,” and what Asimov’s psychohistory promised in
+      fiction. Counterfactual simulation isn’t a party trick bolted onto
+      cliodynamics; it is the whole point of writing history as math: an equation
+      you cannot re-run with different inputs has told you nothing.</p>
+    </details>
+    <details id="clio2">
+      <summary>And how is that generic tool used here, specifically?</summary>
+      <p>You’re right to suspect cliodynamics is generic — Turchin’s own models are
+      differential equations over continuous social quantities, and none of them
+      mention rockets. This page borrows the <b>stance</b> (history as a
+      perturbable system) but swaps the substrate: our state isn’t population
+      curves, it’s a <b>technology dependency graph</b>. The “weird links between
+      history and math” are exactly three, all inspectable: <b>(1) the graph</b> —
+      which technology needs which, taken from the historical record (no smokeless
+      powder without industrial acids; steel’s converter accepts water power
+      <em>or</em> steam, which is why deleting steam merely delays); <b>(2) the
+      lags</b> — how long each step took from possible to done in our one history,
+      used as the baseline cost of that step everywhere; <b>(3) the multipliers</b>
+      — named social forces (a vision, a customer, a censor) that stretch or
+      shrink lags. Everything else is dice: the Monte-Carlo jitter <em>is</em>
+      contingency, and your decisions are exogenous shocks re-simulated forward.
+      Propagation between eras is nothing mystical — a world where Cyrano is
+      censored differs from ours only through those three channels, compounding
+      down the graph. The full equations, calibration, and the model’s honest sins
+      (sample size of one; the graph can’t imagine paths its authors didn’t draw)
+      are in <a href="../../timelines-1/" data-dir>chapter 4</a>.</p>
     </details>
   </footer>
 </main>
