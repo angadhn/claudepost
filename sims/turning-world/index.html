@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Turning World — Claudepost</title>
-<meta name="description" content="A spinning globe of alternate history with a director's camera, decision points where you can leave reality's path, and a verdict on where humanity stands by 2026.">
+<meta name="description" content="A spinning globe of alternate history: compose a world from elements (silence the arts, delete steam, plant a medieval sky-vision), watch its provinces build, and get a verdict on where humanity stands by 2026.">
 <script>
 (function(){
   try{
@@ -89,6 +89,9 @@
   }
   #panel .chips{display:flex; flex-wrap:wrap; gap:.4rem}
   #panel .chips button.ghost{border-style:dashed; color:var(--grey)}
+  #meter{display:flex; align-items:center; gap:.7rem; flex:1; min-width:15rem}
+  #meter svg{width:170px; height:22px; flex:none}
+  #meterText{font-size:.78rem; color:var(--grey); line-height:1.35}
   #panel .prow.locked{opacity:.4; pointer-events:none}
   #worldSummary{
     font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.82rem;
@@ -244,12 +247,20 @@
     <a href="../tape-machine/" data-dir>the Tape Machine</a> ·
     <a href="../../timelines-1/" data-dir>how the engine works</a></p>
   <h1>The Turning World</h1>
-  <p class="subtitle">The planet, played like a game of history. A director’s camera
-  flies you to each city as its moment comes; at the crossroads you choose — and the
-  option history actually took is always marked, so reality is one path through the
-  garden. Below the stage, your trajectory is drawn against our own. Every run ends
-  with a verdict on <em>the state of 2026</em>: in the good timelines, humanity has
-  been a multi-planet species for a century before our present.</p>
+  <p class="subtitle">The planet, played like a game of history. Compose a world
+  from its elements — silence the arts, delete steam, plant a medieval sky-vision —
+  and the outlook meter tells you what to expect before you press Run. A director’s
+  camera flies you to each city as its moment comes; Kepler, Cyrano and Newton
+  stroll their home provinces; every run ends with a verdict on <em>the state of
+  2026</em>. In the good timelines, humanity is multi-planet a century before our
+  present.</p>
+
+  <figure style="margin:1.1rem 0 .4rem">
+    <img src="assets/hero_globe.png" alt="A 3D-rendered globe with raised parchment continents, the Moon, and a satellite on an orange orbit ring"
+         style="width:100%; max-height:330px; object-fit:contain; display:block">
+    <figcaption style="font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem; color:var(--faint); text-align:right; margin-top:.15rem">
+      rendered with the Blender Python API — <a href="make_blender_assets.py">make_blender_assets.py</a></figcaption>
+  </figure>
 
   <details class="promptbox">
     <summary>The prompts — verbatim, typos and all</summary>
@@ -305,6 +316,24 @@
     choosing what you want to add and what you don't want to add. Does that make
     sense? And maybe you should have an explainer for this dice business because I
     still don't get it. but I haven't read the latest version.”</p>
+    <p>“How about you? Make use of cooler images for this one post. Use the Blender
+    API. I think for this one post we should prioritize coolness over following
+    rules.”</p>
+    <p>“So it would be nice to actually have landmarks specific to the country
+    instead of just generic images as well. Maybe you could have something like a
+    Westminster Abbey for the UK in, like, the scenery when we zoom in or something
+    notable. You know what I mean? Like, in each of those areas. Um, that's one
+    thought that comes to mind. But, also, just check that the people that you've
+    drawn as cartoons work nicely in light and dark mode because they're not that
+    great in my opinion. But, also, I imagine that they would be walking around in
+    the specifics of the map, not just show up as a small avatar. Yeah.” — followed
+    by a rethink that simplified the controls: “…I wonder if we can just show,
+    like, some kind of pessimism meter and optimism meter instead. Is this making
+    sense? These should be getting adjusted automatically… The thing is, I think
+    the decision made part just goes away if we are actually just choosing whether
+    to silence the arts, whether to fund rockets, whether sugar rockets happen, and
+    so on. Right? … It's possible tomorrow. I'll change my mind again because I
+    don't know what the right way is, but maybe we keep it simple.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -318,7 +347,12 @@
     element toggles (tap-chips, not drag-and-drop — which iOS Safari fights):
     silence the arts, delete steam, plant the vision, tame the chlorates — in any
     combination, with a live summary of the world you have built. “Isomorphic” faithfully preserved; isometric faithfully
-    delivered.</p>
+    delivered. And per the final prompt, this one page bends the site’s
+    no-dependency rule: the header globe and the seven province terrain plates are
+    real 3D renders made headlessly with the Blender Python API
+    (<a href="make_blender_assets.py">make_blender_assets.py</a>, committed for
+    reproducibility). The outputs are plain PNGs — the page still executes no
+    external code.</p>
   </details>
 </header>
 
@@ -339,55 +373,44 @@
         <button id="reset" class="ghost">↺ our world</button>
       </div>
     </div>
-    <div class="prow lockable"><span class="plab">the dice<em>pick one</em></span>
-      <div class="chips" id="cSigma">
-        <button data-v="exact">exact replay</button>
-        <button data-v="hist" class="on">historical</button>
-        <button data-v="chaos">chaotic</button>
+    <div class="prow"><span class="plab">outlook<em>auto</em></span>
+      <div id="meter">
+        <svg viewBox="0 0 260 22" aria-hidden="true">
+          <defs><linearGradient id="mg" x1="0" x2="1">
+            <stop offset="0" stop-color="var(--red)"/>
+            <stop offset=".5" stop-color="var(--faint)"/>
+            <stop offset="1" stop-color="var(--green)"/>
+          </linearGradient></defs>
+          <rect x="4" y="9" width="252" height="5" rx="2.5" fill="url(#mg)" opacity=".75"/>
+          <circle id="meterNeedle" cx="130" cy="11.5" r="6" fill="var(--fg)" stroke="var(--bg)" stroke-width="2"/>
+        </svg>
+        <span id="meterText"></span>
       </div>
-    </div>
-    <div class="prow lockable"><span class="plab">decisions<em>pick one</em></span>
-      <div class="chips" id="cMode">
-        <button data-v="ask" class="on">ask me</button>
-        <button data-v="hist">auto — as history did</button>
-        <button data-v="coin">auto — coin flips</button>
-      </div>
-    </div>
-    <div class="prow"><span class="plab"></span>
       <button id="run">▶ Run</button>
     </div>
   </div>
   <p id="worldSummary"></p>
   <details id="legend">
     <summary>What do these rows mean?</summary>
-    <p class="lg"><b>World elements</b> are independent counterfactual switches, off
-    = as our history. Silence the arts and no one ever writes the sky as a
-    destination (no Somnium, no Cyrano, no Verne — belief-fed steps run at a third
-    of their pace). Delete steam and the engines never exist. Plant the 1250
-    sky-vision and Damascus funds a motor programme. Essonne luck tames the
-    chlorates a century early. Every combination is a valid world — all sixteen
-    permutations run, including “vision without arts or steam” (a funded programme
-    substitutes for the missing literature). ↺ resets everything to our world.</p>
-    <p class="lg"><b>The dice, concretely.</b> Take Watt’s engine. The graph says
-    it became <em>possible</em> once Newcomen’s engine and precision boring existed;
-    history then took about forty more years to actually build it. Was forty the
-    only possible number? Surely not — a richer patron, an earlier bankruptcy, a
-    duel, and it’s twenty-five or sixty. Every technology has such a
-    “time-from-possible-to-done,” and the dice decide what happens to those numbers
-    each run: <b>exact replay</b> keeps every one at its historical value, so
-    everything lands on its true date (orbit 1957, every time); <b>historical</b>
-    wobbles each by roughly ±15% — a 40-year step becomes anything from ~34 to
-    ~47 — and because each step waits on the ones before it, small wobbles compound
-    into decades by the twentieth century (the satellite typically lands anywhere
-    from the 1890s to the 2020s); <b>chaotic</b> doubles the wobble. The dice never
-    change <em>what needs what</em> — only how long each step happens to take.</p>
-    <p class="lg"><b>Mode</b> is the master switch above everything: “history,
-    exactly” locks the rows to the settings that reproduce our world (all elements
-    off, exact dice, decisions as history made them) — nothing to configure, just
-    press Run. “Build a world” unlocks the rows. <b>Decisions</b>: at each
-    crossroads the run pauses and asks you (“ask me”), answers as history did, or
-    flips a coin.</p>
-    </details>
+    <p class="lg"><b>Mode</b> is the master switch. “History, exactly” locks the
+    elements to history’s settings (all off — you can see that in the row) and runs
+    with no luck in the timings: every technology lands on its true date, satellite
+    1957, every time. “Build a world” unlocks the elements and runs each world with
+    history’s natural luck — every technology’s time-from-possible-to-done wobbles
+    about ±15% per run, which compounds down the chain, so even an unchanged world
+    re-rolls into satellites anywhere from the 1890s to the 2020s.</p>
+    <p class="lg"><b>World elements</b> are independent counterfactual switches, and
+    every combination is a valid world: silence the arts (no Somnium, no Cyrano, no
+    Verne — belief-fed steps limp at a third of their pace), delete steam, plant the
+    1250 sky-vision (a funded motor programme, which also substitutes for missing
+    literature), tame the chlorates. ↺ resets to our world.</p>
+    <p class="lg"><b>The outlook meter</b> is computed, not chosen: whenever you
+    change the elements, the engine quietly runs a small ensemble of futures and
+    places the needle by the median date of the first satellite — pessimism means
+    the sky stays empty past our present; optimism means Mars before today. It is a
+    forecast of the very simulation you are about to watch, so the end-of-run
+    verdict should usually agree with it.</p>
+  </details>
 
   <div id="stage">
     <div id="globeWrap"><canvas id="globe"></canvas></div>
@@ -407,11 +430,6 @@
     <div id="cameo"></div>
     <div id="hint">drag to spin · click a beacon to visit a province · the camera follows the action</div>
     <div id="caption"></div>
-    <div id="dec">
-      <h3 id="decT"></h3>
-      <p id="decP"></p>
-      <div id="decBtns"></div>
-    </div>
     <div id="fin">
       <h2 id="finT"></h2>
       <p id="finP"></p>
@@ -425,7 +443,7 @@
 
   <div id="pathStrip"></div>
   <p class="stripNote">grey: the path our world took (dashed beyond the present:
-    projected) · colour: this run · ⑂ marks where you left history</p>
+    projected) · colour: this run</p>
 
   <footer class="foot">
     Third in the family after the <a href="../tape-machine/" data-dir>Tape
@@ -439,14 +457,11 @@
       (Somnium 1634, Cyrano 1657, Verne/Wells 1865): a satellite must have been
       <em>imagined</em> before it can be funded, and a world that silences that
       fiction sees its belief-fed steps limp at a third of their pace — computed in
-      plain JavaScript with no network calls and no language model. When you answer a decision card, the
-      future is <em>re-simulated from that year with the same dice</em>: the past
-      you watched is unchanged and only the consequences diverge, which is why the
-      trajectory strip can honestly draw your path against reality’s. Auto-play
-      resolves each card with a fresh coin flip, so hands-off runs differ through
-      two layers of chance — the lag dice and the decisions; combine auto-play with
-      “our world, exactly” and the physics goes deterministic, leaving the decision
-      tree as the only source of divergence. The globe is
+      plain JavaScript with no network calls and no language model. The elements you pick reshape the
+      graph before the run (blocked nodes, added programmes, stretched or shortened
+      lags); “history, exactly” disables the dice so every date is the true one,
+      while “build a world” re-rolls each lag ±15% per run. The outlook meter runs
+      a small ensemble of the same simulation in advance and reports the median. The globe is
       an orthographic projection of hand-encoded coastlines; the provinces are
       isometric SVG. Full model, calibration, and caveats in
       <a href="../../timelines-1/" data-dir>chapter 4</a>; the graph is
@@ -503,6 +518,10 @@ const root = document.documentElement;
 function applyTheme(dark){
   root.classList.toggle('dark', dark);
   try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+  try{
+    if (view === 'region') buildRegion(curRegion);
+    if (RUNT) drawPath();
+  }catch(e){ /* first call happens before the sim state exists */ }
 }
 const urlTheme = new URLSearchParams(location.search).get('theme');
 const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
@@ -533,8 +552,7 @@ const EXTRA = [
 ];
 EXTRA.forEach(n => {
   /* fiction sits in K (knowledge); the crewed ladder gets its own branch 'S'
-     so era programs on rocketry (R) don't automatically compress it — only
-     the post-orbit decision targets it */
+     so era programmes on rocketry (R) don't automatically compress it */
   n.br = n.fic ? 'K' : 'S'; n.start = false; n.steam = false;
   let gate = TL.T0;
   for (const g of n.groups){
@@ -631,7 +649,7 @@ const VISION_RULES = Y => [
 ];
 const FICTION = ['somnium', 'moon_voyage', 'space_sf'];
 /* composable world elements; all off + historical dice = our world */
-const TOGGLES = { arts: false, steam: false, vision: false, luck: false, dice: 'hist' };
+const TOGGLES = { arts: false, steam: false, vision: false, luck: false };
 function cfgFromToggles(){
   const block = new Set();
   if (TOGGLES.steam) TL.steam.forEach(id => block.add(id));
@@ -639,8 +657,8 @@ function cfgFromToggles(){
   return {
     rules: TOGGLES.vision ? VISION_RULES(1250) : [],
     block,
-    sigma: {exact: 0, hist: 0.14, chaos: 0.25}[TOGGLES.dice],
-    exact: TOGGLES.dice === 'exact',
+    sigma: startMode === 'exact' ? 0 : 0.14,
+    exact: startMode === 'exact',
     vision: TOGGLES.vision,
     essonneBoost: TOGGLES.luck,
     artsBlocked: TOGGLES.arts,
@@ -1092,6 +1110,51 @@ const SPRITES = {
       '<line x1="' + x2 + '" y1="' + y2 + '" x2="' + x2 + '" y2="' + (y2 - 28) + '" style="stroke:' + GY2 + ';stroke-width:2"/>' +
       '<line x1="' + (x2 - 6) + '" y1="' + (y2 - 25) + '" x2="' + (x2 + 6) + '" y2="' + (y2 - 25) + '" style="stroke:' + GY2 + ';stroke-width:1.6"/>' +
       '<path d="M' + x + ',' + (y - 25) + ' Q' + ((x + x2) / 2) + ',' + ((y + y2) / 2 - 18) + ' ' + x2 + ',' + (y2 - 25) + '" style="fill:none;stroke:' + GY2 + ';stroke-width:1.2"/>'; })(),
+  abbey: (tx, ty) => isoBox(tx + .05, ty + .25, .9, .5, 20, IT, IL, IR) +
+    roof(tx + .05, ty + .25, .9, .5, 20, 8, GY2) +
+    isoBox(tx, ty, .3, .3, 46, IT, IL, IR) + isoBox(tx, ty + .7, .3, .3, 46, IT, IL, IR) +
+    (() => { const a = tileXY(tx + .15, ty + .15), b = tileXY(tx + .15, ty + .85);
+      let st = '';
+      for (const c of [a, b])
+        st += '<polygon points="' + c[0] + ',' + (c[1] - 56) + ' ' + (c[0] - 4) + ',' + (c[1] - 46) + ' ' + (c[0] + 4) + ',' + (c[1] - 46) + '" style="fill:' + IT + '"/>';
+      return st; })(),
+  cathedral: (tx, ty) => isoBox(tx + .05, ty + .22, 1.05, .55, 22, IT, IL, IR) +
+    roof(tx + .05, ty + .22, 1.05, .55, 22, 9, GY2) +
+    isoBox(tx, ty, .28, .28, 38, IT, IL, IR) + isoBox(tx, ty + .72, .28, .28, 38, IT, IL, IR) +
+    (() => { const c = tileXY(tx + .14, ty + .5);
+      return '<circle cx="' + c[0] + '" cy="' + (c[1] - 26) + '" r="4" style="fill:none;stroke:' + GD2 + ';stroke-width:1.6"/>' +
+        '<circle cx="' + c[0] + '" cy="' + (c[1] - 26) + '" r="1.2" style="fill:' + GD2 + '"/>'; })(),
+  gate: (tx, ty) => isoBox(tx, ty + .3, 1.6, .32, 13, IT, IL, IR) +
+    isoBox(tx + .55, ty + .22, .5, .5, 24, IT, IL, IR) +
+    roof(tx + .45, ty + .12, .7, .7, 24, 7, RD) +
+    (() => { const c = tileXY(tx + .8, ty + .72);
+      return '<rect x="' + (c[0] - 4) + '" y="' + (c[1] - 12) + '" width="8" height="10" rx="4" style="fill:' + IR + '"/>'; })(),
+  mosque: (tx, ty) => isoBox(tx, ty, .9, .9, 13, IT, IL, IR) +
+    (() => { const c = tileXY(tx + .45, ty + .45), m = tileXY(tx + 1.05, ty + .1);
+      return '<circle cx="' + c[0] + '" cy="' + (c[1] - 24) + '" r="11" style="fill:' + IL + '"/>' +
+        '<line x1="' + c[0] + '" y1="' + (c[1] - 35) + '" x2="' + c[0] + '" y2="' + (c[1] - 40) + '" style="stroke:' + GD2 + ';stroke-width:1.6"/>' +
+        '<rect x="' + (m[0] - 2.5) + '" y="' + (m[1] - 48) + '" width="5" height="48" style="fill:' + IT + '"/>' +
+        '<circle cx="' + m[0] + '" cy="' + (m[1] - 50) + '" r="4" style="fill:' + IL + '"/>'; })(),
+  gopuram: (tx, ty) => isoBox(tx, ty, 1, .62, 13, IT, IL, IR) +
+    isoBox(tx + .12, ty + .08, .76, .46, 26, IT, IL, IR) +
+    isoBox(tx + .24, ty + .16, .52, .3, 38, IT, IL, IR) +
+    (() => { const c = tileXY(tx + .5, ty + .31);
+      return '<rect x="' + (c[0] - 7) + '" y="' + (c[1] - 47) + '" width="14" height="4" rx="2" style="fill:' + GD2 + '"/>' +
+        '<line x1="' + c[0] + '" y1="' + (c[1] - 47) + '" x2="' + c[0] + '" y2="' + (c[1] - 53) + '" style="stroke:' + GD2 + ';stroke-width:2"/>'; })(),
+  steeple: (tx, ty) => isoBox(tx + .1, ty + .3, .8, .6, 16, IT, IL, IR) +
+    roof(tx + .1, ty + .3, .8, .6, 16, 7, GY2) +
+    isoBox(tx, ty, .24, .24, 34, IT, IL, IR) +
+    (() => { const c = tileXY(tx + .12, ty + .12);
+      return '<polygon points="' + c[0] + ',' + (c[1] - 50) + ' ' + (c[0] - 5) + ',' + (c[1] - 34) + ' ' + (c[0] + 5) + ',' + (c[1] - 34) + '" style="fill:' + GY2 + '"/>' +
+        '<line x1="' + c[0] + '" y1="' + (c[1] - 50) + '" x2="' + c[0] + '" y2="' + (c[1] - 55) + '" style="stroke:' + GY2 + ';stroke-width:1.4"/>'; })(),
+  yurts: (tx, ty) => (() => { let st = '';
+    for (const [dx, dy, r] of [[.25, .3, 12], [.85, .75, 9]]){
+      const c = tileXY(tx + dx, ty + dy);
+      st += '<ellipse cx="' + c[0] + '" cy="' + (c[1] - 4) + '" rx="' + r + '" ry="' + (r * .72) + '" style="fill:' + IT + '"/>' +
+        '<path d="M' + (c[0] - r) + ',' + (c[1] - 4) + ' a' + r + ',' + (r * .55) + ' 0 0 1 ' + (2 * r) + ',0" style="fill:' + IL + '"/>' +
+        '<rect x="' + (c[0] - 2.5) + '" y="' + (c[1] - 4) + '" width="5" height="6" rx="2" style="fill:' + IR + '"/>';
+    }
+    return st; })(),
   tower: (tx, ty) => (() => { const [x, y] = tileXY(tx + .5, ty + .5);
     return '<g style="stroke:' + GY2 + ';stroke-width:2">' +
       '<line x1="' + (x - 7) + '" y1="' + y + '" x2="' + (x - 2) + '" y2="' + (y - 46) + '"/>' +
@@ -1126,21 +1189,25 @@ const TERRA = {
 const TCOL = {g:'var(--terraG)', a:'var(--terraA)', w:'var(--terraW)',
               f:'var(--terraG)', d:'var(--terraD)', s:'var(--terraA)'};
 const SLOTS = {
-  china:  [{always:1, sprite:'pagoda', tx:5, ty:4}, {always:1, sprite:'hut', tx:3.4, ty:6},
+  china:  [{always:1, sprite:'gate', tx:2.4, ty:7.2},
+           {always:1, sprite:'pagoda', tx:5, ty:4}, {always:1, sprite:'hut', tx:3.4, ty:6},
            {always:1, sprite:'hut', tx:7, ty:5.4},
            {node:'rocket_candy', sprite:'candyshop', tx:6.5, ty:7},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.4},
            {node:'orbit', sprite:'pad', tx:9, ty:6}],
-  levant: [{always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
+  levant: [{always:1, sprite:'mosque', tx:3.2, ty:7.3},
+           {always:1, sprite:'mill', tx:4, ty:4}, {always:1, sprite:'hut', tx:6, ty:3},
            {node:'acids', sprite:'alchemy', tx:5, ty:6, smoke:{dx:.62, dy:.45, off:32, tint:'var(--gold)'}},
            {node:'rocket_candy', sprite:'candyshop', tx:6.6, ty:5},
            {node:'sounding', sprite:'gantry', tx:8.2, ty:3.6},
            {node:'orbit', sprite:'pad', tx:8.6, ty:6.4}],
-  mysore: [{always:1, sprite:'hut', tx:4, ty:4}, {always:1, sprite:'hut', tx:6.4, ty:3.4},
+  mysore: [{always:1, sprite:'gopuram', tx:3, ty:7.2},
+           {always:1, sprite:'hut', tx:4, ty:4}, {always:1, sprite:'hut', tx:6.4, ty:3.4},
            {node:'mil_rockets', sprite:'arsenal', tx:5, ty:6},
            {node:'rocket_candy', sprite:'candyshop', tx:7, ty:5.6},
            {node:'sounding', sprite:'gantry', tx:8.4, ty:4}],
-  britain:[{always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'university', tx:4.6, ty:3},
+  britain:[{always:1, sprite:'abbey', tx:2.3, ty:4.7},
+           {always:1, sprite:'hut', tx:3.4, ty:4}, {node:'sci_method', sprite:'university', tx:4.6, ty:3},
            {nodeAny:['newcomen','watt','hp_steam'], sprite:'engine', tx:6.4, ty:4, smoke:1},
            {node:'machine_tools', sprite:'factory', tx:4, ty:6.4},
            {node:'rocket_eq', sprite:'arsenal', tx:7, ty:6},
@@ -1148,7 +1215,8 @@ const SLOTS = {
            {node:'radio', sprite:'mast', tx:8.6, ty:3.2, rings:[.5,.5,62]},
            {node:'sounding', sprite:'gantry', tx:9, ty:5.4},
            {node:'orbit', sprite:'pad', tx:9.4, ty:7.4}],
-  europe: [{always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
+  europe: [{always:1, sprite:'cathedral', tx:2.4, ty:5.6},
+           {always:1, sprite:'hut', tx:3.4, ty:4.4}, {node:'clocks', sprite:'clock', tx:4.6, ty:3.2},
            {node:'printing', sprite:'print', tx:6.2, ty:3},
            {node:'telescope', sprite:'obs', tx:7.8, ty:3.6},
            {node:'moon_voyage', sprite:'theatre', tx:5.3, ty:4.9},
@@ -1156,14 +1224,16 @@ const SLOTS = {
            {node:'delaval', sprite:'turbine', tx:6.4, ty:6.2},
            {node:'liquefaction', sprite:'lique', tx:8, ty:7.2},
            {node:'sounding', sprite:'gantry', tx:9.2, ty:5}],
-  america:[{always:1, sprite:'hut', tx:3.6, ty:4.4},
+  america:[{always:1, sprite:'steeple', tx:7.4, ty:2.4},
+           {always:1, sprite:'hut', tx:3.6, ty:4.4},
            {node:'interchange', sprite:'armory', tx:4.6, ty:3.2},
            {node:'telegraph', sprite:'tele', tx:6, ty:3},
            {node:'liquid_eng', sprite:'tower', tx:7.6, ty:4.6},
            {node:'rocket_candy', sprite:'candyshop', tx:4, ty:6.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:7},
            {node:'orbit', sprite:'pad', tx:8.4, ty:7}],
-  steppe: [{always:1, sprite:'hut', tx:4, ty:4.6},
+  steppe: [{always:1, sprite:'yurts', tx:3.2, ty:6.3},
+           {always:1, sprite:'hut', tx:4, ty:4.6},
            {node:'sounding', sprite:'gantry', tx:6, ty:5},
            {node:'orbit', sprite:'pad', tx:7.4, ty:6.4}],
 };
@@ -1183,10 +1253,12 @@ function buildRegion(key){
       tiles += diamond(tx, ty, TCOL[ch]);
       if (ch === 'w') tiles += diamond(tx, ty, '#ffffff', -1.5,
         `class="shimmer" data-ph="${(tx * 7 + ty * 13) % 20}" opacity=".12"`);
-      if (ch === 'f') deco += tree(tx + .5, ty + .5) +
-        (((tx + ty) % 2) ? tree(tx + .2, ty + .8) : '');
-      if (ch === 'd') tiles += diamond(tx, ty, 'var(--gold)', 0, 'opacity=".18"');
     }
+  /* Blender-rendered 3D plate sits over the flat tiles (which remain as a
+     fallback); its camera is locked to this exact 2:1 projection, so the
+     ground diamond spans precisely the tile grid. */
+  const darkTheme = document.documentElement.classList.contains('dark');
+  tiles += `<image href="assets/terra_${key}${darkTheme ? '_dark' : ''}.png" x="206" y="96" width="768" height="384"/>`;
   let blds = '';
   SLOTS[key].forEach((s, i) => {
     const [sx, sy] = tileXY(s.tx + .55, s.ty + .55);
@@ -1202,6 +1274,9 @@ function buildRegion(key){
   isoSources = []; isoSmoke = []; isoRockets = []; ringSrcs = [];
   villagers = [0, 1, 2].map(i => ({x: 5 + i, y: 5, tx: 3 + Math.random() * 6,
                                    ty: 3 + Math.random() * 6, sp: .25 + Math.random() * .2}));
+  for (const id in CAMEOS)
+    if (unlocked.has(id) && homeOf(id, RUNT ? RUNT[id] : 0, CFG || {vision:false}) === key)
+      spawnWalker(id, key);
   SLOTS[key].forEach((s, i) => {
     const hit = s.always ||
       (s.node && unlockedHere(s.node, key)) ||
@@ -1234,37 +1309,37 @@ function bust(inner){
 const FACES = {
   kepler: bust('<ellipse cx="32" cy="47" rx="15" ry="9" style="fill:var(--grey)"/>' +
     '<ellipse cx="32" cy="46" rx="17" ry="5" style="fill:#fff;opacity:.85"/>' +
-    '<circle cx="32" cy="30" r="11" style="fill:var(--land)"/>' +
+    '<circle cx="32" cy="30" r="11" style="fill:#e6cfae"/>' +
     '<path d="M22,26 q10,-10 20,0 l-2,-7 q-8,-6 -16,0 Z" style="fill:var(--grey)"/>' +
     '<path d="M29,40 l3,9 3,-9" style="fill:var(--grey)"/>' +
     '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="30" r="1.4" style="fill:var(--fg)"/>' +
     '<circle cx="49" cy="16" r="3" style="fill:none;stroke:var(--gold);stroke-width:1.2"/>' +
     '<circle cx="49" cy="16" r="1" style="fill:var(--gold)"/>'),
   cyrano: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--blue)"/>' +
-    '<circle cx="32" cy="31" r="10" style="fill:var(--land)"/>' +
-    '<path d="M32,31 l10,4 -10,1 Z" style="fill:var(--land);stroke:var(--grey);stroke-width:.6"/>' +
+    '<circle cx="32" cy="31" r="10" style="fill:#e6cfae"/>' +
+    '<path d="M32,31 l10,4 -10,1 Z" style="fill:#e6cfae;stroke:var(--grey);stroke-width:.6"/>' +
     '<path d="M18,24 q14,-14 28,-1 l3,-3 q-6,-6 -10,-6 l2,-4 -6,3 q-12,-2 -17,11 Z" style="fill:var(--grey)"/>' +
     '<path d="M14,21 q18,-8 36,-2" style="fill:none;stroke:var(--red);stroke-width:3"/>' +
     '<path d="M44,14 q4,-6 8,-4 q-2,4 -8,4" style="fill:var(--red)"/>' +
     '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/>' +
     '<line x1="46" y1="46" x2="58" y2="34" style="stroke:var(--grey);stroke-width:1.6"/>'),
   newton: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--red)"/>' +
-    '<circle cx="32" cy="30" r="10" style="fill:var(--land)"/>' +
-    '<path d="M20,42 q-3,-20 12,-22 q15,2 12,22 l-5,0 q4,-16 -7,-17 q-11,1 -7,17 Z" style="fill:#e8e5de;stroke:var(--grey);stroke-width:.8"/>' +
+    '<circle cx="32" cy="30" r="10" style="fill:#e6cfae"/>' +
+    '<path d="M20,42 q-3,-20 12,-22 q15,2 12,22 l-5,0 q4,-16 -7,-17 q-11,1 -7,17 Z" style="fill:#efe9db;stroke:var(--grey);stroke-width:.8"/>' +
     '<circle cx="28" cy="29" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="29" r="1.4" style="fill:var(--fg)"/>' +
     '<circle cx="50" cy="47" r="4" style="fill:var(--red)"/>' +
     '<path d="M50,43 q1,-3 3,-3" style="fill:none;stroke:var(--green);stroke-width:1.4"/>'),
   watt: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--grey)"/>' +
-    '<circle cx="32" cy="30" r="10" style="fill:var(--land)"/>' +
+    '<circle cx="32" cy="30" r="10" style="fill:#e6cfae"/>' +
     '<path d="M22,28 q0,-9 10,-9 q10,0 10,9 l-3,-1 q0,-6 -7,-6 q-7,0 -7,6 Z" style="fill:var(--grey)"/>' +
     '<path d="M22,30 q-1,8 4,10 M42,30 q1,8 -4,10" style="fill:none;stroke:var(--grey);stroke-width:3"/>' +
     '<circle cx="28" cy="30" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="30" r="1.4" style="fill:var(--fg)"/>' +
     '<circle cx="49" cy="18" r="5" style="fill:none;stroke:var(--gold);stroke-width:1.4"/>' +
     '<line x1="49" y1="18" x2="49" y2="14.5" style="stroke:var(--gold);stroke-width:1.2"/>'),
   verne: bust('<ellipse cx="32" cy="49" rx="14" ry="8" style="fill:var(--blue)"/>' +
-    '<circle cx="32" cy="29" r="10" style="fill:var(--land)"/>' +
-    '<path d="M22,31 q10,16 20,0 l0,6 q-10,10 -20,0 Z" style="fill:#e8e5de"/>' +
-    '<path d="M21,24 q11,-7 22,0 l-1,-5 q-10,-6 -20,0 Z" style="fill:#e8e5de"/>' +
+    '<circle cx="32" cy="29" r="10" style="fill:#e6cfae"/>' +
+    '<path d="M22,31 q10,16 20,0 l0,6 q-10,10 -20,0 Z" style="fill:#efe9db"/>' +
+    '<path d="M21,24 q11,-7 22,0 l-1,-5 q-10,-6 -20,0 Z" style="fill:#efe9db"/>' +
     '<circle cx="28" cy="28" r="1.4" style="fill:var(--fg)"/><circle cx="36" cy="28" r="1.4" style="fill:var(--fg)"/>' +
     '<path d="M45,40 l10,-6 2,3 -10,6 Z" style="fill:var(--gold)"/>' +
     '<circle cx="53" cy="20" r="4" style="fill:none;stroke:var(--grey);stroke-width:1.2"/>'),
@@ -1281,6 +1356,7 @@ let cameoTimer = null;
 function showCameo(id, y){
   const c = CAMEOS[id];
   if (!c) return;
+  spawnWalker(id, homeOf(id, y, CFG));
   cameoEl.innerHTML = FACES[c[0]] + `<span class="who">${Math.round(y)} — ${c[1]}</span>`;
   cameoEl.classList.add('show');
   clearTimeout(cameoTimer);
@@ -1358,120 +1434,22 @@ function directorTick(ts){
 }
 
 /* ---------- decisions ---------- */
-const decEl = document.getElementById('dec');
-let decisionsTaken = [], pendingDecision = null;
-const DECISIONS = [
-  {id:'vision', year: () => 1250,
-   when: () => !CFG.vision,
-   title: 'Damascus, 1250 — a patron of the fireworks guild asks: what are rockets for?',
-   body: 'Sugar refineries and rocket workshops share these streets. Someone could ask how high, instead of how far.',
-   options: [
-     {label: 'Weapons and spectacle', hist: true, apply(){}},
-     {label: '“How high can they go?” — fund a motor programme',
-      apply(cfg){ VISION_RULES(1250).forEach(r => cfg.rules.push(r)); cfg.vision = true; }},
-   ]},
-  {id:'arts', year: () => 1645,
-   when: () => !unlocked.has('moon_voyage') && !CFG.artsBlocked,
-   title: 'Paris, 1645 — a duelling poet is writing a voyage to the Moon by rocket',
-   body: 'Cyrano’s manuscript is the first machine for leaving Earth anyone has imagined. The censors call such visions heresy.',
-   options: [
-     {label: 'Let it circulate', hist: true, apply(){}},
-     {label: 'Suppress it — the sky is not a destination',
-      apply(cfg){ cfg.block.add('moon_voyage'); cfg.block.add('space_sf');
-                  cfg.artsBlocked = true; }},
-   ]},
-  {id:'steam', year: () => 1705,
-   when: () => !CFG.block.has('newcomen') && !unlocked.has('newcomen'),
-   title: 'England, 1705 — investors weigh Newcomen’s “fire-engine”',
-   body: 'The mines are flooding. An engine that burns coal to pump water looks promising — and expensive.',
-   options: [
-     {label: 'Fund the engine', hist: true, apply(){}},
-     {label: 'Refuse — wind, water and muscle suffice',
-      apply(cfg){ TL.steam.forEach(id => cfg.block.add(id)); }},
-   ]},
-  {id:'essonne', year: () => 1786,
-   when: () => !unlocked.has('composite') && !CFG.essonneBoost,
-   title: 'Essonne, 1786 — Berthollet proposes chlorate powders at scale',
-   body: 'In our world the mill exploded, people died, and the compound class was shelved for a century.',
-   options: [
-     {label: 'Recoil after the accident; ban the cursed salts', hist: true, apply(){}},
-     {label: 'Fund careful burn research instead',
-      apply(cfg){ cfg.essonneBoost = true; }},
-   ]},
-  {id:'satprog', year: () => 1897,
-   /* the colonel only exists in a world where fiction planted the idea */
-   when: () => !CFG.vision && !unlocked.has('orbit') && !CFG.satprog &&
-               unlocked.has('space_sf'),
-   title: '1897 — a colonel who grew up on Verne reads a deaf schoolteacher’s equations and proposes a satellite',
-   body: 'The chemistry exists. The steel exists. The radio is one year old. All that is missing is belief and a budget.',
-   options: [
-     {label: 'Dismiss it as fantasy', hist: true, apply(){}},
-     {label: 'Fund a national programme',
-      apply(cfg){ cfg.satprog = true;
-        cfg.rules.push({trigger: 1897, targets: ['R'], V: 4, C: 3},
-                       {trigger: 1897, targets: ['C'], V: 1, C: 1.5}); }},
-   ]},
-  {id:'postorbit',
-   year: () => (RUNT && RUNT.orbit < TL.NEVER ? RUNT.orbit + 3 : 99999),
-   when: () => unlocked.has('orbit'),
-   title: 'After the first satellite — what is space for?',
-   body: 'In our world: a race, some flags, and a fifty-year retreat to low orbit.',
-   options: [
-     {label: 'Race, plant flags, retreat', hist: true, apply(){}},
-     {label: 'Build permanence — stations, bases, industry',
-      apply(cfg){ cfg.rules.push({trigger: Math.round(YEAR), targets: ['S'], V: 2, C: 2}); }},
-   ]},
-];
-function maybeDecide(){
-  if (pendingDecision) return true;
-  for (const d of DECISIONS){
-    if (decisionsTaken.some(x => x.id === d.id)) continue;
-    if (YEAR >= d.year() && d.when()){
-      if (decideMode !== 'ask'){
-        /* hist: always the badged option; coin: a fresh flip, not the lag dice */
-        const o = decideMode === 'hist'
-          ? d.options.find(x => x.hist)
-          : d.options[Math.floor(Math.random() * d.options.length)];
-        caption(YEAR, `<i>${decideMode === 'hist' ? 'as history did' : 'the world decides'}:</i> ${o.label}` +
-          (o.hist ? ` <span style="color:var(--faint)">(what we did)</span>`
-                  : ` <span style="color:var(--accent)">⑂ leaving our path</span>`));
-        resolveDecision(d, o);
-        return false;          /* keep the tape rolling this same frame */
-      }
-      pendingDecision = d;
-      showDecision(d);
-      return true;
-    }
-  }
-  return false;
-}
-function showDecision(d){
-  playing = false;
-  document.getElementById('decT').textContent = d.title;
-  document.getElementById('decP').textContent = d.body;
-  const bx = document.getElementById('decBtns');
-  bx.innerHTML = '';
-  d.options.forEach(o => {
-    const b = document.createElement('button');
-    b.innerHTML = o.label + (o.hist ? '<span class="hist">what we did</span>' : '');
-    b.addEventListener('click', () => resolveDecision(d, o));
-    bx.appendChild(b);
-  });
-  decEl.style.display = 'block';
-}
-function resolveDecision(d, o){
-  decEl.style.display = 'none';
-  decisionsTaken.push({id: d.id, year: Math.round(YEAR), hist: !!o.hist});
-  o.apply(CFG);
-  pendingDecision = null;
-  /* re-simulate the future with the same dice; the past is already identical */
-  const res = simulate(CFG, null, Z);
-  RUNT = res.t;
-  EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER && RUNT[n.id] > YEAR)
-    .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
-  EIDX = 0;
-  drawPath();
-  playing = true; lastTs = null;
+/* ---------- named walkers: the cameo characters stroll their province ---------- */
+let specials = [];    /* {region, key, name, coat, hat, x, y, tx, ty, sp} */
+const WALKC = {
+  kepler:  ['#6f6a60', '#f2ede2', 'Kepler'],
+  cyrano:  ['#3f6ea8', '#a8442f', 'Cyrano'],
+  newton:  ['#7a3b2e', '#efe9dc', 'Newton'],
+  watt:    ['#5d574c', '#c8c2b4', 'Watt'],
+  verne:   ['#2f5d8a', '#e8e2d6', 'Verne'],
+};
+function spawnWalker(id, region){
+  const c = CAMEOS[id];
+  if (!c || specials.some(w => w.key === c[0])) return;
+  const [coat, hat, name] = WALKC[c[0]];
+  specials.push({region, key: c[0], name, coat, hat,
+    x: 5.5, y: 5.5, tx: 3 + Math.random() * 6, ty: 3 + Math.random() * 6,
+    sp: .2 + Math.random() * .1});
 }
 
 /* ---------- playback ---------- */
@@ -1485,17 +1463,10 @@ let CFG = null, RUNT = null, Z = null, EVENTS = [], EIDX = 0, YEAR = 1000,
     worldKey = 'our', finShown = false, capQueue = [];
 const BASE_SPEED = 26, PRESENT = 2026;
 
-let decideMode = 'hist';
 let startMode = 'exact';
 function applyStartMode(){
   const exact = startMode === 'exact';
-  if (exact){
-    Object.assign(TOGGLES, {arts:false, steam:false, vision:false, luck:false, dice:'exact'});
-    decideMode = 'hist';
-  } else {
-    if (TOGGLES.dice === 'exact') TOGGLES.dice = 'hist';
-    decideMode = 'ask';
-  }
+  if (exact) Object.assign(TOGGLES, {arts:false, steam:false, vision:false, luck:false});
   document.querySelectorAll('#cStart button').forEach(b =>
     b.classList.toggle('on', b.dataset.v === startMode));
   document.querySelectorAll('#panel .prow.lockable').forEach(r =>
@@ -1505,36 +1476,60 @@ function applyStartMode(){
 function syncToggleUI(){
   document.querySelectorAll('#elements button[data-e]').forEach(b =>
     b.classList.toggle('on', !!TOGGLES[b.dataset.e]));
-  document.querySelectorAll('#cSigma button').forEach(b =>
-    b.classList.toggle('on', b.dataset.v === TOGGLES.dice));
-  document.querySelectorAll('#cMode button').forEach(b =>
-    b.classList.toggle('on', b.dataset.v === decideMode));
   const el = [
     TOGGLES.arts ? 'the arts are silenced' : 'the arts flourish',
     TOGGLES.steam ? 'steam is never invented' : 'steam exists',
     TOGGLES.vision ? 'a sky-vision takes hold in 1250' : 'no early sky-vision',
     TOGGLES.luck ? 'chlorates are tamed early' : 'chlorate history as ours',
   ];
-  const dice = {
-    exact: 'exact replay — no luck; every technology on its true date',
-    hist: 'historical — each run re-rolls history’s luck (the satellite wanders by decades)',
-    chaos: 'chaotic — the luck swings are doubled',
-  }[TOGGLES.dice];
   const isOur = !TOGGLES.arts && !TOGGLES.steam && !TOGGLES.vision && !TOGGLES.luck;
   if (startMode === 'exact'){
     document.getElementById('worldSummary').innerHTML =
-      '<b>History, exactly:</b> nothing to choose — every technology on its true ' +
-      'date, every crossroads answered as history answered it. Press Run and ' +
-      'watch our world happen. Switch to <b>build a world</b> to start bending it.';
+      '<b>History, exactly:</b> every element at history’s setting (shown above), ' +
+      'no luck in the timings — press Run and watch our world happen to the year. ' +
+      'Switch to <b>build a world</b> to start bending it.';
+  } else {
+    document.getElementById('worldSummary').innerHTML =
+      `<b>This world:</b> ${el.join(' · ')}${isOur ? ' — our world’s elements, re-rolled with history’s luck' : ''}.`;
+  }
+  updateOutlook();
+}
+
+/* ---------- the outlook meter: a quick ensemble, auto-updated ---------- */
+function updateOutlook(){
+  const needle = document.getElementById('meterNeedle');
+  const txt = document.getElementById('meterText');
+  if (startMode === 'exact'){
+    needle.setAttribute('cx', 130 + 55);
+    txt.innerHTML = 'fixed: our exact history — satellite <b>1957</b>, Moon <b>1969</b>, Mars still ahead of us';
     return;
   }
-  document.getElementById('worldSummary').innerHTML =
-    `<b>This world:</b> ${el.join(' · ')}${isOur ? ' — our world' : ''}.<br>` +
-    `<b>Dice:</b> ${dice}. <b>Decisions:</b> ${{
-      ask: 'the run pauses and asks you at each crossroads',
-      hist: 'every crossroads is answered the way history answered it — with exact-replay dice this reproduces our world precisely',
-      coin: 'a coin answers each crossroads and the tape keeps rolling',
-    }[decideMode]}.`;
+  const cfg = cfgFromToggles();
+  const N = 14;
+  const orbits = [], mars = [];
+  for (let k = 0; k < N; k++){
+    const t = simulate(cfg, mulberry32(777 + k * 131)).t;
+    orbits.push(t.orbit);
+    mars.push(t.crewed_mars);
+  }
+  orbits.sort((a, b) => a - b);
+  const med = orbits[N >> 1];
+  const marsPct = Math.round(mars.filter(v => v <= 2026).length / N * 100);
+  const satPct = Math.round(orbits.filter(v => v <= 2026).length / N * 100);
+  let frac;                                   /* 0 = grim, 1 = glorious */
+  if (med >= TL.NEVER) frac = 0.02;
+  else frac = Math.max(0.02, Math.min(0.98, (2150 - med) / (2150 - 1650)));
+  needle.setAttribute('cx', (4 + 252 * frac).toFixed(1));
+  if (med >= TL.NEVER || med > 2140)
+    txt.innerHTML = '<b>bleak:</b> the sky stays empty — no satellite in sight in most runs';
+  else if (med > 2026)
+    txt.innerHTML = `<b>pessimistic:</b> satellites typically ~<b>${Math.round(med)}</b> — still earthbound at our present (${satPct}% of runs make it by 2026)`;
+  else if (med <= 1900)
+    txt.innerHTML = `<b>far ahead of our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs`;
+  else if (marsPct >= 60)
+    txt.innerHTML = `<b>optimistic:</b> satellites typically ~<b>${Math.round(med)}</b>; humans on Mars before today in ${marsPct}% of runs`;
+  else
+    txt.innerHTML = `<b>about our pace:</b> satellites typically ~<b>${Math.round(med)}</b>; Mars before today in ${marsPct}% of runs`;
 }
 document.querySelectorAll('#cStart button').forEach(b =>
   b.addEventListener('click', () => { startMode = b.dataset.v; applyStartMode(); }));
@@ -1544,13 +1539,9 @@ document.querySelectorAll('#elements button[data-e]').forEach(b =>
     syncToggleUI();
   }));
 document.getElementById('reset').addEventListener('click', () => {
-  Object.assign(TOGGLES, {arts: false, steam: false, vision: false, luck: false, dice: 'hist'});
+  Object.assign(TOGGLES, {arts: false, steam: false, vision: false, luck: false});
   syncToggleUI();
 });
-document.querySelectorAll('#cSigma button').forEach(b =>
-  b.addEventListener('click', () => { TOGGLES.dice = b.dataset.v; syncToggleUI(); }));
-document.querySelectorAll('#cMode button').forEach(b =>
-  b.addEventListener('click', () => { decideMode = b.dataset.v; syncToggleUI(); }));
 applyStartMode();
 
 function startWorld(){
@@ -1560,8 +1551,8 @@ function startWorld(){
   EVENTS = TL.nodes.filter(n => !n.start && RUNT[n.id] < TL.NEVER)
     .map(n => ({y: RUNT[n.id], n})).sort((a, b) => a.y - b.y);
   EIDX = 0; YEAR = 1000; unlocked = new Set(); pings = []; satT = -1; moonAng = 0;
-  decisionsTaken = []; pendingDecision = null; camQueue = []; camTarget = null;
-  finShown = false; fin.style.display = 'none'; decEl.style.display = 'none';
+  camQueue = []; camTarget = null; specials = [];
+  finShown = false; fin.style.display = 'none';
   capQueue = [];
   hudEra.textContent = 'The Age of Wind and Muscle';
   ['btnPause','btnSkip','btnDirector'].forEach(id =>
@@ -1631,7 +1622,9 @@ function showFin(){
   L.innerHTML = '';
   const by26 = id => RUNT[id] < TL.NEVER && RUNT[id] <= PRESENT;
   const top = LADDER.find(([id]) => by26(id));
-  const devs = decisionsTaken.filter(d => !d.hist).length;
+  const bent = [TOGGLES.arts && 'the arts silenced', TOGGLES.steam && 'steam deleted',
+    TOGGLES.vision && 'a 1250 sky-vision', TOGGLES.luck && 'Essonne luck']
+    .filter(Boolean);
   if (top){
     t.textContent = `2026: ${top[1]}.`;
     const oy = Math.round(RUNT.orbit), d = 1957 - oy;
@@ -1657,11 +1650,11 @@ function showFin(){
     L.insertAdjacentHTML('beforeend',
       `<li>The arts were silenced in this world — with no one writing the sky as
        a destination, every belief-fed step limped at a third of its pace.</li>`);
-  L.insertAdjacentHTML('beforeend', devs
-    ? `<li>You left history’s path at ${devs} decision${devs > 1 ? 's' : ''} (⑂ on the strip below).</li>`
+  L.insertAdjacentHTML('beforeend', bent.length
+    ? `<li>Elements you bent: ${bent.join(', ')}.</li>`
     : CFG.exact
-      ? `<li>Every choice as history made it, on exact dice — this is our world, replayed to the year.</li>`
-      : `<li>You made every choice history made — this is reality’s corridor, re-rolled.</li>`);
+      ? `<li>Our world, replayed to the year — nothing bent, no dice.</li>`
+      : `<li>History’s own elements, re-rolled with history’s luck.</li>`);
   fin.style.display = 'block';
 }
 
@@ -1712,8 +1705,6 @@ function drawPath(){
         `<circle cx="${x}" cy="${YU}" r="3.4" fill="${css('--accent')}"/>` +
         `<text x="${x}" y="${YU + 15}" text-anchor="middle" font-size="8.5" fill="${css('--accent')}">${Math.round(v)}</text>`;
     }
-    for (const d of decisionsTaken.filter(d => !d.hist))
-      s += `<text x="${xr(d.year)}" y="${YU - 10}" text-anchor="middle" font-size="12" fill="${css('--accent')}">⑂</text>`;
   }
   s += `<line id="stripNow" x1="${xr(YEAR)}" x2="${xr(YEAR)}" y1="18" y2="${H2 - 18}" stroke="${css('--accent')}" stroke-width="1" opacity=".55"/>`;
   s += '</svg>';
@@ -1764,6 +1755,21 @@ function isoTick(dt, now){
       `<line x1="${x.toFixed(1)}" y1="${(y - 13).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y - 8).toFixed(1)}"/></g>` +
       `<circle cx="${x.toFixed(1)}" cy="${(y - 15).toFixed(1)}" r="2.2" style="fill:var(--fg);opacity:.75"/>`;
   }
+  for (const w of specials){
+    if (w.region !== curRegion) continue;
+    const dx = w.tx - w.x, dy = w.ty - w.y, dist = Math.hypot(dx, dy);
+    if (dist < .05){ w.tx = 2.5 + Math.random() * 7; w.ty = 2.5 + Math.random() * 7; }
+    else { w.x += dx / dist * w.sp * dt; w.y += dy / dist * w.sp * dt; }
+    const [x, y] = tileXY(w.x, w.y);
+    const step = Math.sin(now / 95 + w.x * 7) * 2.8;
+    out += `<g style="stroke:${w.coat};stroke-width:2;opacity:.95">` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 9).toFixed(1)}" x2="${(x + step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 9).toFixed(1)}" x2="${(x - step).toFixed(1)}" y2="${(y - 1).toFixed(1)}"/>` +
+      `<line x1="${x.toFixed(1)}" y1="${(y - 15).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y - 9).toFixed(1)}"/></g>` +
+      `<circle cx="${x.toFixed(1)}" cy="${(y - 17).toFixed(1)}" r="2.6" style="fill:#e6cfae"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${(y - 19.5).toFixed(1)}" r="1.6" style="fill:${w.hat}"/>` +
+      `<text x="${x.toFixed(1)}" y="${(y - 24).toFixed(1)}" text-anchor="middle" font-size="8.5" style="fill:var(--fg);opacity:.85">${w.name}</text>`;
+  }
   isoFx.innerHTML = out;
   isoSvg.querySelectorAll('.shimmer').forEach(el => {
     el.setAttribute('opacity', (0.08 + 0.07 * Math.sin(now / 600 + (+el.dataset.ph))).toFixed(3));
@@ -1788,7 +1794,7 @@ function isoTick(dt, now){
 function tick(ts){
   if (lastTs == null) lastTs = ts;
   const dt = Math.min((ts - lastTs) / 1000, 0.1); lastTs = ts;
-  if (playing && !maybeDecide()){
+  if (playing){
     const nextY = EIDX < EVENTS.length ? EVENTS[EIDX].y : PRESENT;
     const gap = nextY - YEAR;
     const mult = gap > 60 ? 9 : gap > 18 ? 4 : 1;
@@ -1820,21 +1826,15 @@ document.getElementById('btnAgain').addEventListener('click', () => {
 });
 document.getElementById('btnClose').addEventListener('click', () => fin.style.display = 'none');
 document.getElementById('btnPause').addEventListener('click', e => {
-  if (pendingDecision) return;
   playing = !playing;
   e.target.textContent = playing ? 'pause' : 'resume';
   if (playing) lastTs = null;
 });
 document.getElementById('btnSkip').addEventListener('click', () => {
-  if (pendingDecision)
-    resolveDecision(pendingDecision, pendingDecision.options.find(o => o.hist));
   playing = false;
   while (EIDX < EVENTS.length && EVENTS[EIDX].y <= PRESENT){
     YEAR = EVENTS[EIDX].y;
     onEvent(EVENTS[EIDX]); EIDX++;
-    const d = DECISIONS.find(dd => !decisionsTaken.some(x => x.id === dd.id) &&
-                                   YEAR >= dd.year() && dd.when());
-    if (d) decisionsTaken.push({id: d.id, year: Math.round(YEAR), hist: true});
   }
   YEAR = PRESENT;
   hudYear.textContent = PRESENT;
