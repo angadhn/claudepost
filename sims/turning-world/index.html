@@ -335,6 +335,11 @@
     asset for India. There's so many, like, specific things you could use for each
     country. Even though we know that the Taj Mahal is not in Mysore or Westminster
     Abbey is not in Cambridge or wherever things are being found.”</p>
+    <p>“It's interesting that sometimes you have let James Watt live to eighteen
+    fifty four and all of that. I wonder if it's even possible in this Cleodynamics
+    universe to retain the persons that get born but have their deaths also in
+    there because that also affects what gets invented when and where. Uh, but I
+    think now it starts to get really complicated.”</p>
     <p class="src">By Angadh Nanjangud (prompter) &amp; Claude Fable&nbsp;5 (AI).
     Everything here is hand-drawn canvas and SVG — no game engine, no sprites, no
     network. The second prompt is why this page has a director’s camera, decision
@@ -508,7 +513,12 @@
       used as the baseline cost of that step everywhere; <b>(3) the multipliers</b>
       — named social forces (a vision, a customer, a censor) that stretch or
       shrink lags. Everything else is dice: the Monte-Carlo jitter <em>is</em>
-      contingency, and your decisions are exogenous shocks re-simulated forward.
+      contingency — and note that the dice quietly stand in for mortal humans.
+      “Watt dies young and someone else builds the condenser a decade later”
+      <em>is</em> a lag re-roll, which is why the cameo cards credit a
+      <em>seat</em> rather than a person whenever an invention lands outside its
+      inventor’s working lifetime: simultaneous discovery (Merton’s “multiples”)
+      is the historical norm, so in this model people are seats.
       Propagation between eras is nothing mystical — a world where Cyrano is
       censored differs from ours only through those three channels, compounding
       down the graph. The full equations, calibration, and the model’s honest sins
@@ -1370,19 +1380,31 @@ const FACES = {
     '<circle cx="53" cy="20" r="4" style="fill:none;stroke:var(--grey);stroke-width:1.2"/>'),
 };
 const CAMEOS = {
-  somnium:     ['kepler', '<b>Johannes Kepler</b> dreams a voyage to the Moon'],
-  moon_voyage: ['cyrano', '<b>Cyrano de Bergerac</b> straps fireworks to a chair and writes the first space rocket'],
-  calculus:    ['newton', '<b>Isaac Newton</b> — the falling apple and the orbit are the same fall'],
-  watt:        ['watt',   '<b>James Watt</b> hears the engine wasting its heat'],
-  space_sf:    ['verne',  '<b>Jules Verne</b> fires the imagination of every future engineer'],
+  somnium:     ['kepler', '<b>Johannes Kepler</b> dreams a voyage to the Moon',
+                'someone in <b>Kepler’s seat</b> dreams a voyage to the Moon'],
+  moon_voyage: ['cyrano', '<b>Cyrano de Bergerac</b> straps fireworks to a chair and writes the first space rocket',
+                'a duelling poet in <b>Cyrano’s seat</b> writes the first space rocket'],
+  calculus:    ['newton', '<b>Isaac Newton</b> — the falling apple and the orbit are the same fall',
+                'someone in <b>Newton’s seat</b> sees the apple and the orbit are the same fall'],
+  watt:        ['watt',   '<b>James Watt</b> hears the engine wasting its heat',
+                'an engineer in <b>Watt’s seat</b> hears the engine wasting its heat'],
+  space_sf:    ['verne',  '<b>Jules Verne</b> fires the imagination of every future engineer',
+                'a novelist in <b>Verne’s seat</b> fires the imagination of every engineer'],
 };
+/* adult working years of the real person; outside them, the seat gets the
+   credit — invention “multiples” are the norm, people are seats */
+const CAMEO_LIFE = { kepler: [1591, 1634], cyrano: [1639, 1662],
+                     newton: [1663, 1727], watt: [1756, 1819],
+                     verne: [1848, 1905] };
 const cameoEl = document.getElementById('cameo');
 let cameoTimer = null;
 function showCameo(id, y){
   const c = CAMEOS[id];
   if (!c) return;
   spawnWalker(id, homeOf(id, y, CFG));
-  cameoEl.innerHTML = FACES[c[0]] + `<span class="who">${Math.round(y)} — ${c[1]}</span>`;
+  const [b0, d0] = CAMEO_LIFE[c[0]];
+  const line = (y >= b0 && y <= d0) ? c[1] : c[2];
+  cameoEl.innerHTML = FACES[c[0]] + `<span class="who">${Math.round(y)} — ${line}</span>`;
   cameoEl.classList.add('show');
   clearTimeout(cameoTimer);
   cameoTimer = setTimeout(() => cameoEl.classList.remove('show'), 4600);
