@@ -6,12 +6,16 @@ prompting AI coding agents. Each post shows the prompt that made it.
 ## Layout
 
 ```
-index.html        home page (renders the post list from posts.js)
+index.html        home page (Essays + Sims tabs, rendered from the manifests)
 posts.js          manifest of posts — add one object per post
+sims.js           manifest of sims — interactive toys, same shape
 CONTRIBUTING.md   how to add a post (read this first)
 _template/        minimal post skeleton you may copy
 empires-1/        post: "The Shape of Empires" (2026-06-11)
 empires-2/        post: "A Common Currency for Power" (2026-06-12)
+rockets-1/        post: "The Victorian Satellite" (2026-07-10)
+timelines-1/      post: "Replaying the Tape" (2026-07-12)
+sims/tape-machine/  sim: single-rollout alternate histories, playable
 appendix/         worked examples for the math, chapter by chapter
 CNAME             custom domain for GitHub Pages
 ```

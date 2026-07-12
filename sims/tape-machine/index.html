@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tape Machine — Claudepost</title>
+<meta name="description" content="Deal yourself an alternate history of technology: set the assumptions, press play, watch a thousand years unfold.">
+<script>
+/* set theme before first paint to avoid flash */
+(function(){
+  try{
+    var u=new URLSearchParams(location.search).get('theme');
+    var s=localStorage.getItem('empiresTheme');
+    var d=u?u==='dark':s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    if(d)document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#faf9f5; --fg:#33312c; --grey:#7d786e; --faint:#a59f93;
+    --accent:#c15f3c; --rule:#e7e4dc; --card:#f3f1e9;
+    --scB:#9c453a; --scC:#2f629c; --scD:#2d7d52; --gold:#b3873e;
+  }
+  html.dark{
+    --bg:#262624; --fg:#e8e5de; --grey:#a09a8e; --faint:#7d786e;
+    --accent:#d97757; --rule:#3a3833; --card:#2e2d2a;
+    --scB:#c25a3c; --scC:#5b8ed8; --scD:#3ba26b; --gold:#b98a2c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.02rem; line-height:1.6;
+    transition:background .25s,color .25s;
+  }
+  .prose{max-width:46rem; margin:0 auto; padding:0 1.5rem}
+  header{padding:3.6rem 0 .6rem}
+  h1{font-size:2.2rem; line-height:1.15; font-weight:600; margin:0 0 .5rem; letter-spacing:-.01em}
+  .subtitle{font-style:italic; color:var(--grey); font-size:1.05rem; margin:0 0 .8rem}
+  .backlink{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.85rem; margin:0 0 1.4rem}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .sans{font-family:ui-sans-serif,-apple-system,"Helvetica Neue",sans-serif}
+
+  #themeBtn{
+    position:fixed; top:1rem; right:1rem; z-index:50;
+    width:2.4rem; height:2.4rem; border-radius:50%;
+    border:1px solid var(--rule); background:var(--card); color:var(--fg);
+    font-size:1.05rem; cursor:pointer; line-height:1;
+  }
+  #themeBtn:hover{border-color:var(--accent)}
+
+  /* ---------- setup ---------- */
+  #setup{
+    border:1px solid var(--rule); border-radius:10px; background:var(--card);
+    padding:1.3rem 1.4rem 1.2rem; margin:1.4rem 0;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #setup h3{margin:0 0 .9rem; font-size:.8rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--accent)}
+  .assump{display:grid; grid-template-columns:11rem 1fr; gap:.4rem 1rem;
+    align-items:center; margin-bottom:.75rem}
+  .assump .q{font-size:.86rem; color:var(--grey)}
+  .chips{display:flex; flex-wrap:wrap; gap:.4rem}
+  .chips button{
+    font:inherit; font-size:.8rem; padding:.28rem .75rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--bg); color:var(--fg);
+  }
+  .chips button:hover{border-color:var(--accent)}
+  .chips button.on{border-color:var(--accent); color:var(--accent); font-weight:600}
+  .assump input[type=range]{width:100%; accent-color:var(--accent); max-width:16rem}
+  .assump .yr{font-size:.84rem; color:var(--fg); font-variant-numeric:tabular-nums;
+    font-weight:600; margin-left:.6rem}
+  #visionRow{display:flex; align-items:center}
+  #go{
+    display:block; width:100%; margin-top:1rem; padding:.75rem;
+    font:inherit; font-size:1rem; font-weight:700; letter-spacing:.02em;
+    color:#fff; background:var(--accent); border:none; border-radius:8px; cursor:pointer;
+  }
+  #go:hover{filter:brightness(1.07)}
+  @media (max-width:560px){ .assump{grid-template-columns:1fr} }
+
+  /* ---------- the tape ---------- */
+  #tape{display:none}
+  #deck{
+    position:sticky; top:0; z-index:20; background:var(--bg);
+    border-bottom:1px solid var(--rule); padding:.7rem 0 .6rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+  }
+  #deckRow{display:flex; align-items:baseline; gap:1.1rem; flex-wrap:wrap}
+  #yearBig{font-size:2.1rem; font-weight:700; font-variant-numeric:tabular-nums;
+    letter-spacing:.02em; min-width:6.2rem}
+  #era{font-size:1rem; font-style:italic; color:var(--grey);
+    font-family:"Iowan Old Style",Palatino,Georgia,serif}
+  #ffwd{font-size:.8rem; color:var(--faint); min-width:2rem}
+  #deckBtns{margin-left:auto; display:flex; gap:.45rem}
+  #deckBtns button{
+    font:inherit; font-size:.78rem; padding:.25rem .7rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:99px; background:var(--card); color:var(--fg);
+  }
+  #deckBtns button:hover{border-color:var(--accent); color:var(--accent)}
+  #meters{display:flex; gap:.9rem; flex-wrap:wrap; margin-top:.55rem}
+  .meter{flex:1 1 7rem; min-width:6.5rem}
+  .meter .lbl{font-size:.62rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--faint); margin-bottom:.15rem; white-space:nowrap}
+  .meter .bar{height:5px; border-radius:3px; background:var(--rule); overflow:hidden}
+  .meter .fill{height:100%; width:0%; background:var(--accent); border-radius:3px;
+    transition:width .5s}
+
+  #feed{list-style:none; margin:1.2rem 0; padding:0}
+  #feed li{
+    display:grid; grid-template-columns:4.4rem 1fr; gap:1rem;
+    padding:.5rem .2rem; border-bottom:1px solid var(--rule);
+    animation:pop .45s ease-out;
+  }
+  @keyframes pop{from{opacity:0; transform:translateY(7px)}to{opacity:1; transform:none}}
+  #feed .y{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.88rem;
+    font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums; text-align:right}
+  #feed .txt b{font-weight:600}
+  #feed .delta{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.76rem;
+    margin-left:.5rem; white-space:nowrap}
+  #feed .early{color:var(--accent); font-weight:600}
+  #feed .late{color:var(--faint)}
+  #feed li.marquee .txt b{border-bottom:1px solid var(--accent)}
+  #feed li.special .txt{color:var(--gold); font-style:italic}
+  #feed .dot{display:inline-block; width:.55rem; height:.55rem; border-radius:50%;
+    margin-right:.5rem; vertical-align:1px}
+
+  /* ---------- finale ---------- */
+  #finale{
+    display:none; border:1px solid var(--accent); border-radius:10px;
+    background:var(--card); padding:1.4rem 1.5rem; margin:1.6rem 0;
+    animation:pop .6s ease-out;
+  }
+  #finale h2{margin:0 0 .5rem; font-size:1.5rem; letter-spacing:-.01em}
+  #finale .verdict{font-size:1.05rem; margin-bottom:.8rem}
+  #finale .verdict .n{color:var(--accent); font-weight:700}
+  #finale ul{margin:.2rem 0 1rem; padding-left:1.2rem; color:var(--grey); font-size:.95rem}
+  #finale ul li{margin-bottom:.3rem}
+  #finaleBtns{display:flex; gap:.5rem; flex-wrap:wrap;
+    font-family:ui-sans-serif,-apple-system,sans-serif}
+  #finaleBtns button{
+    font:inherit; font-size:.85rem; padding:.45rem .9rem; cursor:pointer;
+    border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  #finaleBtns button:hover{border-color:var(--accent); color:var(--accent)}
+  #finaleBtns button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  #finaleBtns button.primary:hover{color:#fff; filter:brightness(1.07)}
+
+  .foot{padding:2rem 0 3.5rem; color:var(--grey); font-size:.88rem}
+  @media (max-width:640px){
+    header{padding-top:3.2rem}
+    h1{font-size:1.7rem}
+    .prose{padding:0 1.1rem}
+    #themeBtn{top:.7rem; right:.7rem}
+    #yearBig{font-size:1.7rem; min-width:5rem}
+  }
+</style>
+</head>
+<body>
+<button id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<header class="prose">
+  <p class="backlink"><a href="../../index.html#sims">&#8592; All sims</a> ·
+    <a href="../../timelines-1/" data-dir>how the engine works (chapter 4)</a></p>
+  <h1>The Tape Machine</h1>
+  <p class="subtitle">Deal yourself an alternate history. Set the assumptions, press
+  play, and watch one possible thousand years tick past — every run rolls new dice
+  on the same calibrated engine as
+  <a href="../../timelines-1/" data-dir>Replaying the Tape</a>. No two worlds
+  are alike.</p>
+</header>
+
+<main class="prose">
+  <section id="setup" aria-label="World assumptions">
+    <h3>New world — choose your assumptions</h3>
+    <div class="assump">
+      <span class="q">Rocket vision event</span>
+      <div class="chips" id="cVision">
+        <button data-v="none" class="on">none (our world)</button>
+        <button data-v="on">someone dreams of the sky…</button>
+      </div>
+    </div>
+    <div class="assump" id="visionYearRow" style="visibility:hidden">
+      <span class="q">…in the year</span>
+      <div id="visionRow">
+        <input type="range" id="visionYear" min="1100" max="1900" step="10" value="1250">
+        <span class="yr" id="visionYearV">1250</span>
+      </div>
+    </div>
+    <div class="assump">
+      <span class="q">The steam engine</span>
+      <div class="chips" id="cSteam">
+        <button data-v="yes" class="on">gets invented</button>
+        <button data-v="no">never exists</button>
+      </div>
+    </div>
+    <div class="assump">
+      <span class="q">Chlorate luck (Essonne, 1788)</span>
+      <div class="chips" id="cEssonne">
+        <button data-v="history" class="on">as in our world</button>
+        <button data-v="dice">flip the coin</button>
+      </div>
+    </div>
+    <div class="assump">
+      <span class="q">Proof of orbit</span>
+      <div class="chips" id="cProof">
+        <button data-v="radio" class="on">must be heard (radio)</button>
+        <button data-v="optical">seen is enough</button>
+      </div>
+    </div>
+    <div class="assump">
+      <span class="q">Turbulence of history</span>
+      <div class="chips" id="cSigma">
+        <button data-v="0.07">calm</button>
+        <button data-v="0.14" class="on">historical</button>
+        <button data-v="0.25">chaotic</button>
+      </div>
+    </div>
+    <button id="go">▶&nbsp; Run this world</button>
+  </section>
+
+  <section id="tape" aria-live="polite">
+    <div id="deck">
+      <div id="deckRow">
+        <span id="yearBig">1000</span>
+        <span id="era">The Age of Wind and Muscle</span>
+        <span id="ffwd"></span>
+        <div id="deckBtns">
+          <button id="btnPause">pause</button>
+          <button id="btnSkip">skip to end</button>
+          <button id="btnNew">new world</button>
+        </div>
+      </div>
+      <div id="meters"></div>
+    </div>
+    <ul id="feed"></ul>
+    <div id="finale">
+      <h2 id="finTitle"></h2>
+      <p class="verdict" id="finVerdict"></p>
+      <ul id="finNotes"></ul>
+      <div id="finaleBtns">
+        <button class="primary" id="btnAgain">↻ same assumptions, new dice</button>
+        <button id="btnNew2">new assumptions</button>
+        <button id="btnCopy">copy this world’s chronicle</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="prose foot">
+  One run = one rollout of the 43-technology dependency graph from
+  <a href="../../timelines-1/" data-dir>chapter 4</a> (model, lags, and caveats
+  documented there; data: <a href="timelines_data.js">timelines_data.js</a>).
+  Nothing leaves your browser. Companion counterfactuals:
+  <a href="../../rockets-1/" data-dir>The Victorian Satellite</a> and
+  <a href="https://angadh.com/rockets-1">Why Space Rockets Could have Happened
+  Sooner But Didn’t</a>.
+</footer>
+
+<script src="timelines_data.js"></script>
+<script>
+/* ---------- theme ---------- */
+const root = document.documentElement;
+function applyTheme(dark){
+  root.classList.toggle('dark', dark);
+  try{ localStorage.setItem('empiresTheme', dark ? 'dark' : 'light'); }catch(e){}
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const saved = (()=>{ try{ return localStorage.getItem('empiresTheme'); }catch(e){ return null; }})();
+applyTheme(urlTheme ? urlTheme === 'dark'
+  : saved ? saved === 'dark'
+  : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+document.getElementById('themeBtn').addEventListener('click',
+  ()=>applyTheme(!root.classList.contains('dark')));
+const css = v => getComputedStyle(root).getPropertyValue(v).trim();
+
+/* ---------- engine (same semantics as chapter 4; verified against it) ---------- */
+const NODE = {}; TL.nodes.forEach(n => NODE[n.id] = n);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rand){ let u=0,v=0;
+  while(!u) u=rand(); while(!v) v=rand();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+function arrivalTime(n, gate, work, active){
+  const hits = r => r.targets.includes(n.br) || r.targets.includes(n.id);
+  const rate = tt => { let v = 1;
+    for (const [s, r] of active) if (s <= tt && hits(r)) v *= r.V * r.C;
+    return v; };
+  const starts = active.filter(([s, r]) => s > gate && hits(r))
+                       .map(([s]) => s).sort((a, b) => a - b);
+  let t = gate, rem = work;
+  for (const s of starts){
+    const seg = (s - t) * rate(t);
+    if (seg >= rem) return t + rem / rate(t);
+    rem -= seg; t = s;
+  }
+  return t + rem / rate(t);
+}
+
+function simulate(cfg, rand){
+  const t = {}, rem = new Set();
+  for (const n of TL.nodes){
+    if (cfg.block.has(n.id)) continue;
+    if (n.start) t[n.id] = n.real; else rem.add(n.id);
+  }
+  const z = {}; rem.forEach(id => z[id] = gauss(rand));
+  const lucky = cfg.essonne && rand() < 0.5;
+  const active = cfg.rules.filter(r => typeof r.trigger === 'number')
+                          .map(r => [r.trigger, r]);
+  const fired = new Set();
+  while (true){
+    let bid = null, barr = Infinity;
+    for (const id of rem){
+      const n = NODE[id];
+      let gate = TL.T0, ok = true;
+      const groups = cfg.orbitGroups && id === 'orbit' ? cfg.orbitGroups : n.groups;
+      for (const g of groups){
+        let m = Infinity;
+        for (const p of g) if (t[p] !== undefined && t[p] < m) m = t[p];
+        if (m === Infinity){ ok = false; break; }
+        if (m > gate) gate = m;
+      }
+      if (!ok) continue;
+      let work = n.L0 * Math.exp(cfg.sigma * z[id]);
+      if (id === 'composite' && cfg.essonne && lucky) work /= 3;
+      const arr = arrivalTime(n, gate, work, active);
+      if (arr < barr){ barr = arr; bid = id; }
+    }
+    if (bid === null) break;
+    t[bid] = barr; rem.delete(bid);
+    if (!fired.has(bid)){
+      for (const r of cfg.rules) if (r.trigger === bid) active.push([barr, r]);
+      fired.add(bid);
+    }
+  }
+  for (const id of rem) t[id] = TL.NEVER;
+  return { t, lucky };
+}
+
+/* ---------- flavor ---------- */
+const LINES = {
+  clocks:      "Cathedral <b>clocks</b> begin to strike the hours",
+  acids:       "Alchemists distil the <b>mineral acids</b>",
+  blast_furnace:"<b>Blast furnaces</b> roar; iron flows",
+  printing:    "<b>Movable type</b> — ideas learn to replicate",
+  telescope:   "A spyglass turns skyward: the <b>telescope</b>",
+  sci_method:  "Societies, journals, experiment: <b>knowledge compounds</b>",
+  glauber_acid:"Glauber bottles <b>fuming nitric acid</b>",
+  clockwork:   "The pendulum makes <b>time precise</b>",
+  calculus:    "<b>Calculus</b> — change itself becomes computable",
+  coke_iron:   "<b>Coke-smelted iron</b>, no forests required",
+  newcomen:    "An engine breathes fire and pumps water: <b>atmospheric steam</b>",
+  crucible:    "<b>Crucible steel</b> pours",
+  lead_chamber:"Acid by the tonne — <b>chemistry industrialises</b>",
+  watt:        "<b>Watt’s condenser</b> tames the engine",
+  chlorine:    "A yellow-green gas is bottled: <b>chlorine</b>",
+  mil_rockets: "<b>Iron-cased war rockets</b> shriek over battlefields",
+  machine_tools:"<b>Machines begin making machines</b>",
+  hp_steam:    "<b>High-pressure steam</b> — power goes mobile",
+  rocket_eq:   "A mathematician writes the <b>rocket equation</b>",
+  perchlorate: "<b>Perchlorates</b> isolated — and shelved",
+  interchange: "Parts become <b>interchangeable</b>",
+  telegraph:   "Lightning learns the alphabet: the <b>telegraph</b>",
+  spin:        "Rockets learn to <b>spin true</b>",
+  nitrocell:   "<b>Guncotton</b>: cellulose with ambitions",
+  gauges:      "The micrometer arrives; <b>error shrinks</b>",
+  thermo:      "Heat becomes a science: <b>thermodynamics</b>",
+  gyroscope:   "Foucault’s wheel <b>remembers where it points</b>",
+  bessemer:    "<b>Steel becomes cheap</b>",
+  electricity: "Generators hum; <b>power becomes current</b>",
+  ice:         "The <b>internal-combustion engine</b> barks to life",
+  smokeless:   "<b>Smokeless powder</b> — exhaust velocity triples",
+  delaval:     "The <b>bell nozzle</b>: thrust learns geometry",
+  gyro_auto:   "A gyroscope <b>steers a machine by itself</b>",
+  liquefaction:"Air itself is bottled: <b>liquefied gases</b>",
+  radio:       "A signal crosses space without wires: <b>radio</b>",
+  liquid_eng:  "A <b>liquid-fuelled rocket</b> coughs, then flies",
+  sounding:    "<b>Rockets touch the edge of space</b>",
+  composite:   "<b>Castable propellant</b> — the solid motor grows up",
+  rocket_candy:"Sugar meets saltpetre: the <b>candy motor</b> burns sweet and steady",
+  barometer:   "Air has weight: the <b>barometer</b>",
+  orbit:       "A beacon circles the world — <b>ORBIT</b>",
+};
+const VARIANTS = {   // used when a node lands ≥80 years before its real date
+  delaval:  "The <b>bell nozzle</b>, found by motor tinkerers — centuries before any turbine",
+  thermo:   "Heat becomes a science — <b>learned from rocket chambers</b>, not steam cylinders",
+  sounding: "<b>Rockets touch the edge of space</b>, and cartographers argue about what to call it",
+  smokeless:"<b>Smokeless powder</b> — propellant chemists finally out-run the confectioners",
+  orbit:    "A beacon circles the world — <b>ORBIT</b>, generations ahead of schedule",
+};
+const BR_COL = { K:"--scC", P:"--grey", M:"--scB", C:"--gold",
+                 F:"--scD", I:"--scC", R:"--accent" };
+const MARQUEE = new Set(["rocket_candy","delaval","sounding","smokeless","radio",
+                         "liquid_eng","orbit","printing","calculus"]);
+
+function eraOf(un, steamBlocked){
+  if (un.has('orbit'))        return "The Space Age";
+  if (un.has('sounding'))     return "The Rocket Age";
+  if (un.has('radio') || un.has('electricity')) return "The Electric Age";
+  if (un.has('machine_tools') || un.has('hp_steam'))
+    return steamBlocked ? "The Steamless Industrial Age" : "The Industrial Age";
+  if (un.has('sci_method'))   return "The Scientific Revolution";
+  if (un.has('rocket_candy')) return "The Motor Middle Ages";
+  if (un.has('printing'))     return "The Print Era";
+  return "The Age of Wind and Muscle";
+}
+
+/* ---------- setup state ---------- */
+const pick = (id, cb) => {
+  document.querySelectorAll('#' + id + ' button').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      if (cb) cb(b.dataset.v);
+    }));
+};
+const val = id => document.querySelector('#' + id + ' button.on').dataset.v;
+pick('cVision', v => {
+  document.getElementById('visionYearRow').style.visibility =
+    v === 'on' ? 'visible' : 'hidden';
+});
+pick('cSteam'); pick('cEssonne'); pick('cProof'); pick('cSigma');
+const vy = document.getElementById('visionYear');
+vy.addEventListener('input', () =>
+  document.getElementById('visionYearV').textContent = vy.value);
+
+function buildCfg(){
+  const visionOn = val('cVision') === 'on';
+  const Y = +vy.value;
+  const rules = visionOn ? [
+    {trigger: Y, targets: ["rocket_candy"], V: 6, C: 3},
+    {trigger: "rocket_candy", targets: ["R"], V: 3, C: 2},
+    {trigger: "sounding", targets: ["C"], V: 1.5, C: 2},
+    {trigger: "sounding", targets: ["F"], V: 1, C: 1.5},
+    {trigger: "sounding", targets: ["I"], V: 1, C: 1.5},
+  ] : [];
+  const block = new Set(val('cSteam') === 'no' ? TL.steam : []);
+  return {
+    rules, block,
+    essonne: val('cEssonne') === 'dice',
+    sigma: +val('cSigma'),
+    orbitGroups: val('cProof') === 'optical'
+      ? NODE.orbit.groups.filter(g => !(g.length === 1 && g[0] === 'radio'))
+      : null,
+    visionOn, visionYear: Y,
+  };
+}
+
+/* ---------- playback ---------- */
+const feed = document.getElementById('feed');
+const yearBig = document.getElementById('yearBig');
+const eraEl = document.getElementById('era');
+const ffwd = document.getElementById('ffwd');
+const finale = document.getElementById('finale');
+let CFG = null, RUN = null, EVENTS = [], EIDX = 0, YEAR = 1000,
+    playing = false, raf = null, lastTs = null, unlocked = new Set(), chronicle = [];
+
+const BASE_SPEED = 22;         /* years per second */
+const END_YEAR = 2200;
+
+function metersInit(){
+  const m = document.getElementById('meters');
+  m.innerHTML = '';
+  for (const br in TL.branches){
+    m.insertAdjacentHTML('beforeend',
+      `<div class="meter"><div class="lbl">${TL.branches[br]}</div>
+       <div class="bar"><div class="fill" id="fill_${br}"></div></div></div>`);
+  }
+}
+function metersUpdate(){
+  for (const br in TL.branches){
+    const all = TL.nodes.filter(n => n.br === br && !n.start);
+    const got = all.filter(n => unlocked.has(n.id)).length;
+    document.getElementById('fill_' + br).style.width =
+      (all.length ? 100 * got / all.length : 0) + '%';
+  }
+}
+
+function startWorld(cfg, reuseSeed){
+  CFG = cfg;
+  const seed = reuseSeed != null ? reuseSeed
+    : (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+  RUN = simulate(cfg, mulberry32(seed));
+  RUN.seed = seed;
+  EVENTS = TL.nodes.filter(n => !n.start && RUN.t[n.id] < TL.NEVER)
+    .map(n => ({y: RUN.t[n.id], n}))
+    .sort((a, b) => a.y - b.y);
+  if (cfg.essonne)
+    EVENTS.push({y: Math.min(1788, (RUN.t.composite || 1788) - 1), special:
+      RUN.lucky
+        ? "The Essonne mill <b>never explodes</b>; chlorates keep their reputation — composite propellant beckons early"
+        : "The Essonne mill <b>explodes</b> (as in our world); chlorates are filed under “cursed” for a century"});
+  if (cfg.visionOn)
+    EVENTS.push({y: cfg.visionYear, special:
+      "Someone watches a fire arrow climb and asks: <b>how high could it go?</b> A patronised programme begins"});
+  EVENTS.sort((a, b) => a.y - b.y);
+  EIDX = 0; YEAR = 1000; unlocked = new Set(); chronicle = [];
+  feed.innerHTML = ''; finale.style.display = 'none';
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('tape').style.display = 'block';
+  eraEl.textContent = eraOf(unlocked, CFG.block.size > 0);
+  metersInit(); metersUpdate();
+  playing = true; lastTs = null;
+  document.getElementById('btnPause').textContent = 'pause';
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+}
+
+function emit(ev){
+  let html, cls = '';
+  if (ev.special){
+    html = `<span class="txt">${ev.special}</span>`;
+    cls = 'special';
+  } else {
+    const n = ev.n, d = Math.round(ev.y - n.real);
+    const line = (d <= -80 && VARIANTS[n.id]) ? VARIANTS[n.id] : LINES[n.id] || n.label;
+    const delta = d <= -60 ? `<span class="delta early">${-d} yr early</span>`
+      : d >= 60 ? `<span class="delta late">${d} yr late</span>` : '';
+    html = `<span class="txt"><span class="dot" style="background:${css(BR_COL[n.br])}"></span>${line}${delta}</span>`;
+    if (MARQUEE.has(n.id)) cls = 'marquee';
+    unlocked.add(n.id);
+  }
+  feed.insertAdjacentHTML('beforeend',
+    `<li class="${cls}"><span class="y">${Math.round(ev.y)}</span>${html}</li>`);
+  chronicle.push(`${Math.round(ev.y)} — ${
+    (ev.special || (LINES[ev.n.id] || ev.n.label)).replace(/<[^>]+>/g, '')}`);
+  metersUpdate();
+  eraEl.textContent = eraOf(unlocked, CFG.block.size > 0);
+  const li = feed.lastElementChild;
+  const r = li.getBoundingClientRect();
+  if (r.bottom > innerHeight - 40) li.scrollIntoView({behavior: 'smooth', block: 'end'});
+}
+
+function tick(ts){
+  if (!playing) return;
+  if (lastTs == null) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / 1000, 0.1); lastTs = ts;
+  const nextY = EIDX < EVENTS.length ? EVENTS[EIDX].y : END_YEAR;
+  const gap = nextY - YEAR;
+  const mult = gap > 60 ? 10 : gap > 18 ? 4 : 1;   /* time compression */
+  ffwd.textContent = mult > 4 ? '≫≫' : mult > 1 ? '≫' : '';
+  YEAR += dt * BASE_SPEED * mult;
+  while (EIDX < EVENTS.length && EVENTS[EIDX].y <= YEAR){
+    emit(EVENTS[EIDX]); EIDX++;
+  }
+  yearBig.textContent = Math.round(Math.min(YEAR, END_YEAR));
+  if (unlocked.has('orbit') || YEAR >= END_YEAR){
+    playing = false; ffwd.textContent = '';
+    setTimeout(showFinale, 700);
+    return;
+  }
+  raf = requestAnimationFrame(tick);
+}
+
+function showFinale(){
+  const t = RUN.t, oy = t.orbit;
+  const title = document.getElementById('finTitle');
+  const verdict = document.getElementById('finVerdict');
+  const notes = document.getElementById('finNotes');
+  notes.innerHTML = '';
+  if (oy < TL.NEVER && oy <= END_YEAR){
+    const d = Math.round(1957 - oy);
+    title.textContent = d > 0 ? `Orbit, ${Math.round(oy)}.` : `Orbit, ${Math.round(oy)}.`;
+    verdict.innerHTML = `This world put a satellite up
+      <span class="n">${Math.abs(d)} years ${d > 0 ? 'before' : 'after'}</span> ours did.`;
+    yearBig.textContent = Math.round(oy);
+  } else {
+    title.textContent = 'The tape ran out.';
+    verdict.innerHTML = `No satellite by ${END_YEAR} — under these assumptions the
+      lattice never closed.`;
+  }
+  const bits = [];
+  if (CFG.block.size) bits.push('The steam engine was never invented — and this world ' +
+    (oy < TL.NEVER && oy <= END_YEAR ? 'reached orbit anyway.' : 'still didn’t need it for what it managed.'));
+  if (CFG.visionOn) bits.push(`The vision event fired in ${CFG.visionYear}.`);
+  if (CFG.essonne) bits.push(RUN.lucky
+    ? 'The Essonne coin came up lucky: chlorates were tamed early.'
+    : 'The Essonne coin came up as in our world: the mill blew.');
+  /* top anachronisms */
+  const anach = TL.nodes.filter(n => !n.start && t[n.id] < TL.NEVER)
+    .map(n => ({n, d: n.real - t[n.id]})).sort((a, b) => b.d - a.d).slice(0, 3)
+    .filter(o => o.d >= 60);
+  anach.forEach(o => bits.push(
+    `${o.n.label}: ${Math.round(t[o.n.id])}, ${Math.round(o.d)} years early.`));
+  bits.push(`World seed ${RUN.seed} · same engine and caveats as chapter 4.`);
+  bits.forEach(b => notes.insertAdjacentHTML('beforeend', `<li>${b}</li>`));
+  finale.style.display = 'block';
+  finale.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+/* ---------- controls ---------- */
+document.getElementById('go').addEventListener('click', () => startWorld(buildCfg()));
+document.getElementById('btnPause').addEventListener('click', e => {
+  playing = !playing;
+  e.target.textContent = playing ? 'pause' : 'resume';
+  if (playing){ lastTs = null; raf = requestAnimationFrame(tick); }
+});
+document.getElementById('btnSkip').addEventListener('click', () => {
+  playing = false;
+  while (EIDX < EVENTS.length){ emit(EVENTS[EIDX]); EIDX++; }
+  YEAR = Math.min(RUN.t.orbit < TL.NEVER ? RUN.t.orbit : END_YEAR, END_YEAR);
+  yearBig.textContent = Math.round(YEAR);
+  showFinale();
+});
+const backToSetup = () => {
+  playing = false; cancelAnimationFrame(raf);
+  document.getElementById('tape').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+  scrollTo({top: 0, behavior: 'smooth'});
+};
+document.getElementById('btnNew').addEventListener('click', backToSetup);
+document.getElementById('btnNew2').addEventListener('click', backToSetup);
+document.getElementById('btnAgain').addEventListener('click', () => startWorld(CFG));
+document.getElementById('btnCopy').addEventListener('click', e => {
+  const head = `A world from the Tape Machine (claudepost.com/sims/tape-machine)\n` +
+    `Assumptions: vision ${CFG.visionOn ? CFG.visionYear : 'none'} · steam ${CFG.block.size ? 'never' : 'yes'}` +
+    ` · Essonne ${CFG.essonne ? 'coin' : 'history'} · proof ${CFG.orbitGroups ? 'optical' : 'radio'}` +
+    ` · turbulence σ=${CFG.sigma} · seed ${RUN.seed}\n\n`;
+  navigator.clipboard.writeText(head + chronicle.join('\n')).then(() => {
+    e.target.textContent = 'copied ✓';
+    setTimeout(() => e.target.textContent = 'copy this world’s chronicle', 1600);
+  });
+});
+
+/* file:// can't resolve directory URLs — point them at index.html locally */
+if (location.protocol === 'file:')
+  document.querySelectorAll('a[data-dir]').forEach(a =>
+    a.href = a.href.replace(/\/($|#)/, '/index.html$1'));
+</script>
+</body>
+</html>

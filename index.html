@@ -48,7 +48,19 @@
   }
   #themeBtn:hover{border-color:var(--accent)}
 
-  .essays{list-style:none; margin:2.5rem 0 0; padding:0}
+  #tabs{
+    display:flex; gap:.5rem; margin-top:2.1rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    border-bottom:1px solid var(--rule);
+  }
+  #tabs button{
+    font:inherit; font-size:.9rem; padding:.45rem 1.05rem .55rem; cursor:pointer;
+    border:none; background:none; color:var(--grey);
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  #tabs button:hover{color:var(--accent)}
+  #tabs button.on{color:var(--fg); font-weight:600; border-bottom-color:var(--accent)}
+  .essays{list-style:none; margin:.4rem 0 0; padding:0}
   .essays li{
     border-top:1px solid var(--rule); padding:1.6rem 0 1.8rem;
   }
@@ -83,10 +95,15 @@
 </header>
 
 <main class="prose">
+  <nav id="tabs" aria-label="Sections">
+    <button id="tabPosts" class="on">Essays</button>
+    <button id="tabSims">Sims</button>
+  </nav>
   <ul class="essays" id="essayList">
     <noscript><li style="padding-top:1.6rem">JavaScript is off — browse the posts
     <a href="https://github.com/angadhn/claudepost">in the repository</a>.</li></noscript>
   </ul>
+  <ul class="essays" id="simList" style="display:none"></ul>
 </main>
 
 <footer class="prose">
@@ -96,21 +113,37 @@
 </footer>
 
 <script src="posts.js"></script>
+<script src="sims.js"></script>
 <script>
 const IDX=location.protocol==='file:'?'index.html':'';
 if(IDX) document.getElementById('appendixLink').href+=IDX;
 const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',
   {day:'numeric',month:'long',year:'numeric'});
 const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-document.getElementById('essayList').insertAdjacentHTML('beforeend',
-  POSTS.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`
+const card=p=>`
   <li>
     <span class="date">${fmtDate(p.date)}</span>
     <h2><a href="${esc(p.slug)}/${IDX}">${esc(p.title)}</a></h2>
     <p>${esc(p.blurb)}</p>
     <span class="meta">by <a href="${esc(p.prompterUrl)}">${esc(p.prompter)}</a>
       &amp; ${esc(p.model)}${p.meta?' · '+esc(p.meta):''}</span>
-  </li>`).join(''));
+  </li>`;
+document.getElementById('essayList').insertAdjacentHTML('beforeend',
+  POSTS.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(card).join(''));
+document.getElementById('simList').innerHTML =
+  SIMS.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(card).join('');
+
+/* tabs; #sims in the URL opens the Sims tab */
+const tabP=document.getElementById('tabPosts'), tabS=document.getElementById('tabSims');
+function showTab(sims){
+  tabP.classList.toggle('on',!sims); tabS.classList.toggle('on',sims);
+  document.getElementById('essayList').style.display=sims?'none':'';
+  document.getElementById('simList').style.display=sims?'':'none';
+  if(history.replaceState) history.replaceState(null,'',sims?'#sims':location.pathname);
+}
+tabP.addEventListener('click',()=>showTab(false));
+tabS.addEventListener('click',()=>showTab(true));
+if(location.hash==='#sims') showTab(true);
 
 const root=document.documentElement;
 function applyTheme(d){
