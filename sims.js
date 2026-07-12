@@ -14,7 +14,7 @@ const SIMS = [
       "draws your run against ours; and the tech graph runs past Sputnik to " +
       "Mars — so the verdict is the state of 2026. In good timelines humanity " +
       "is multi-planet by the 1800s.",
-    meta: "director's camera · decision points · reality-vs-you strip · verdict at 2026",
+    meta: "director's camera · decision points · the imaginaries lane · verdict at 2026",
   },
   {
     slug: "sims/skyline",
