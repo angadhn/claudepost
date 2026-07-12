@@ -244,6 +244,10 @@
       <button data-w="sugarnosteam">sugar rocket, no steam</button>
       <button data-w="chaos">chaotic history</button>
     </div>
+    <div class="chips" id="cMode">
+      <button data-v="ask" class="on">decisions: ask me</button>
+      <button data-v="auto">auto-play (the world decides)</button>
+    </div>
     <button id="run">▶ Run</button>
   </div>
 
@@ -296,7 +300,11 @@
       network calls and no language model. When you answer a decision card, the
       future is <em>re-simulated from that year with the same dice</em>: the past
       you watched is unchanged and only the consequences diverge, which is why the
-      trajectory strip can honestly draw your path against reality’s. The globe is
+      trajectory strip can honestly draw your path against reality’s. Auto-play
+      resolves each card with a fresh coin flip, so hands-off runs differ through
+      two layers of chance — the lag dice and the decisions; combine auto-play with
+      “our world, exactly” and the physics goes deterministic, leaving the decision
+      tree as the only source of divergence. The globe is
       an orthographic projection of hand-encoded coastlines; the provinces are
       isometric SVG. Full model, calibration, and caveats in
       <a href="../../timelines-1/" data-dir>chapter 4</a>; the graph is
@@ -1064,6 +1072,15 @@ function maybeDecide(){
   for (const d of DECISIONS){
     if (decisionsTaken.some(x => x.id === d.id)) continue;
     if (YEAR >= d.year() && d.when()){
+      if (decideMode === 'auto'){
+        /* the world decides: a fresh coin, not the lag dice */
+        const o = d.options[Math.floor(Math.random() * d.options.length)];
+        caption(YEAR, `<i>the world decides:</i> ${o.label}` +
+          (o.hist ? ` <span style="color:var(--faint)">(as history did)</span>`
+                  : ` <span style="color:var(--accent)">⑂ leaving our path</span>`));
+        resolveDecision(d, o);
+        return false;          /* keep the tape rolling this same frame */
+      }
       pendingDecision = d;
       showDecision(d);
       return true;
@@ -1115,6 +1132,12 @@ document.querySelectorAll('#worlds button').forEach(b =>
   b.addEventListener('click', () => {
     document.querySelectorAll('#worlds button').forEach(x => x.classList.remove('on'));
     b.classList.add('on'); worldKey = b.dataset.w;
+  }));
+let decideMode = 'ask';
+document.querySelectorAll('#cMode button').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#cMode button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); decideMode = b.dataset.v;
   }));
 
 function startWorld(){
