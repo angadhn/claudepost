@@ -138,7 +138,9 @@
     position:absolute; left:50%; transform:translate(-50%,-50%);
     display:none; background:var(--bg); z-index:9;
     border:1px solid var(--accent); border-radius:10px; padding:1.1rem 1.5rem;
-    font-family:ui-sans-serif,-apple-system,sans-serif; max-width:30rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    width:min(30rem, calc(100% - 1.6rem));
+    max-height:calc(100% - 1rem); overflow-y:auto;
     box-shadow:0 4px 24px rgba(0,0,0,.18);
   }
   #fin{top:46%; text-align:center}
@@ -166,8 +168,8 @@
     border-radius:4px; padding:.02rem .3rem; margin-left:.5rem; vertical-align:1px;
   }
 
-  #pathStrip{margin:.7rem 0 0}
-  #pathStrip svg{width:100%; height:auto; display:block}
+  #pathStrip{margin:.7rem 0 0; overflow-x:auto; -webkit-overflow-scrolling:touch}
+  #pathStrip svg{width:100%; min-width:680px; height:auto; display:block}
   #pathStrip text{font-family:ui-sans-serif,-apple-system,sans-serif}
   .stripNote{font-family:ui-sans-serif,-apple-system,sans-serif; font-size:.78rem;
     color:var(--faint); margin:.2rem 0 0; text-align:right}
@@ -181,7 +183,15 @@
     h1{font-size:1.6rem}
     .prose{padding:0 1rem}
     #hudYear{font-size:1.3rem}
+    #hudEra{font-size:.8rem}
+    #hudBtns button{font-size:.68rem; padding:.18rem .5rem}
+    #hint{display:none}
     #themeBtn{top:.7rem; right:.7rem}
+    /* escape the stage's overflow:hidden: pin cards to the viewport */
+    #fin, #dec{
+      position:fixed; top:50%; width:min(30rem, calc(100vw - 1.6rem));
+      max-height:80vh; z-index:60;
+    }
   }
 </style>
 </head>
@@ -560,7 +570,7 @@ function sizeCanvas(){
   DPR = Math.min(devicePixelRatio || 1, 2);
   canvas.width = CW * DPR; canvas.height = CHh * DPR;
   canvas.style.height = CHh + 'px';
-  RGL = Math.min(CW * 0.20, CHh * 0.40);
+  RGL = Math.min(CW * (CW < 640 ? 0.36 : 0.20), CHh * 0.40);
   GCX = CW / 2; GCY = CHh * 0.52;
 }
 addEventListener('resize', sizeCanvas);
@@ -899,10 +909,11 @@ const SLOTS = {
 let curRegion = null, isoSmoke = [], isoSources = [], isoRockets = [],
     villagers = [], isoFx = null, isoSvg = null;
 
+const ISO_W = 1180, ISO_H = 560;   /* fixed design space; SVG scales to fit */
 function buildRegion(key){
   curRegion = key;
   const map = TERRA[key];
-  isoCX = CW / 2; isoTop = Math.max(90, CHh * 0.2);
+  isoCX = ISO_W / 2; isoTop = 112;
   let tiles = '', deco = '';
   for (let ty = 0; ty < 12; ty++)
     for (let tx = 0; tx < 12; tx++){
@@ -918,7 +929,7 @@ function buildRegion(key){
   SLOTS[key].forEach((s, i) => {
     blds += `<g id="slot_${key}_${i}" style="opacity:${s.always ? 1 : 0};transition:opacity .8s">${SPRITES[s.sprite](s.tx, s.ty)}</g>`;
   });
-  isoDiv.innerHTML = `<svg viewBox="0 0 ${CW} ${CHh}">
+  isoDiv.innerHTML = `<svg viewBox="0 0 ${ISO_W} ${ISO_H}" preserveAspectRatio="xMidYMid meet">
     <g id="terra">${tiles}</g><g id="deco">${deco}</g>
     <g id="blds">${blds}</g><g id="isofx"></g></svg>`;
   isoSvg = isoDiv.querySelector('svg');

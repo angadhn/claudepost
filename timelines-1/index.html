@@ -161,8 +161,8 @@
   }
   #big .hero{font-size:1.5rem; font-weight:700; font-variant-numeric:tabular-nums}
   #big .sub{font-size:.8rem; color:var(--grey)}
-  #dagWrap{position:relative}
-  #dag svg{width:100%; height:auto; display:block}
+  #dagWrap{position:relative; overflow-x:auto; -webkit-overflow-scrolling:touch}
+  #dag svg{width:100%; min-width:880px; height:auto; display:block}
   #dag text{font-family:ui-sans-serif,-apple-system,sans-serif}
   #dagTip{
     position:absolute; pointer-events:none; display:none; z-index:40;

@@ -104,7 +104,9 @@
     position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
     display:none; text-align:center; background:var(--bg);
     border:1px solid var(--accent); border-radius:10px; padding:1.1rem 1.6rem;
-    font-family:ui-sans-serif,-apple-system,sans-serif; max-width:26rem;
+    font-family:ui-sans-serif,-apple-system,sans-serif;
+    width:min(26rem, calc(100% - 1.6rem));
+    max-height:calc(100% - .8rem); overflow-y:auto;
     box-shadow:0 4px 24px rgba(0,0,0,.15);
   }
   #fin h2{margin:0 0 .3rem; font-size:1.35rem;
@@ -150,7 +152,12 @@
     h1{font-size:1.6rem}
     .prose{padding:0 1rem}
     #hudYear{font-size:1.3rem}
+    #hudEra{font-size:.8rem}
+    #hudBtns button{font-size:.68rem; padding:.18rem .5rem}
     #themeBtn{top:.7rem; right:.7rem}
+    /* escape the stage's overflow:hidden: pin the card to the viewport */
+    #fin{position:fixed; top:50%; width:min(26rem, calc(100vw - 1.6rem));
+      max-height:80vh; z-index:60}
   }
 </style>
 </head>
